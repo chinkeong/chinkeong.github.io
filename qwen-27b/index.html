@@ -1,0 +1,498 @@
+<title>Qwen 3.8 27B Optimal settings</title>
+<style>
+  :root {
+    --ground: #fafbf7;
+    --surface: #f0f3ea;
+    --surface2: #e7ecdc;
+    --ink: #1d2118;
+    --muted: #5d6555;
+    --line: #dde3d2;
+    --accent: #5a8f00;
+    --accent-ink: #3f6600;
+    --bad: #b04a2f;
+    --c-weights: #3f6600;
+    --c-kv: #8ab52e;
+    --c-ovh: #9a6a1f;
+    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
+    --body: "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131610;
+      --surface: #1b1f15;
+      --surface2: #232819;
+      --ink: #e5eadb;
+      --muted: #9aa38c;
+      --line: #2b3122;
+      --accent: #9ed845;
+      --accent-ink: #b5e763;
+      --bad: #e0794f;
+      --c-weights: #74a52c;
+      --c-kv: #50701e;
+      --c-ovh: #b5842f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131610;
+    --surface: #1b1f15;
+    --surface2: #232819;
+    --ink: #e5eadb;
+    --muted: #9aa38c;
+    --line: #2b3122;
+    --accent: #9ed845;
+    --accent-ink: #b5e763;
+    --bad: #e0794f;
+    --c-weights: #74a52c;
+    --c-kv: #50701e;
+    --c-ovh: #b5842f;
+  }
+  body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.65; margin: 0; }
+  .layout { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 56px; max-width: 1120px; margin: 0 auto; padding: 48px 28px 96px; }
+  nav.toc { position: sticky; top: 36px; align-self: start; font-family: var(--mono); font-size: 12px; line-height: 1.5; padding-top: 120px; }
+  nav.toc .toctitle { letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 10px; font-size: 11px; }
+  nav.toc a { display: block; padding: 5px 0 5px 12px; color: var(--muted); text-decoration: none; border-left: 2px solid var(--line); }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent-ink); border-left-color: var(--accent); }
+  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; gap: 0; } nav.toc { display: none; } }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 28px; margin-bottom: 12px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font-family: var(--mono); font-size: clamp(24px, 4.5vw, 34px); line-height: 1.25; margin: 0 0 14px; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { color: var(--muted); margin: 0; max-width: 64ch; }
+  .specs { display: flex; flex-wrap: wrap; gap: 0 32px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .spec { font-family: var(--mono); font-size: 13px; padding: 6px 0; }
+  .spec b { display: block; font-weight: 400; color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  section { margin-top: 52px; scroll-margin-top: 24px; }
+  .fno { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  .fno::before { content: "§ "; color: var(--accent); }
+  h2 { font-family: var(--mono); font-size: 20px; line-height: 1.35; margin: 0 0 14px; text-wrap: balance; }
+  p { margin: 0 0 14px; max-width: 74ch; }
+  p:last-child { margin-bottom: 0; }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  strong { color: var(--accent-ink); }
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 14px 18px; margin: 18px 0; }
+  .callout p { margin: 0; }
+  .callout .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); display: block; margin-bottom: 6px; }
+  .tablebox { overflow-x: auto; margin: 18px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; text-align: left; padding: 8px 14px 8px 0; border-bottom: 2px solid var(--ink); }
+  td { padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.hl td { background: var(--surface); }
+  figure { margin: 22px 0; padding: 0; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .axis-t { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+  .dlabel { font-family: var(--mono); font-size: 11.5px; fill: var(--ink); }
+  .dlabel-m { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.7; background: var(--surface); border: 1px solid var(--line); padding: 18px 20px; overflow-x: auto; margin: 18px 0; }
+  pre .c { color: var(--muted); }
+  pre .f { color: var(--accent-ink); }
+  footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  a { color: var(--accent-ink); }
+  ul { margin: 0 0 14px; padding-left: 22px; max-width: 74ch; }
+  li { margin-bottom: 6px; }
+</style>
+
+<div class="layout">
+<nav class="toc" aria-label="Contents">
+  <div class="toctitle">Contents</div>
+  <a href="#s01">01 · The model</a>
+  <a href="#s02">02 · The physics</a>
+  <a href="#s03">03 · Universal rules</a>
+  <a href="#s04">04 · Reasoning effort</a>
+  <a href="#s05">05 · Which file to get</a>
+  <a href="#s06">06 · Hardware matrix</a>
+  <a href="#s07">07 · Recipes per card</a>
+  <a href="#appendix">Appendix · aider setup</a>
+  <a href="#src">Sources</a>
+</nav>
+
+<div class="content">
+<header>
+  <p class="eyebrow">Field guide · Local inference</p>
+  <h1>Qwen 3.8 27B Optimal settings</h1>
+  <p class="lede">How to run Qwen3.8-27B well on whatever you have — RTX 30/40/50 series, DGX Spark (GB10), Intel Arc Pro B50/B70, or a Panther Lake iGPU. Grounded in measured runs on an RTX 3090 and fact-checked against published specs and community benchmarks.</p>
+</header>
+
+<div class="specs">
+  <div class="spec"><b>Model</b>Qwen3.8-27B · hybrid attention</div>
+  <div class="spec"><b>Native context</b>262,144 tok</div>
+  <div class="spec"><b>Q4 weights</b>~16.5 GB</div>
+  <div class="spec"><b>Reference</b>RTX 3090 · 40 t/s measured</div>
+  <div class="spec"><b>Benchmark run</b>~2k in + ~100k thinking/out</div>
+</div>
+
+<section id="s01">
+  <p class="fno">01</p>
+  <h2>The model, in five facts that drive every setting</h2>
+  <ul>
+    <li><strong>Hybrid attention.</strong> Most of its 64 layers are Gated DeltaNet (linear attention, constant-size state); only a minority are standard attention with 4-KV-head GQA. Consequence: the KV cache is a fraction of a normal 27B's — ~3&nbsp;GB at 122k with Q8 — so huge contexts are cheap in memory and speed decays gently as they fill.</li>
+    <li><strong>Native 262,144 context.</strong> No YaRN or rope tricks needed below that; the limit you'll actually hit is VRAM, not the model.</li>
+    <li><strong>Thinking always on, defaulting to <code>xhigh</code>.</strong> Reasoning tokens share the context window with your prompt and output — a 100k-token thinking run needs a &gt;100k window (§04).</li>
+    <li><strong>Vision is optional at serve time.</strong> The mmproj projector costs ~1.3&nbsp;GB of VRAM; drop it for text-only work.</li>
+    <li><strong>Official thinking-mode sampling: temp 1.0 · top-p 0.95 · top-k 20 · min-p 0.</strong> Clients that silently send temperature 0 (aider does) cause repetition loops — override them.</li>
+  </ul>
+</section>
+
+<section id="s02">
+  <p class="fno">02</p>
+  <h2>The physics: bandwidth is king, and VRAM is a cliff</h2>
+  <p>Decode speed ≈ memory bandwidth ÷ bytes read per token. A 4-bit quant reads ~16.5&nbsp;GB per token; divide your card's GB/s by that and multiply by ~0.7 (measured efficiency on CUDA) and you have your ceiling. This one ratio predicts every row of the matrix in §06.</p>
+  <p>The second law: speed vs. context is a <strong>cliff, not a curve</strong>. Flat while weights + KV fit in VRAM; ~10× collapse the moment anything spills over the PCIe bus. Measured on the reference 3090:</p>
+  <figure>
+    <svg viewBox="0 0 640 250" role="img" aria-label="Line chart: decode speed stays near 40 tokens per second up to 122k context, then collapses to 4 tokens per second at 256k when KV cache spills out of VRAM">
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="48" y1="210" x2="620" y2="210"/>
+        <line x1="48" y1="145" x2="620" y2="145"/>
+        <line x1="48" y1="81"  x2="620" y2="81"/>
+        <line x1="48" y1="16"  x2="620" y2="16"/>
+      </g>
+      <text class="axis-t" x="40" y="214" text-anchor="end">0</text>
+      <text class="axis-t" x="40" y="149" text-anchor="end">20</text>
+      <text class="axis-t" x="40" y="85"  text-anchor="end">40</text>
+      <text class="axis-t" x="40" y="20"  text-anchor="end">60</text>
+      <text class="axis-t" x="48"  y="230">0</text>
+      <text class="axis-t" x="179" y="230" text-anchor="middle">64k</text>
+      <text class="axis-t" x="310" y="230" text-anchor="middle">128k</text>
+      <text class="axis-t" x="440" y="230" text-anchor="middle">192k</text>
+      <text class="axis-t" x="571" y="230" text-anchor="middle">256k</text>
+      <text class="axis-t" x="620" y="246" text-anchor="end">allocated context (tokens) · decode t/s on y · RTX 3090</text>
+      <polyline points="56,35 211,81 299,85" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+      <polyline points="299,85 571,197" fill="none" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 5"/>
+      <circle cx="211" cy="81" r="5" fill="var(--accent)" stroke="var(--ground)" stroke-width="2"/>
+      <circle cx="299" cy="85" r="5" fill="var(--accent)" stroke="var(--ground)" stroke-width="2"/>
+      <circle cx="571" cy="197" r="5" fill="var(--bad)" stroke="var(--ground)" stroke-width="2"/>
+      <text class="dlabel" x="196" y="66">80k · 40 t/s</text>
+      <text class="dlabel" x="308" y="108">122k · 38.6 t/s</text>
+      <text class="dlabel" x="566" y="185" text-anchor="end">256k · 4 t/s</text>
+      <text class="dlabel-m" x="435" y="130" text-anchor="middle">KV outgrows VRAM → the cliff</text>
+    </svg>
+    <figcaption>Same model, same GPU. The optimal context is the largest that fits — found with nvidia-smi, not a stopwatch.</figcaption>
+  </figure>
+  <div class="callout"><span class="tag">Corollary</span><p>Allocated ≠ used: a big window with a small prompt costs VRAM, not speed. And below the cliff, shrinking context buys nothing — there is no "optimal point" to search for.</p></div>
+</section>
+
+<section id="s03">
+  <p class="fno">03</p>
+  <h2>Universal rules — true on every card</h2>
+  <ul>
+    <li><strong>One token pool.</strong> <code>prompt + thinking + output ≤ context</code>. The model has no awareness of its limits and cannot budget its own thinking; limits are enforced by your config only.</li>
+    <li><strong>Cut-offs are client-side.</strong> The server generates until told to stop. Truncations come from the client's <code>max_tokens</code>, its request timeout, or Ctrl+C — and with OpenAI-compatible APIs a cut generation cannot seamlessly resume. Size <code>max_tokens</code> and the client timeout so the whole run fits one response.</li>
+    <li><strong>One slot, quantized KV.</strong> <code>--parallel 1</code> (some UIs default to 2 = double KV) and <code>-ctk q8_0 -ctv q8_0</code> (halves KV, negligible loss — but never Q4 for the K cache).</li>
+    <li><strong><code>--no-mmap</code> on RAM-tight machines.</strong> Otherwise the whole GGUF stays cached in system RAM even after the weights are in VRAM.</li>
+    <li><strong>All layers on GPU or accept the cliff.</strong> Partial offload speed is set by CPU RAM bandwidth, not by the GPU — a 5080 and a 4060&nbsp;Ti offload at nearly the same ~8–12 t/s.</li>
+  </ul>
+</section>
+
+<section id="s04">
+  <p class="fno">04</p>
+  <h2>Reasoning effort: the setting that moves hours, not percent</h2>
+  <p>The default <code>xhigh</code> maximizes benchmark scores by thinking enormously — community testing found <span class="num">22,276</span> reasoning tokens and 21 minutes spent on a simple SVG task that completes in ~2 minutes with reasoning off. On the other end, disabling reasoning measurably hurt complex tasks (coordinate math errors, degraded geometry). The honest guidance:</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>Effort</th><th>Use for</th><th>Cost</th></tr>
+    <tr><td><code>xhigh</code> (default)</td><td>benchmarks, hardest problems, unattended runs</td><td class="n">can consume 100k+ tokens / hours</td></tr>
+    <tr class="hl"><td><code>medium</code></td><td><b>everyday coding — the sane default</b></td><td class="n">minutes, not hours</td></tr>
+    <tr><td><code>low</code> / <code>none</code></td><td>quick edits, boilerplate, chat</td><td class="n">seconds–minutes, quality dips on hard tasks</td></tr>
+  </table>
+  </div>
+  <p>Set it server-side in llama.cpp: <code>--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</code> (GUI front-ends typically expose it as a reasoning-effort setting). Keep <code>xhigh</code> only for runs where you'd rather wait than re-prompt.</p>
+</section>
+
+<section id="s05">
+  <p class="fno">05</p>
+  <h2>Which file to download — quants are not interchangeable</h2>
+  <p>Measured KLD comparisons show large quality gaps between same-size files from different quantizers. Current best picks:</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>Size class</th><th>Best file</th><th>Weights</th><th>Notes</th></tr>
+    <tr><td>4-bit GGUF (the default choice)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q4_K_XL</b></a> · unsloth (Dynamic V3)</td><td class="n">17.6 GB</td><td>~10% better accuracy than plain Q4_K_M at the same size</td></tr>
+    <tr><td>3-bit GGUF (16 GB cards)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q3_K_XL</b></a> · unsloth</td><td class="n">13.1 GB</td><td>modern 3-bit ≫ old 3-bit; Qwen's own AD-IQ3_S reportedly edges it (<a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">KLD data</a>) but that repo is gated</td></tr>
+    <tr><td>6-bit GGUF (quality, 32 GB cards)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q6_K</b></a> · lmstudio-community</td><td class="n">22.4 GB</td><td>wins its size class; near-Q8 quality</td></tr>
+    <tr><td>8-bit GGUF (reference)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q8_0</b></a> · lmstudio-community</td><td class="n">29 GB</td><td>ground-truth machine (GB10, 32 GB cards at short context)</td></tr>
+    <tr class="hl"><td>NVFP4 (Blackwell only)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4"><b>Qwen3.8-27B-NVFP4</b></a> · unsloth, via vLLM</td><td class="n">~15 GB</td><td>RTX 50 / GB10 / B200 only; ~1.5× BF16 speed, FP8 KV; 92–97% accuracy retention; vLLM only (FP8 lm_head — no SGLang, no llama.cpp). A community <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP GGUF tier family</a> exists for llama.cpp, but still requires Blackwell (sm_120) kernels — it does not bring NVFP4 to older GPUs</td></tr>
+    <tr><td>OpenVINO int4 (Intel Arc / iGPU)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov"><b>Qwen3.8-27B-int4-ov</b></a> · Intel official</td><td class="n">~16 GB</td><td>INT4_ASYM g128; first-party Intel runtime, OpenAI-compatible server; experimental — validate long runs</td></tr>
+    <tr><td>OpenVINO int8 (32 GB Arc quality play)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov"><b>Qwen3.8-27B-int8-ov</b></a> · Intel official</td><td class="n">~28 GB</td><td>the Intel-runtime analogue of Q6/Q8; too big below 32 GB</td></tr>
+  </table>
+  </div>
+  <div class="callout"><span class="tag">Rule of thumb</span><p>For a benchmark, keep the quant fixed across machines (Q4-class) — a different quant is a different model. For daily use, buy the best quant your VRAM holds fully resident.</p></div>
+
+  <h2 style="margin-top:36px">MTP speculative decoding — free speed on every GPU</h2>
+  <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong>, and it survives quantization — the standard K-quant GGUFs above <a href="https://github.com/sudoingX/qwen38-mtp">carry it already</a> (it's pinned to Q8_0). llama.cpp's <code>draft-mtp</code> path (<a href="https://github.com/ggml-org/llama.cpp/discussions/27164">merged July 2026</a>) uses it to draft several tokens per step and verify them with the full model, so <strong>output quality is mathematically identical</strong> — rejected drafts are discarded. Unlike NVFP4, this works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
+  <pre>  --spec-type draft-mtp  --spec-draft-n-max 4  --spec-draft-p-min 0.75</pre>
+  <p>Reported gains span <span class="num">+33%</span> to <span class="num">+145%</span> decode depending on hardware and workload — an RTX 5090 tester measured <span class="num">148 avg / 203 peak t/s</span> on the NVFP4 tiers with acceptance ~49%, rising with long repetitive contexts. Two hardware-dependent caveats, so <strong>benchmark on your own machine</strong>: the optimal <code>--spec-draft-n-max</code> varies per system (that tester found 4 fastest, while 6–8 collapsed acceptance and got slower — sweep 1–6 and keep the winner), and acceptance rates vary a lot with prompt style, so quick-test on your real workload, not a toy prompt. Requires a llama.cpp build recent enough to have the draft-mtp path.</p>
+</section>
+
+<section id="s06">
+  <p class="fno">06</p>
+  <h2>The hardware matrix</h2>
+  <p>Estimated wall-clock for the reference benchmark run (~2k prompt + ~100k thinking/output), each card on its best fidelity-preserving strategy. The 3090 row is one measured data point — from a single machine and workload, so treat it as an anchor, not a promise; the rest follow the bandwidth ratio at ~0.7 efficiency (less on Intel's stack). All times exclude MTP speculative decoding (§05), which can shorten decode substantially and varies per system — measure it on yours.</p>
+  <figure>
+    <svg viewBox="0 0 640 340" role="img" aria-label="Bar chart of estimated time for a 100k-token run: RTX 5090 about 25 minutes, RTX 4090 about 40, RTX 3090 45 measured, Arc B70 about 1.4 hours, DGX Spark about 2.2, RTX 5080 offloading about 2.8, Arc B50 about 5, Panther Lake iGPU about 5.2 hours">
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="215" y1="4" x2="215" y2="312"/>
+        <line x1="304" y1="4" x2="304" y2="312"/>
+        <line x1="393" y1="4" x2="393" y2="312"/>
+        <line x1="482" y1="4" x2="482" y2="312"/>
+        <line x1="571" y1="4" x2="571" y2="312"/>
+      </g>
+      <text class="axis-t" x="118" y="25"  text-anchor="end">RTX 5090 32GB</text>
+      <text class="axis-t" x="118" y="63"  text-anchor="end">RTX 4090 24GB</text>
+      <text class="axis-t" x="118" y="101" text-anchor="end">RTX 3090 24GB</text>
+      <text class="axis-t" x="118" y="139" text-anchor="end">Arc B70 32GB</text>
+      <text class="axis-t" x="118" y="177" text-anchor="end">DGX Spark GB10</text>
+      <text class="axis-t" x="118" y="215" text-anchor="end">RTX 16GB class</text>
+      <text class="axis-t" x="118" y="253" text-anchor="end">Arc B50 16GB</text>
+      <text class="axis-t" x="118" y="291" text-anchor="end">PTL iGPU B390</text>
+      <rect x="126" y="8"   width="37"  height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="46"  width="60"  height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="84"  width="67"  height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="122" width="125" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="160" width="196" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="198" width="249" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="236" width="445" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="274" width="463" height="26" rx="3" fill="var(--accent)"/>
+      <text class="dlabel" x="171" y="26">~25 min</text>
+      <text class="dlabel" x="194" y="64">~40 min</text>
+      <text class="dlabel" x="201" y="102">45 min · measured</text>
+      <text class="dlabel" x="259" y="140">~1.4 h</text>
+      <text class="dlabel" x="330" y="178">~2.2 h</text>
+      <text class="dlabel" x="383" y="216">~2.8 h · offload</text>
+      <text class="dlabel" x="579" y="254">~5 h</text>
+      <text class="dlabel" x="597" y="292">~5.2 h</text>
+      <text class="axis-t" x="126" y="330">0</text>
+      <text class="axis-t" x="215" y="330" text-anchor="middle">1h</text>
+      <text class="axis-t" x="304" y="330" text-anchor="middle">2h</text>
+      <text class="axis-t" x="393" y="330" text-anchor="middle">3h</text>
+      <text class="axis-t" x="482" y="330" text-anchor="middle">4h</text>
+      <text class="axis-t" x="571" y="330" text-anchor="middle">5h</text>
+    </svg>
+    <figcaption>One 100k-token thinking run per platform, Q4-class fidelity. "RTX 16GB class" = 4080 / 4070 Ti S / 5080 / 5060 Ti running Q4 with ~22 layers on CPU.</figcaption>
+  </figure>
+  <div class="tablebox">
+  <table>
+    <tr><th>Card</th><th>VRAM</th><th>Bandwidth</th><th>Strategy</th><th>Decode</th><th>100k run</th></tr>
+    <tr><td>RTX 5090</td><td class="n">32 GB</td><td class="n">1792 GB/s</td><td>UD-Q4_K_XL, all-GPU, 262k ctx — or NVFP4/vLLM</td><td class="n">~65–80 t/s</td><td class="n">~25 min</td></tr>
+    <tr><td>RTX 4090</td><td class="n">24 GB</td><td class="n">1008 GB/s</td><td>UD-Q4_K_XL, all-GPU, ~122k ctx</td><td class="n">~40–45 t/s</td><td class="n">~40 min</td></tr>
+    <tr class="hl"><td>RTX 3090</td><td class="n">24 GB</td><td class="n">936 GB/s</td><td>UD-Q4_K_XL, all-GPU, 122,880 ctx (measured)</td><td class="n">40 t/s</td><td class="n">45 min</td></tr>
+    <tr><td>RTX 5080 / 4080 / 4070&nbsp;Ti&nbsp;S / 5060&nbsp;Ti</td><td class="n">16 GB</td><td class="n">448–960 GB/s</td><td>Q4 partial offload (fidelity) or UD-Q3_K_XL resident (speed)</td><td class="n">~8–12 / 25–50 t/s</td><td class="n">~3 h / ~45 min†</td></tr>
+    <tr><td>RTX 3060 / 5070</td><td class="n">12 GB</td><td class="n">360–672 GB/s</td><td>heavy offload — better served by a smaller model</td><td class="n">~5–8 t/s</td><td class="n">~4–5 h</td></tr>
+    <tr><td>Intel Arc Pro B70</td><td class="n">32 GB</td><td class="n">608 GB/s</td><td>Q5/Q6 GGUF (Vulkan) or OpenVINO int4; full 262k fits</td><td class="n">~18–26 t/s</td><td class="n">~1.1–1.5 h</td></tr>
+    <tr><td>Intel Arc Pro B50</td><td class="n">16 GB</td><td class="n">224 GB/s</td><td>UD-Q3_K_XL resident or OpenVINO int4 — Q4 does not fit</td><td class="n">~8–12 t/s</td><td class="n">~5 h†</td></tr>
+    <tr><td>Intel Arc B580</td><td class="n">12 GB</td><td class="n">456 GB/s</td><td>even 3-bit doesn't fit — heavy offload (Vulkan) or 2-bit; better served by a 14B model</td><td class="n">~6–8 t/s</td><td class="n">~4–4.5 h</td></tr>
+    <tr><td>DGX Spark (GB10)</td><td class="n">128 GB unified</td><td class="n">273 GB/s</td><td>NVFP4/vLLM for speed · Q8_0 GGUF for reference quality</td><td class="n">~10–15 t/s</td><td class="n">~2–2.8 h</td></tr>
+    <tr><td>Panther Lake iGPU (B390)</td><td class="n">shared, ≤96 GB</td><td class="n">153.6 GB/s (LPDDR5X-9600, 2ch)</td><td>OpenVINO int4 or Vulkan Q4; effort ≤ medium</td><td class="n">~5–7 t/s</td><td class="n">~4.5–5.5 h</td></tr>
+  </table>
+  </div>
+  <p>† 3-bit rows trade quality for that speed — a different model for benchmark purposes (§05). The pattern to internalize: <strong>capacity decides the strategy; bandwidth decides the wait.</strong> A 5080's 960&nbsp;GB/s is worthless for this model the moment one layer lands on the CPU.</p>
+</section>
+
+<section id="s07">
+  <p class="fno">07</p>
+  <h2>Recipes per card class</h2>
+
+  <p class="fno" style="margin-top:24px">NVIDIA 24–32 GB · 3090 / 4090 / 5090</p>
+  <pre><span class="c">:: the measured reference recipe — full speed, full fidelity</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q4_K_XL, 17.6 GB)</span>
+llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
+  <span class="f">-c 122880</span>                     <span class="c">:: 24 GB cards; 5090 32 GB: -c 262144 fits (~7 GB KV)</span>
+  <span class="f">-ngl 99  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0</span>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: MTP: free decode</span>
+                                <span class="c">:: speed, any GPU — sweep n-max 1-6 on your system (§05)</span>
+  --jinja --port 1234
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"  <span class="c">:: xhigh for benchmarks only</span>
+<span class="c">:: RTX 5090 alternative: vLLM + unsloth NVFP4 — ~1.5x BF16 speed, FP8 KV (Blackwell only)</span></pre>
+
+  <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
+  <pre><span class="c">:: fidelity path — same Q4 model, ~22 layers on CPU (~8-12 t/s regardless of GPU tier)</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
+llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
+  <span class="f">-c 112640  -ngl 42</span>            <span class="c">:: raise -ngl until &lt;500 MB VRAM free, back off 1</span>
+  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: no mmproj; CPU layers need ~6 GB RAM</span>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
+<span class="c">:: speed path — <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q3_K_XL</a> (13.1 GB) fully resident: 25-50 t/s, mild quality loss</span></pre>
+
+  <p class="fno">12 GB class · RTX 3060 / RTX 5070 / Arc B580</p>
+  <pre><span class="c">:: honest framing first: this class runs the 27B poorly in every configuration.</span>
+<span class="c">:: If the exact model isn't required, a 14B-class Qwen at Q4 fits resident and flies.</span>
+<span class="c">:: fidelity path — Q4 with MOST of the model on CPU (~6-8 t/s, 100k run ≈ 4-4.5 h);</span>
+<span class="c">:: speed is set by your system RAM, so dual-channel DDR5 matters more than the GPU:</span>
+<span class="c">:: files (Q4 + Q2): <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
+llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
+  <span class="f">-c 112640  -ngl 28</span>            <span class="c">:: ~28 of 64 layers fit; raise until &lt;500 MB VRAM free</span>
+  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: CPU layers need ~10 GB of real RAM</span>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
+<span class="c">:: last-resort resident path: UD-Q2_K_XL (~10 GB) fits all-GPU — fast, but 2-bit</span>
+<span class="c">:: quality loss compounds over a 100k reasoning chain; unfit for benchmark use</span>
+<span class="c">:: Arc B580: use the Vulkan build (same Battlemage SYCL caveat as the Pro cards)</span></pre>
+
+  <p class="fno">Intel Arc Pro B70 32 GB</p>
+  <pre><span class="c">:: VULKAN llama.cpp build — currently beats SYCL on Battlemage (SYCL has known</span>
+<span class="c">:: perf bugs there; IPEX-LLM is archived as of Jan 2026 — do not use it).</span>
+<span class="c">:: Backend speeds shift monthly on this card: keep drivers/Mesa current, re-benchmark.</span>
+llama-server.exe -m Qwen3.8-27B-Q6_K.gguf      <span class="c">:: 22.4 GB — <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a></span>
+  <span class="f">-c 262144  -ngl 99</span>            <span class="c">:: full native context fits (~7 GB KV at Q8)</span>
+  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: verify KV-quant support in your build</span>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
+<span class="c">:: first-party alternative: OpenVINO Model Server + Intel's official models:</span>
+<span class="c">:: <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a> · <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov">int8-ov</a> (quality, ~28 GB)</span>
+<span class="c">:: (OpenAI-compatible API; experimental — validate a long thinking run first)</span></pre>
+
+  <p class="fno">Intel Arc Pro B50 16 GB</p>
+  <pre><span class="c">:: Q4 does not fit and 224 GB/s punishes offload — go fully resident 3-bit</span>
+<span class="c">:: Vulkan build here too (same Battlemage SYCL caveat as the B70)</span>
+llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  <span class="c">:: 13.1 GB — <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
+  <span class="f">-c 112640  -ngl 99</span>  --parallel 1  --no-mmap
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
+<span class="c">:: or Intel's official <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a> — same capacity math,</span>
+<span class="c">:: likely faster kernels on Arc via the first-party OpenVINO runtime</span></pre>
+
+  <p class="fno">DGX Spark · GB10, 128 GB unified</p>
+  <pre><span class="c">:: speed path — NVFP4 on vLLM (Blackwell-native, ~30% faster than FP8, FP8 KV cache):</span>
+vllm serve unsloth/Qwen3.8-27B-NVFP4 --max-model-len 131072
+<span class="c">:: model: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4">huggingface.co/unsloth/Qwen3.8-27B-NVFP4</a> (vLLM only — FP8 lm_head)</span>
+<span class="c">:: reference-quality path — capacity is free, bandwidth isn't (~10 t/s at Q8):</span>
+<span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a> (Q8_0, 29 GB)</span>
+llama-server -m Qwen3.8-27B-Q8_0.gguf
+  <span class="f">-c 262144  -ngl 99</span>  --parallel 1
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234</pre>
+
+  <p class="fno">Intel Panther Lake iGPU · Arc B390-class</p>
+  <pre><span class="c">:: RAM is the spec that matters: the B390 tier (Core Ultra X9 388H) is MANDATED to</span>
+<span class="c">:: ship with dual-channel LPDDR5X-9600 (128-bit) = 153.6 GB/s, up to 96 GB shared.</span>
+<span class="c">:: The lower B370 tier allows 7467-8533 MT/s = ~120-136 GB/s — check before buying.</span>
+<span class="c">:: Shipping products: ASUS Zenbook Duo UX8407, Lenovo X9 388H designs (64 GB @ 9600).</span>
+<span class="c">:: The model fits in shared memory easily; it's just slow (~5-7 t/s).</span>
+<span class="c">:: first-party path: OpenVINO GenAI / Model Server on the iGPU device with Intel's</span>
+<span class="c">:: official <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a></span>
+<span class="c">:: portable path: Vulkan llama.cpp build + <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q4_K_XL</a>, -ngl 99</span>
+<span class="c">:: mandatory sanity: reasoning_effort medium or low — an xhigh 100k run is ~5 hours</span></pre>
+
+  <div class="callout"><span class="tag">Client side, all platforms</span><p>Point the client at the same OpenAI-compatible port and the config never changes: aider needs <code>--edit-format diff</code>, <code>--timeout</code> sized to the slowest expected run, temperature 1.0 override, and a metadata file matching the server's context/output limits.</p></div>
+</section>
+
+<section id="appendix">
+  <p class="fno">Appendix</p>
+  <h2>Connecting aider to llama-server</h2>
+  <p>Every recipe above ends with an OpenAI-compatible server on port 1234 — which means <a href="https://aider.chat">aider</a> (the terminal AI pair-programmer) connects to any of them with one identical client setup. Nothing here is hardware-specific.</p>
+
+  <p class="fno" style="margin-top:24px">Step 1 · Install aider</p>
+  <pre><span class="c"># needs Python 3.9+ — any one of these:</span>
+python -m pip install aider-install &amp;&amp; aider-install   <span class="c"># official installer (recommended)</span>
+pip install aider-chat                                 <span class="c"># plain pip</span>
+uv tool install --force --python python3.12 aider-chat <span class="c"># uv, isolated env</span></pre>
+
+  <p class="fno">Step 2 · Point aider at the server</p>
+  <p>Aider's <code>openai/</code> model prefix means "any OpenAI-compatible server" — llama-server and OpenVINO Model Server both qualify. Set two environment variables (the key is required by aider; make it match the server's <code>--api-key</code> if you set one, otherwise any placeholder works):</p>
+  <pre><span class="c"># Windows (cmd / batch)                              # Linux / macOS</span>
+set OPENAI_API_BASE=http://localhost:1234/v1         export OPENAI_API_BASE=http://localhost:1234/v1
+set OPENAI_API_KEY=dummy                             export OPENAI_API_KEY=dummy</pre>
+
+  <p class="fno">Step 3 · Tell aider the model's limits</p>
+  <p>Aider knows nothing about a local model until you describe it. Create <code>.aider.model.metadata.json</code> in the directory you launch aider from (or your home directory). Match <code>max_input_tokens</code> to the server's <code>-c</code> value — these two numbers drifting apart is the classic silent failure:</p>
+  <pre>{
+    "openai/qwen/qwen3.8-27b": {
+        "max_input_tokens": 122880,
+        "max_tokens": 106496,
+        "input_cost_per_token": 0,
+        "output_cost_per_token": 0,
+        "supports_vision": true
+    }
+}</pre>
+  <p>The model name after <code>openai/</code> must match what the server reports at <code>/v1/models</code> — llama-server sets it with <code>--alias</code>, so the recipes above all serve as <code>qwen/qwen3.8-27b</code>.</p>
+
+  <p class="fno">Step 4 · Fix aider's defaults for a thinking model</p>
+  <p>Aider sends temperature 0 by default — a repetition-loop trigger on reasoning models — and needs to know to strip <code>&lt;think&gt;</code> blocks before parsing edits. Create <code>.aider.model.settings.yml</code> next to the metadata file:</p>
+  <pre>- name: openai/qwen/qwen3.8-27b
+  use_temperature: 1.0
+  reasoning_tag: think
+  extra_params:
+    top_p: 0.95</pre>
+
+  <p class="fno">Step 5 · Launch</p>
+  <pre>aider --model openai/qwen/qwen3.8-27b --edit-format diff --timeout 3600</pre>
+  <ul style="font-size:14px">
+    <li><code>--edit-format diff</code> — the model writes only changed hunks instead of whole files. On local t/s this is the biggest quality-of-life setting there is: a 60&nbsp;KB file edit drops from minutes to seconds. Diff also degrades gracefully on cut-offs (complete hunks still apply).</li>
+    <li><code>--timeout 3600</code> — long thinking runs outlive default client timeouts; the server log shows a timeout as "Client disconnected. Stopping generation".</li>
+    <li>First run sanity checks: the model-warning banner should be gone (metadata file found), and the banner should read <em>diff edit format</em>. If edits arrive mangled, the fallback is removing <code>--edit-format diff</code> to use whole-file mode.</li>
+    <li>Vision: with <code>supports_vision: true</code> and the server launched with <code>--mmproj</code>, you can <code>/add screenshot.png</code> in aider and the local model will see it.</li>
+  </ul>
+
+  <h2 style="margin-top:44px">Other clients: Qwen Code, Pi, OpenCode</h2>
+  <p>The same server serves any OpenAI-compatible client — only the config file format changes. In every case the three facts to supply are the same: base URL <code>http://localhost:1234/v1</code>, the model id the server reports (<code>qwen/qwen3.8-27b</code> via <code>--alias</code>), and the context/output limits from your <code>-c</code> setting.</p>
+
+  <p class="fno" style="margin-top:24px"><a href="https://github.com/QwenLM/qwen-code">Qwen Code CLI</a> · Qwen's own terminal agent</p>
+  <pre><span class="c"># install (Node.js 20+)</span>
+npm install -g @qwen-code/qwen-code
+<span class="c"># configure via env vars — put them in ~/.qwen/.env to persist:</span>
+OPENAI_BASE_URL=http://localhost:1234/v1
+OPENAI_API_KEY=dummy
+OPENAI_MODEL=qwen/qwen3.8-27b
+<span class="c"># then just run:</span>
+qwen</pre>
+  <p style="font-size:14px">The API key must be present even for a local server ("Missing credentials" otherwise), and set the context window explicitly in its settings if offered — Qwen Code's built-in defaults assume the cloud model's limits, not your <code>-c</code> value. (<a href="https://carteakey.dev/snippets/qwen-code-local-llama-cpp.html">setup notes</a>)</p>
+
+  <p class="fno"><a href="https://pi.dev/docs/latest/custom-provider">Pi coding agent</a></p>
+  <pre><span class="c"># custom providers live in ~/.pi/agent/models.json:</span>
+{
+  "providers": {
+    "llamacpp": {
+      "baseUrl": "http://localhost:1234/v1",
+      "api": "openai-completions",
+      "apiKey": "dummy",
+      "compat": { "supportsDeveloperRole": false, "supportsReasoningEffort": false },
+      "models": [
+        { "id": "qwen/qwen3.8-27b", "name": "Qwen3.8 27B (local)",
+          "contextWindow": 122880, "maxTokens": 106496, "reasoning": true }
+      ]
+    }
+  }
+}</pre>
+  <p style="font-size:14px">The <code>compat</code> flags matter: they tell Pi to send a plain <code>system</code> role and skip the <code>reasoning_effort</code> request parameter — the dialect llama-server expects. Pi enforces <code>maxTokens</code> client-side, so size it like aider's (this is the client whose default cap causes the mid-generation cut-offs described in §03). (<a href="https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/custom-provider.md">docs</a>)</p>
+
+  <p class="fno"><a href="https://opencode.ai/docs/providers/">OpenCode</a></p>
+  <pre><span class="c"># install:  npm i -g opencode-ai   (or the curl installer / brew)</span>
+<span class="c"># config: ~/.config/opencode/opencode.json (or opencode.json in the project)</span>
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "llamacpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama-server (local)",
+      "options": { "baseURL": "http://localhost:1234/v1", "apiKey": "dummy" },
+      "models": {
+        "qwen/qwen3.8-27b": {
+          "name": "Qwen3.8 27B (local)",
+          "limit": { "context": 122880, "output": 106496 }
+        }
+      }
+    }
+  }
+}
+<span class="c"># run:  opencode --model llamacpp/qwen/qwen3.8-27b   (or pick via /models)</span></pre>
+  <p style="font-size:14px">Two gotchas from the docs: <code>baseURL</code> must sit inside <code>options</code>, not at the provider root, and the provider id must be a custom name ("llamacpp", "local") — reusing a built-in provider name breaks resolution. (<a href="https://njannasch.dev/snippets/opencode-llamacpp-config/">llama.cpp example</a>)</p>
+
+  <div class="callout"><span class="tag">One rule for all clients</span><p>Whatever the client, its context and max-output settings must match the server's <code>-c</code> value — the client-side limits are what prevent the silent mid-generation cut-offs, because the model itself cannot budget its own tokens (§03).</p></div>
+</section>
+
+<section id="src">
+  <p class="fno">Sources</p>
+  <h2>Fact-check trail</h2>
+  <ul style="font-size:14px">
+    <li>Arc Pro B70 32 GB, 256-bit, 608 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/intel-arc-pro-b70-and-arc-pro-b65-gpus-bring-32gb-of-ram-to-ai-and-pro-apps-bigger-battlemage-finally-arrives-but-its-not-for-gaming">Tom's Hardware</a>, <a href="https://www.pugetsystems.com/labs/articles/intel-arc-pro-b70-review/">Puget Systems</a>, <a href="https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b70-gpu.pdf">Intel datasheet</a></li>
+    <li>RTX 50-series bandwidth (5090 1792, 5080 960, 5060 Ti 448 GB/s) — <a href="https://gamersnexus.net/gpus/nvidia-rtx-5090-575-watts-rtx-5080-5070-ti-5070-specs">GamersNexus</a>, <a href="https://www.techspot.com/specs/gpu/303357-nvidia-geforce-rtx-5090.html">TechSpot</a></li>
+    <li>DGX Spark GB10: 128 GB unified LPDDR5X, 273 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/nvidia-dgx-spark-review/2">Tom's Hardware review</a>, <a href="https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark/">LMSYS</a></li>
+    <li>Panther Lake iGPU: dual-channel LPDDR5X-9600 mandate for B390, 153.6 GB/s, ≤96 GB, shipping in Core Ultra X9 388H laptops — <a href="https://www.tomshardware.com/pc-components/gpus/intels-xe3-graphics-architecture-breaks-cover-panther-lakes-12-xe-core-igpu-promises-50-percent-better-performance-than-lunar-lake">Tom's Hardware</a>, <a href="https://www.techpowerup.com/345897/intel-mandates-7-467-mt-s-memory-for-panther-lake-arc-b390-b370-integrated-graphics">TechPowerUp</a>, <a href="https://hothardware.com/reviews/intel-core-ultra-x9-388h-panther-lake-review?page=2">HotHardware 388H review</a>, <a href="https://www.intel.com/content/www/us/en/products/sku/245526/intel-core-ultra-x9-processor-388h-18m-cache-up-to-5-10-ghz/specifications.html">Intel ARK</a>, <a href="https://www.ultrabookreview.com/74624-intel-panther-lake-laptops/">shipping laptop list</a></li>
+    <li>NVFP4: Blackwell-only, vLLM, ~1.5× BF16, 92–97% accuracy, FP8 KV — <a href="https://unsloth.ai/docs/models/qwen3.8">Unsloth docs</a>, <a href="https://forums.developer.nvidia.com/t/qwen3-8-27b-on-dgx-spark-using-vllm-nvfp4-vs-fp8-performance/380258">NVIDIA forums</a>, <a href="https://kaitchup.substack.com/p/qwen36-27b-quantization-fp8-vs-int4">Kaitchup</a></li>
+    <li>Quant quality (UD V3, AD-IQ3_S, lmstudio Q6_K KLD comparison) — <a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">HF discussion #65</a>, <a href="https://kingy.ai/blog/qwen3-8-27b-best-quantization-gguf/">kingy.ai</a></li>
+    <li>xhigh overthinking (22,276 thinking tokens / 21 min for a simple SVG) — <a href="https://simonw.substack.com/p/qwen-38-27b-is-excellent-but-it-defaults">Simon Willison</a></li>
+    <li>Intel stack status: IPEX-LLM archived Jan 2026 — <a href="https://github.com/intel/ipex-llm">GitHub repo</a>; Vulkan beats SYCL on Battlemage — <a href="https://github.com/ggml-org/llama.cpp/issues/22413">llama.cpp #22413</a>, <a href="https://jonathanmann.tech/blog/intel-arc-b70-llama-cpp-benchmarks/">B70 benchmark notes</a>, <a href="https://www.phoronix.com/review/intel-arc-pro-b70-linux/3">Phoronix</a></li>
+    <li>OpenVINO builds — <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">int4-ov</a>, <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov">int8-ov</a> · Model card — <a href="https://huggingface.co/Qwen/Qwen3.8-27B">Qwen/Qwen3.8-27B</a></li>
+    <li>MTP speculative decoding: ships in standard GGUFs, +33–145% on consumer GPUs — <a href="https://github.com/sudoingX/qwen38-mtp">qwen38-mtp recipe & benchmarks</a>, <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">llama.cpp discussion</a>; RTX 5090 tier benchmarks — <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP-GGUF card</a> (Blackwell-only weights, but the MTP data generalizes)</li>
+  </ul>
+</section>
+
+<footer>Field guide · 2026-08-20 · measured base: RTX 3090 · companion doc: Qwen 3.8 27B on RTX 3090 (session field notes)</footer>
+</div>
+</div>
