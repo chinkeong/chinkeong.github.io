@@ -1,58 +1,71 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Qwen 3.8 27B Optimal settings</title>
 <style>
   :root {
-    --ground: #fafbf7;
-    --surface: #f0f3ea;
-    --surface2: #e7ecdc;
-    --ink: #1d2118;
-    --muted: #5d6555;
-    --line: #dde3d2;
-    --accent: #5a8f00;
-    --accent-ink: #3f6600;
-    --bad: #b04a2f;
-    --c-weights: #3f6600;
-    --c-kv: #8ab52e;
-    --c-ovh: #9a6a1f;
-    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
-    --body: "Segoe UI", system-ui, sans-serif;
+    --ground: #ffffff;
+    --surface: #f5f5f7;
+    --surface2: #e8e8ed;
+    --ink: #1d1d1f;
+    --muted: #6e6e73;
+    --line: #d2d2d7;
+    --accent: #0071e3;
+    --accent-ink: #0066cc;
+    --bad: #d70015;
+    --c-weights: #0066cc;
+    --c-kv: #64b5ff;
+    --c-ovh: #6e6e73;
+    --mono: "SF Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+    --body: -apple-system, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #131610;
-      --surface: #1b1f15;
-      --surface2: #232819;
-      --ink: #e5eadb;
-      --muted: #9aa38c;
-      --line: #2b3122;
-      --accent: #9ed845;
-      --accent-ink: #b5e763;
-      --bad: #e0794f;
-      --c-weights: #74a52c;
-      --c-kv: #50701e;
-      --c-ovh: #b5842f;
+      --ground: #000000;
+      --surface: #1d1d1f;
+      --surface2: #2c2c2e;
+      --ink: #f5f5f7;
+      --muted: #86868b;
+      --line: #3a3a3c;
+      --accent: #2997ff;
+      --accent-ink: #6cb4ff;
+      --bad: #ff6961;
+      --c-weights: #2997ff;
+      --c-kv: #0a5cad;
+      --c-ovh: #86868b;
     }
   }
   :root[data-theme="dark"] {
-    --ground: #131610;
-    --surface: #1b1f15;
-    --surface2: #232819;
-    --ink: #e5eadb;
-    --muted: #9aa38c;
-    --line: #2b3122;
-    --accent: #9ed845;
-    --accent-ink: #b5e763;
-    --bad: #e0794f;
-    --c-weights: #74a52c;
-    --c-kv: #50701e;
-    --c-ovh: #b5842f;
+    --ground: #000000;
+    --surface: #1d1d1f;
+    --surface2: #2c2c2e;
+    --ink: #f5f5f7;
+    --muted: #86868b;
+    --line: #3a3a3c;
+    --accent: #2997ff;
+    --accent-ink: #6cb4ff;
+    --bad: #ff6961;
+    --c-weights: #2997ff;
+    --c-kv: #0a5cad;
+    --c-ovh: #86868b;
   }
   body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.65; margin: 0; }
-  .layout { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: 56px; max-width: 1120px; margin: 0 auto; padding: 48px 28px 96px; }
+  .layout { display: grid; grid-template-columns: 200px minmax(0,1fr); gap: clamp(36px, 4vw, 72px); max-width: 1240px; margin: 0 auto; padding: clamp(28px, 4vh, 56px) clamp(20px, 3vw, 40px) 96px; }
+  @media (min-width: 1600px) { body { font-size: 17px; } .layout { max-width: 1360px; } }
   nav.toc { position: sticky; top: 36px; align-self: start; font-family: var(--mono); font-size: 12px; line-height: 1.5; padding-top: 120px; }
   nav.toc .toctitle { letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 10px; font-size: 11px; }
   nav.toc a { display: block; padding: 5px 0 5px 12px; color: var(--muted); text-decoration: none; border-left: 2px solid var(--line); }
   nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent-ink); border-left-color: var(--accent); }
-  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; gap: 0; } nav.toc { display: none; } }
+  .content { min-width: 0; }
+  @media (max-width: 940px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding: 28px 18px 64px; }
+    nav.toc { display: none; }
+    body { font-size: 15px; }
+    pre { font-size: 12px; padding: 14px 14px; }
+    section { margin-top: 40px; }
+    .specs { gap: 0 22px; }
+    .layout code { white-space: normal; overflow-wrap: anywhere; }
+  }
   header { border-bottom: 2px solid var(--ink); padding-bottom: 28px; margin-bottom: 12px; }
   .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
   h1 { font-family: var(--mono); font-size: clamp(24px, 4.5vw, 34px); line-height: 1.25; margin: 0 0 14px; letter-spacing: -0.01em; text-wrap: balance; }
@@ -66,13 +79,18 @@
   h2 { font-family: var(--mono); font-size: 20px; line-height: 1.35; margin: 0 0 14px; text-wrap: balance; }
   p { margin: 0 0 14px; max-width: 74ch; }
   p:last-child { margin-bottom: 0; }
-  code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
   strong { color: var(--accent-ink); }
-  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 14px 18px; margin: 18px 0; }
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 14px 18px; margin: 18px 0; border-radius: 0 12px 12px 0; }
   .callout p { margin: 0; }
   .callout .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); display: block; margin-bottom: 6px; }
   .tablebox { overflow-x: auto; margin: 18px 0; }
+  .flags { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; cursor: help; }
+  .hint { font-size: 10px; letter-spacing: 0.04em; text-transform: none; color: var(--muted); }
+  details.cmds { margin: 14px 0 18px; }
+  details.cmds summary { font-family: var(--mono); font-size: 12.5px; color: var(--accent-ink); cursor: pointer; padding: 8px 0; }
+  details.cmds pre { margin-top: 8px; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 400; text-align: left; padding: 8px 14px 8px 0; border-bottom: 2px solid var(--ink); }
   td { padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -84,7 +102,7 @@
   .axis-t { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
   .dlabel { font-family: var(--mono); font-size: 11.5px; fill: var(--ink); }
   .dlabel-m { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
-  pre { font-family: var(--mono); font-size: 13px; line-height: 1.7; background: var(--surface); border: 1px solid var(--line); padding: 18px 20px; overflow-x: auto; margin: 18px 0; }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.7; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; overflow-x: auto; margin: 18px 0; }
   pre .c { color: var(--muted); }
   pre .f { color: var(--accent-ink); }
   footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -118,7 +136,7 @@
   <div class="spec"><b>Model</b>Qwen3.8-27B · hybrid attention</div>
   <div class="spec"><b>Native context</b>262,144 tok</div>
   <div class="spec"><b>Q4 weights</b>~16.5 GB</div>
-  <div class="spec"><b>Reference</b>RTX 3090 · 40 t/s measured</div>
+  <div class="spec"><b>Reference</b>RTX 3090 · 40 t/s base · 82 t/s tuned MTP</div>
   <div class="spec"><b>Benchmark run</b>~2k in + ~100k thinking/out</div>
 </div>
 
@@ -126,7 +144,7 @@
   <p class="fno">01</p>
   <h2>The model, in five facts that drive every setting</h2>
   <ul>
-    <li><strong>Hybrid attention.</strong> Most of its 64 layers are Gated DeltaNet (linear attention, constant-size state); only a minority are standard attention with 4-KV-head GQA. Consequence: the KV cache is a fraction of a normal 27B's — ~3&nbsp;GB at 122k with Q8 — so huge contexts are cheap in memory and speed decays gently as they fill.</li>
+    <li><strong>Hybrid attention.</strong> Most of its 64 layers use Gated DeltaNet, a linear-attention design whose memory use stays constant no matter how long the context gets; only a minority are standard attention layers (and those use GQA with 4 KV heads). The result: the KV cache is a fraction of a normal 27B's — about 3&nbsp;GB at 122k context with a Q8 cache — so huge contexts are cheap in memory, and speed falls off gently as they fill rather than collapsing.</li>
     <li><strong>Native 262,144 context.</strong> No YaRN or rope tricks needed below that; the limit you'll actually hit is VRAM, not the model.</li>
     <li><strong>Thinking always on, defaulting to <code>xhigh</code>.</strong> Reasoning tokens share the context window with your prompt and output — a 100k-token thinking run needs a &gt;100k window (§04).</li>
     <li><strong>Vision is optional at serve time.</strong> The mmproj projector costs ~1.3&nbsp;GB of VRAM; drop it for text-only work.</li>
@@ -137,7 +155,7 @@
 <section id="s02">
   <p class="fno">02</p>
   <h2>The physics: bandwidth is king, and VRAM is a cliff</h2>
-  <p>Decode speed ≈ memory bandwidth ÷ bytes read per token. A 4-bit quant reads ~16.5&nbsp;GB per token; divide your card's GB/s by that and multiply by ~0.7 (measured efficiency on CUDA) and you have your ceiling. This one ratio predicts every row of the matrix in §06.</p>
+  <p>Generation speed comes down to one ratio: how fast your card can read memory, divided by how much it must read per token. Every token requires reading the entire model — about 16.5&nbsp;GB for a 4-bit quant. So take your card's bandwidth in GB/s, divide by 16.5, multiply by ~0.7 (the efficiency we measured on CUDA), and that's your speed ceiling in tokens per second. This one calculation predicts every row of the matrix in §06.</p>
   <p>The second law: speed vs. context is a <strong>cliff, not a curve</strong>. Flat while weights + KV fit in VRAM; ~10× collapse the moment anything spills over the PCIe bus. Measured on the reference 3090:</p>
   <figure>
     <svg viewBox="0 0 640 250" role="img" aria-label="Line chart: decode speed stays near 40 tokens per second up to 122k context, then collapses to 4 tokens per second at 256k when KV cache spills out of VRAM">
@@ -169,7 +187,7 @@
     </svg>
     <figcaption>Same model, same GPU. The optimal context is the largest that fits — found with nvidia-smi, not a stopwatch.</figcaption>
   </figure>
-  <div class="callout"><span class="tag">Corollary</span><p>Allocated ≠ used: a big window with a small prompt costs VRAM, not speed. And below the cliff, shrinking context buys nothing — there is no "optimal point" to search for.</p></div>
+  <div class="callout"><span class="tag">Corollary</span><p>Allocated is not the same as used: a big context window with a small prompt in it costs VRAM, not speed. And as long as you stay below the cliff, shrinking the window gains you nothing — there is no hidden "optimal point" to search for.</p></div>
 </section>
 
 <section id="s03">
@@ -202,31 +220,142 @@
 <section id="s05">
   <p class="fno">05</p>
   <h2>Which file to download — quants are not interchangeable</h2>
-  <p>Measured KLD comparisons show large quality gaps between same-size files from different quantizers. Current best picks:</p>
+  <p>Two files of the same size from different quantizers can differ a lot in quality — measured comparisons (KL divergence against the full model) prove it. Current best picks:</p>
   <div class="tablebox">
   <table>
     <tr><th>Size class</th><th>Best file</th><th>Weights</th><th>Notes</th></tr>
     <tr><td>4-bit GGUF (the default choice)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q4_K_XL</b></a> · unsloth (Dynamic V3)</td><td class="n">17.6 GB</td><td>~10% better accuracy than plain Q4_K_M at the same size</td></tr>
-    <tr><td>3-bit GGUF (16 GB cards)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q3_K_XL</b></a> · unsloth</td><td class="n">13.1 GB</td><td>modern 3-bit ≫ old 3-bit; Qwen's own AD-IQ3_S reportedly edges it (<a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">KLD data</a>) but that repo is gated</td></tr>
+    <tr><td>3-bit GGUF (16 GB cards)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q3_K_XL</b></a> · unsloth</td><td class="n">13.1 GB</td><td>today's 3-bit methods are far better than older ones; Qwen's own AD-IQ3_S reportedly scores slightly better (<a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">KLD data</a>) but you have to request access to download it</td></tr>
     <tr><td>6-bit GGUF (quality, 32 GB cards)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q6_K</b></a> · lmstudio-community</td><td class="n">22.4 GB</td><td>wins its size class; near-Q8 quality</td></tr>
-    <tr><td>8-bit GGUF (reference)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q8_0</b></a> · lmstudio-community</td><td class="n">29 GB</td><td>ground-truth machine (GB10, 32 GB cards at short context)</td></tr>
-    <tr class="hl"><td>NVFP4 (Blackwell only)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4"><b>Qwen3.8-27B-NVFP4</b></a> · unsloth, via vLLM</td><td class="n">~15 GB</td><td>RTX 50 / GB10 / B200 only; ~1.5× BF16 speed, FP8 KV; 92–97% accuracy retention; vLLM only (FP8 lm_head — no SGLang, no llama.cpp). A community <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP GGUF tier family</a> exists for llama.cpp, but still requires Blackwell (sm_120) kernels — it does not bring NVFP4 to older GPUs</td></tr>
+    <tr><td>8-bit GGUF (reference)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q8_0</b></a> · lmstudio-community</td><td class="n">29 GB</td><td>the reference-quality choice, for machines that can hold it (DGX Spark; 32 GB cards at short context)</td></tr>
+    <tr class="hl"><td>NVFP4 (native on Blackwell)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4"><b>Qwen3.8-27B-NVFP4</b></a> · unsloth, via vLLM</td><td class="n">~15 GB</td><td>for Blackwell cards (RTX 50 / GB10 / B200): about 1.5× the speed of the unquantized model while keeping 92–97% of its accuracy. Runs only in vLLM — its FP8 output layer isn't supported by llama.cpp or SGLang</td></tr>
+    <tr><td>NVFP4 GGUF (any GPU — measured)</td><td><a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF"><b>NVFP4-MTP GGUF tiers</b></a> · community, via llama.cpp</td><td class="n">13.8–23.2 GiB</td><td>The model card claims these need a Blackwell GPU (sm_120). <strong>We tested that claim on an RTX 3090, and it's wrong</strong> — llama.cpp falls back to software decoding and the files run fine on older cards. The catch: on older cards you keep the small file size but lose the speed. Prompt processing is ~20% slower than Q4_K_M (1058 vs 1288 t/s), and speculative decoding is slower too (46.8 vs 58–60 t/s with the same MTP head). So if speed is what you want, stick with Q4_K_M. The one reason to pick NVFP4 on an older card: the 13.8 GiB VERY-LOW file is ~1.8 GiB smaller than Q4_K_M, and that spare VRAM buys roughly 60k extra tokens of context on a 24 GB card. One quirk to know: llama-bench reports these files as "Q8_0" — that's a metadata bug, so tell them apart by file size</td></tr>
     <tr><td>OpenVINO int4 (Intel Arc / iGPU)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov"><b>Qwen3.8-27B-int4-ov</b></a> · Intel official</td><td class="n">~16 GB</td><td>INT4_ASYM g128; first-party Intel runtime, OpenAI-compatible server; experimental — validate long runs</td></tr>
-    <tr><td>OpenVINO int8 (32 GB Arc quality play)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov"><b>Qwen3.8-27B-int8-ov</b></a> · Intel official</td><td class="n">~28 GB</td><td>the Intel-runtime analogue of Q6/Q8; too big below 32 GB</td></tr>
+    <tr><td>OpenVINO int8 (32 GB Arc quality play)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov"><b>Qwen3.8-27B-int8-ov</b></a> · Intel official</td><td class="n">~28 GB</td><td>Intel's equivalent of the Q6/Q8 quality tier; needs a 32 GB card</td></tr>
   </table>
   </div>
-  <div class="callout"><span class="tag">Rule of thumb</span><p>For a benchmark, keep the quant fixed across machines (Q4-class) — a different quant is a different model. For daily use, buy the best quant your VRAM holds fully resident.</p></div>
+  <div class="callout"><span class="tag">Rule of thumb</span><p>For a benchmark, use the same quant on every machine (Q4-class) — a different quant is a different model and its scores aren't comparable. For daily use, pick the best quant that fits entirely in your VRAM.</p></div>
 
   <h2 style="margin-top:36px">MTP speculative decoding — free speed on every GPU</h2>
-  <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong>, and it survives quantization — the standard K-quant GGUFs above <a href="https://github.com/sudoingX/qwen38-mtp">carry it already</a> (it's pinned to Q8_0). llama.cpp's <code>draft-mtp</code> path (<a href="https://github.com/ggml-org/llama.cpp/discussions/27164">merged July 2026</a>) uses it to draft several tokens per step and verify them with the full model, so <strong>output quality is mathematically identical</strong> — rejected drafts are discarded. Unlike NVFP4, this works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
+  <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong> — a small helper network that guesses several tokens ahead so the full model only has to check them, which is much faster than generating each one. The standard K-quant GGUFs above <a href="https://github.com/sudoingX/qwen38-mtp">already include it</a> (the head itself always stays at 8-bit, whatever the main quant). llama.cpp added support in <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">July 2026</a>, and because every guess is verified by the full model before it's accepted, <strong>the output is exactly what the model would have written anyway</strong> — you only gain speed. It works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
   <pre>  --spec-type draft-mtp  --spec-draft-n-max 4  --spec-draft-p-min 0.75</pre>
-  <p>Reported gains span <span class="num">+33%</span> to <span class="num">+145%</span> decode depending on hardware and workload — an RTX 5090 tester measured <span class="num">148 avg / 203 peak t/s</span> on the NVFP4 tiers with acceptance ~49%, rising with long repetitive contexts. Two hardware-dependent caveats, so <strong>benchmark on your own machine</strong>: the optimal <code>--spec-draft-n-max</code> varies per system (that tester found 4 fastest, while 6–8 collapsed acceptance and got slower — sweep 1–6 and keep the winner), and acceptance rates vary a lot with prompt style, so quick-test on your real workload, not a toy prompt. Requires a llama.cpp build recent enough to have the draft-mtp path.</p>
+  <p>How much speed it adds depends heavily on hardware and workload — reports range from <span class="num">+33%</span> to <span class="num">+145%</span>. An RTX 5090 tester saw <span class="num">148 avg / 203 peak t/s</span> on the NVFP4 tiers. On our reference 3090, generation went from 40.3 to 58–60 t/s — <strong><span class="num">+45%</span></strong> at the default-ish settings, with 89% of drafted tokens accepted, and a proper settings sweep pushed it much further (see the tuning section below). The warning both numbers carry: <strong>benchmark on your own machine</strong>. That 5090 tester found n-max 4 fastest with 6–8 slower; our 3090 kept getting faster all the way to n-max 10. The two machines genuinely disagree — there is no universal best value. You'll need a llama.cpp build recent enough to have the draft-mtp feature.</p>
+
+  <h2 style="margin-top:36px">DFlash2 — block drafting (PR stage)</h2>
+  <p><a href="https://inco.ai/blog/dflash2/">DFlash2</a> drafts differently from MTP: instead of guessing one token at a time, it predicts a whole 7-token block in a single pass, then picks the most plausible sequence out of the candidates it considered for each position. Like MTP, every draft is verified before it's accepted, so <strong>the output is identical to running the model alone</strong>. The costs: a separate 1.14&nbsp;GB drafter model to download (<a href="https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF">incoai/Qwen3.8-27B-DFlash2-GGUF</a>, ~1.2&nbsp;GB of VRAM), and — until <a href="https://github.com/ggml-org/llama.cpp/pull/27342">llama.cpp PR 27342</a> is merged — building llama.cpp yourself from that branch.</p>
+  <p>Measured on the reference RTX 3090, same prompt, temp 0, 600-token code generation:</p>
+  <figure>
+    <svg viewBox="0 0 640 248" role="img" aria-label="Bar chart of decode speed on an RTX 3090: Q4_K_M baseline 40.3 tokens per second, Q4_K_M with MTP 59, Q4_K_M with DFlash2 70, NVFP4-HIGH with MTP 46.8, NVFP4-VERY-LOW with MTP 43">
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="126" y1="4" x2="126" y2="200"/>
+        <line x1="244" y1="4" x2="244" y2="200"/>
+        <line x1="361" y1="4" x2="361" y2="200"/>
+        <line x1="479" y1="4" x2="479" y2="200"/>
+        <line x1="596" y1="4" x2="596" y2="200"/>
+      </g>
+      <text class="axis-t" x="118" y="25"  text-anchor="end">Q4_K_M alone</text>
+      <text class="axis-t" x="118" y="63"  text-anchor="end">Q4_K_M + MTP</text>
+      <text class="axis-t" x="118" y="101" text-anchor="end">Q4_K_M + DFlash2</text>
+      <text class="axis-t" x="118" y="139" text-anchor="end">NVFP4-HIGH + MTP</text>
+      <text class="axis-t" x="118" y="177" text-anchor="end">NVFP4-V-LOW + MTP</text>
+      <rect x="126" y="8"   width="237" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="46"  width="347" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="84"  width="411" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="122" width="275" height="26" rx="3" fill="var(--accent)"/>
+      <rect x="126" y="160" width="253" height="26" rx="3" fill="var(--accent)"/>
+      <text class="dlabel" x="371" y="26">40.3 t/s</text>
+      <text class="dlabel" x="481" y="64">58–60 t/s · +45%</text>
+      <text class="dlabel" x="545" y="102">69–71 · +75%</text>
+      <text class="dlabel" x="409" y="140">46.8 t/s</text>
+      <text class="dlabel" x="387" y="178">43.0 t/s</text>
+      <text class="axis-t" x="126" y="222">0</text>
+      <text class="axis-t" x="244" y="222" text-anchor="middle">20</text>
+      <text class="axis-t" x="361" y="222" text-anchor="middle">40</text>
+      <text class="axis-t" x="479" y="222" text-anchor="middle">60</text>
+      <text class="axis-t" x="596" y="222" text-anchor="middle">80</text>
+      <text class="axis-t" x="620" y="242" text-anchor="end">decode t/s · RTX 3090 · all rows lossless vs the base model</text>
+    </svg>
+    <figcaption>Within each group the model weights are identical — only the drafting method changes. On older cards, NVFP4's software fallback limits how much drafting can help.</figcaption>
+  </figure>
+  <div class="tablebox">
+  <table>
+    <tr><th>Configuration <span class="hint">(hover a row for its flags)</span></th><th>Decode</th><th>vs baseline</th><th>Draft acceptance</th></tr>
+    <tr><td><span class="flags" title="llama-server -m Qwen3.8-27B-Q4_K_M.gguf -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja  (no speculative flags)">Q4_K_M, no speculation</span></td><td class="n">40.3 t/s</td><td class="n">—</td><td class="n">—</td></tr>
+    <tr><td><span class="flags" title="llama-server -m Qwen3.8-27B-Q4_K_M.gguf --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75  (MTP head is inside the main GGUF — no extra file)">Q4_K_M + built-in MTP (n-max 4)</span></td><td class="n">58–60 t/s</td><td class="n">+45%</td><td class="n">89%</td></tr>
+    <tr class="hl"><td><span class="flags" title="llama-server -m Qwen3.8-27B-Q4_K_M.gguf -md Qwen3.8-27B-DFlash2-Q4_K_M.gguf --spec-type draft-dflash --spec-draft-n-max 7  (needs the separate 1.14 GB drafter + the PR 27342 build)">Q4_K_M + DFlash2 (n-max 7)</span></td><td class="n"><b>69–71 t/s</b></td><td class="n"><b>+75%</b></td><td class="n">73% (7-token blocks)</td></tr>
+    <tr><td><span class="flags" title="llama-server -m Qwen3.8-27B-NVFP4-MTP-HIGH.gguf --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75">NVFP4-HIGH + built-in MTP</span></td><td class="n">46.8 t/s</td><td class="n">+16%</td><td class="n">90%</td></tr>
+    <tr><td><span class="flags" title="llama-server -m Qwen3.8-27B-NVFP4-MTP-VERY-LOW.gguf --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75">NVFP4-VERY-LOW + built-in MTP</span></td><td class="n">43.0 t/s</td><td class="n">+7%</td><td class="n">86%</td></tr>
+  </table>
+  </div>
+  <details class="cmds">
+    <summary>The exact llama-server command for each row (tap to expand)</summary>
+    <pre><span class="c">:: shared flags in every run below:</span>
+llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 1235
+
+<span class="c">:: row 1 — baseline: just the model, no speculative flags</span>
+  -m Qwen3.8-27B-Q4_K_M.gguf
+
+<span class="c">:: row 2 — built-in MTP (the draft head ships inside the main GGUF):</span>
+  -m Qwen3.8-27B-Q4_K_M.gguf <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>
+
+<span class="c">:: row 3 — DFlash2 (separate 1.14 GB drafter via -md; needs the PR 27342 build):</span>
+  -m Qwen3.8-27B-Q4_K_M.gguf <span class="f">-md Qwen3.8-27B-DFlash2-Q4_K_M.gguf --spec-type draft-dflash --spec-draft-n-max 7</span>
+
+<span class="c">:: rows 4-5 — NVFP4 files with their embedded MTP head (same MTP flags):</span>
+  -m Qwen3.8-27B-NVFP4-MTP-HIGH.gguf <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>
+  -m Qwen3.8-27B-NVFP4-MTP-VERY-LOW.gguf <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>
+
+<span class="c">:: what each speculative flag means:</span>
+<span class="c">::   --spec-type            which drafting method: draft-mtp (built-in head) or draft-dflash (external drafter)</span>
+<span class="c">::   -md / --model-draft    path to the external drafter GGUF (DFlash2 only)</span>
+<span class="c">::   --spec-draft-n-max     how many tokens to draft per step - the main tuning knob, sweep 1-8 on your machine</span>
+<span class="c">::   --spec-draft-p-min     drafter confidence floor 0-1; below it, drafting pauses for that step</span></pre>
+  </details>
+  <p>That table says two things. First, speculation gets a 3090 to ~70 t/s — the 100k reference run drops from 45 to under 26 minutes, which matches what this guide estimates for an <em>RTX 5090</em> without speculation (and the sweep below pushed it further still). Second, the NVFP4 rows show that the quant and the drafter interact: speculative decoding makes the GPU check several drafted tokens at once, and that batch-checking is exactly the work NVFP4's software fallback does slowest. So on cards older than Blackwell, pair speculation with normal K-quants, not NVFP4.</p>
+  <h2 style="margin-top:36px">Tuning the drafter — an 18-config sweep on the 3090</h2>
+  <p>The table above used the settings each method's authors recommend. Then we swept <code>--spec-draft-n-max</code> across both methods (same prompt, temp 0, warm cache — numbers run a few t/s hotter than the cold-start table, so compare within this chart, not against it). The result contradicted both recommendations:</p>
+  <figure>
+    <svg viewBox="0 0 640 268" role="img" aria-label="Line chart of decode speed versus spec-draft-n-max on an RTX 3090. The built-in MTP curve keeps rising to a peak of 81.7 tokens per second at n-max 10, then dips at 12. The DFlash2 curve peaks at 77.6 at n-max 4 and slowly declines through n-max 16. The no-speculation baseline is 39.8.">
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="48" y1="57"  x2="620" y2="57"/>
+        <line x1="48" y1="130" x2="620" y2="130"/>
+        <line x1="48" y1="203" x2="620" y2="203"/>
+      </g>
+      <text class="axis-t" x="40" y="61"  text-anchor="end">80</text>
+      <text class="axis-t" x="40" y="134" text-anchor="end">60</text>
+      <text class="axis-t" x="40" y="207" text-anchor="end">40</text>
+      <line x1="48" y1="204" x2="620" y2="204" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 5"/>
+      <text class="dlabel-m" x="614" y="196" text-anchor="end">no speculation · 39.8</text>
+      <polyline points="83,141 118,114 188,99 258,106 328,79 398,50 468,62" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+      <polyline points="118,109 153,89 188,66 223,66 258,69 293,79 398,80 608,83" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="398" cy="50" r="5" fill="var(--accent)" stroke="var(--ground)" stroke-width="2"/>
+      <circle cx="188" cy="66" r="5" fill="var(--muted)" stroke="var(--ground)" stroke-width="2"/>
+      <text class="dlabel" x="398" y="36" text-anchor="middle">MTP · n-max 10 · 81.7 t/s</text>
+      <text class="dlabel-m" x="188" y="52" text-anchor="middle">DFlash2 · n-max 4 · 77.6</text>
+      <text class="dlabel" x="476" y="60">MTP (built-in)</text>
+      <text class="dlabel-m" x="560" y="103">DFlash2</text>
+      <text class="axis-t" x="83"  y="228" text-anchor="middle">1</text>
+      <text class="axis-t" x="188" y="228" text-anchor="middle">4</text>
+      <text class="axis-t" x="328" y="228" text-anchor="middle">8</text>
+      <text class="axis-t" x="468" y="228" text-anchor="middle">12</text>
+      <text class="axis-t" x="608" y="228" text-anchor="middle">16</text>
+      <text class="axis-t" x="620" y="250" text-anchor="end">--spec-draft-n-max · decode t/s on y · RTX 3090, warm cache</text>
+    </svg>
+    <figcaption>The blue MTP curve keeps climbing long after the advice says to stop; DFlash2 peaks at 4, not its recommended 7.</figcaption>
+  </figure>
+  <p>Three findings, all measured 2026-08-21:</p>
+  <ul>
+    <li><strong>The tuned built-in MTP head wins outright on this card: n-max 10 with p-min 0.5 gives 81.7 t/s — +105% over baseline</strong>, beating DFlash2's best (77.6 at n-max 4–5). No drafter download, no source build, no VRAM cost.</li>
+    <li><strong><code>--spec-draft-p-min</code> is the hidden second knob.</strong> At n-max 10, lowering it from 0.75 to 0.5 was worth +8 t/s (73.5 → 81.7); at n-max 4 the difference was small. A high confidence floor keeps pausing exactly the long drafts that big n-max exists for.</li>
+    <li><strong>DFlash2's recommended n-max 7 was not its own best setting here</strong> — 4 and 5 both beat it (77.6/77.5 vs 74.0). Every recommendation in this space, including ours, is one machine's measurement.</li>
+  </ul>
+  <div class="callout"><span class="tag">Reading acceptance tables</span><p>Published speculative-decoding tables (like the DFlash2 blog's "mean acceptance length") are <strong>speed numbers, not quality scores</strong>. The verify step guarantees every configuration writes exactly what the base model would have written — a higher acceptance number just means more tokens got through per check. Quality only changes when the <em>weights</em> change (a different quant); speed only changes when the <em>drafter</em> changes.</p></div>
 </section>
 
 <section id="s06">
   <p class="fno">06</p>
   <h2>The hardware matrix</h2>
-  <p>Estimated wall-clock for the reference benchmark run (~2k prompt + ~100k thinking/output), each card on its best fidelity-preserving strategy. The 3090 row is one measured data point — from a single machine and workload, so treat it as an anchor, not a promise; the rest follow the bandwidth ratio at ~0.7 efficiency (less on Intel's stack). All times exclude MTP speculative decoding (§05), which can shorten decode substantially and varies per system — measure it on yours.</p>
+  <p>Estimated wall-clock time for the reference benchmark run (~2k prompt + ~100k thinking/output), with each card using the settings that keep quality highest. The 3090 row is one measured data point — from a single machine and workload, so treat it as an anchor, not a promise; the other rows follow the bandwidth calculation from §02 at ~0.7 efficiency (less on Intel's stack). All times exclude speculative decoding (§05), which varies per system but can help a lot: on the reference 3090, tuned MTP (n-max 10, p-min 0.5) roughly halves the run, from 45 to ~22 minutes — in effect moving a card one or two rows up this chart.</p>
   <figure>
     <svg viewBox="0 0 640 340" role="img" aria-label="Bar chart of estimated time for a 100k-token run: RTX 5090 about 25 minutes, RTX 4090 about 40, RTX 3090 45 measured, Arc B70 about 1.4 hours, DGX Spark about 2.2, RTX 5080 offloading about 2.8, Arc B50 about 5, Panther Lake iGPU about 5.2 hours">
       <g stroke="var(--line)" stroke-width="1">
@@ -298,8 +427,10 @@ llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
   <span class="f">-c 122880</span>                     <span class="c">:: 24 GB cards; 5090 32 GB: -c 262144 fits (~7 GB KV)</span>
   <span class="f">-ngl 99  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
-  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: MTP: free decode</span>
-                                <span class="c">:: speed, any GPU — sweep n-max 1-6 on your system (§05)</span>
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 10 --spec-draft-p-min 0.5</span>  <span class="c">:: MTP: free decode speed,</span>
+                                <span class="c">:: any GPU. n-max 10 / p-min 0.5 = measured optimum on the</span>
+                                <span class="c">:: reference 3090 (81.7 t/s, +105%%); a 5090 peaked at 4 —</span>
+                                <span class="c">:: sweep n-max 2-12 AND p-min 0.5/0.75 on your card (§05)</span>
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"  <span class="c">:: xhigh for benchmarks only</span>
 <span class="c">:: RTX 5090 alternative: vLLM + unsloth NVFP4 — ~1.5x BF16 speed, FP8 KV (Blackwell only)</span></pre>
@@ -489,10 +620,12 @@ qwen</pre>
     <li>xhigh overthinking (22,276 thinking tokens / 21 min for a simple SVG) — <a href="https://simonw.substack.com/p/qwen-38-27b-is-excellent-but-it-defaults">Simon Willison</a></li>
     <li>Intel stack status: IPEX-LLM archived Jan 2026 — <a href="https://github.com/intel/ipex-llm">GitHub repo</a>; Vulkan beats SYCL on Battlemage — <a href="https://github.com/ggml-org/llama.cpp/issues/22413">llama.cpp #22413</a>, <a href="https://jonathanmann.tech/blog/intel-arc-b70-llama-cpp-benchmarks/">B70 benchmark notes</a>, <a href="https://www.phoronix.com/review/intel-arc-pro-b70-linux/3">Phoronix</a></li>
     <li>OpenVINO builds — <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">int4-ov</a>, <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov">int8-ov</a> · Model card — <a href="https://huggingface.co/Qwen/Qwen3.8-27B">Qwen/Qwen3.8-27B</a></li>
-    <li>MTP speculative decoding: ships in standard GGUFs, +33–145% on consumer GPUs — <a href="https://github.com/sudoingX/qwen38-mtp">qwen38-mtp recipe & benchmarks</a>, <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">llama.cpp discussion</a>; RTX 5090 tier benchmarks — <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP-GGUF card</a> (Blackwell-only weights, but the MTP data generalizes)</li>
+    <li>MTP speculative decoding: ships in standard GGUFs, +33–145% on consumer GPUs — <a href="https://github.com/sudoingX/qwen38-mtp">qwen38-mtp recipe & benchmarks</a>, <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">llama.cpp discussion</a>; RTX 5090 tier benchmarks — <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP-GGUF card</a> (the card's Blackwell-only claim is contradicted by the Ampere measurements below, but its MTP data generalizes)</li>
+    <li>DFlash2: block drafting + path selection — <a href="https://inco.ai/blog/dflash2/">inco.ai announcement</a>, <a href="https://github.com/ggml-org/llama.cpp/pull/27342">llama.cpp PR 27342</a>, <a href="https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF">drafter GGUFs</a></li>
+    <li>3090 measurements in §05 (baseline / MTP / DFlash2 / NVFP4-on-Ampere, plus the 18-config n-max &amp; p-min sweep): this guide's own runs, 2026-08-21 — llama.cpp build 5ecbe1ac1 (PR 27342), CUDA 12.8, temp-0 600-token code generation, llama-bench pp512/tg128</li>
   </ul>
 </section>
 
-<footer>Field guide · 2026-08-20 · measured base: RTX 3090 · companion doc: Qwen 3.8 27B on RTX 3090 (session field notes)</footer>
+<footer>Field guide · updated 2026-08-21 (DFlash2 + NVFP4-on-Ampere measurements) · measured base: RTX 3090 · companion doc: Qwen 3.8 27B on RTX 3090 (session field notes)</footer>
 </div>
 </div>
