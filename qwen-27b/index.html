@@ -119,6 +119,10 @@
   <a href="#s03">03 · Universal rules</a>
   <a href="#s04">04 · Reasoning effort</a>
   <a href="#s05">05 · Which file to get</a>
+  <a href="#s05-mtp" style="padding-left:22px">MTP free speed</a>
+  <a href="#s05-dflash2" style="padding-left:22px">DFlash2</a>
+  <a href="#s05-sweep" style="padding-left:22px">Settings sweep</a>
+  <a href="#s05-scored" style="padding-left:22px">Scored: FP4 vs INT4</a>
   <a href="#s06">06 · Hardware matrix</a>
   <a href="#s07">07 · Recipes per card</a>
   <a href="#appendix">Appendix · aider setup</a>
@@ -236,12 +240,12 @@
   </div>
   <div class="callout"><span class="tag">Rule of thumb</span><p>For a benchmark, use the same quant on every machine (Q4-class) — a different quant is a different model and its scores aren't comparable. For daily use, pick the best quant that fits entirely in your VRAM.</p></div>
 
-  <h2 style="margin-top:36px">MTP speculative decoding — free speed on every GPU</h2>
+  <h2 id="s05-mtp" style="margin-top:36px; scroll-margin-top:24px">MTP speculative decoding — free speed on every GPU</h2>
   <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong> — a small helper network that guesses several tokens ahead so the full model only has to check them, which is much faster than generating each one. The standard K-quant GGUFs above <a href="https://github.com/sudoingX/qwen38-mtp">already include it</a> (the head itself always stays at 8-bit, whatever the main quant). llama.cpp added support in <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">July 2026</a>, and because every guess is verified by the full model before it's accepted, <strong>the output is exactly what the model would have written anyway</strong> — you only gain speed. It works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
   <pre>  --spec-type draft-mtp  --spec-draft-n-max 4  --spec-draft-p-min 0.75</pre>
   <p>How much speed it adds depends heavily on hardware and workload — reports range from <span class="num">+33%</span> to <span class="num">+145%</span>. An RTX 5090 tester saw <span class="num">148 avg / 203 peak t/s</span> on the NVFP4 tiers. On our reference 3090, generation went from 40.3 to 58–60 t/s — <strong><span class="num">+45%</span></strong> at the default-ish settings (n-max 4, 89% of drafted tokens accepted) — and tuning the draft settings pushed it to <strong><span class="num">81.7 t/s, +105%</span></strong> (n-max 10, p-min 0.5; the sweep below shows the full curve). The warning both numbers carry: <strong>benchmark on your own machine</strong>. That 5090 tester found n-max 4 fastest with 6–8 slower; our 3090 kept getting faster all the way to n-max 10. The two machines genuinely disagree — there is no universal best value. You'll need a llama.cpp build recent enough to have the draft-mtp feature.</p>
 
-  <h2 style="margin-top:36px">DFlash2 — block drafting (PR stage)</h2>
+  <h2 id="s05-dflash2" style="margin-top:36px; scroll-margin-top:24px">DFlash2 — block drafting (PR stage)</h2>
   <p><a href="https://inco.ai/blog/dflash2/">DFlash2</a> drafts differently from MTP: instead of guessing one token at a time, it predicts a whole 7-token block in a single pass, then picks the most plausible sequence out of the candidates it considered for each position. Like MTP, every draft is verified before it's accepted, so <strong>the output is identical to running the model alone</strong>. The costs: a separate 1.14&nbsp;GB drafter model to download (<a href="https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF">incoai/Qwen3.8-27B-DFlash2-GGUF</a>, ~1.2&nbsp;GB of VRAM), and — until <a href="https://github.com/ggml-org/llama.cpp/pull/27342">llama.cpp PR 27342</a> is merged — building llama.cpp yourself from that branch.</p>
   <p>Measured on the reference RTX 3090, same prompt, temp 0, 600-token code generation:</p>
   <figure>
@@ -319,7 +323,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
 <span class="c">::   --spec-draft-p-min     drafter confidence floor 0-1; below it, drafting pauses for that step</span></pre>
   </details>
   <p>That table says two things. First, speculation gets a 3090 to 70–82 t/s — the 100k reference run drops from 45 to roughly 22–26 minutes, matching what this guide estimates for an <em>RTX 5090</em> without speculation (the tuned row comes from the sweep below, which explains the settings). Second, the NVFP4 rows show that the quant and the drafter interact: speculative decoding makes the GPU check several drafted tokens at once, and that batch-checking is exactly the work NVFP4's software fallback does slowest. So on cards older than Blackwell, pair speculation with normal K-quants, not NVFP4.</p>
-  <h2 style="margin-top:36px">Tuning the drafter — an 18-config sweep on the 3090</h2>
+  <h2 id="s05-sweep" style="margin-top:36px; scroll-margin-top:24px">Tuning the drafter — an 18-config sweep on the 3090</h2>
   <p>The table above used the settings each method's authors recommend. Then we swept <code>--spec-draft-n-max</code> across both methods (same prompt, temp 0, warm cache — numbers run a few t/s hotter than the cold-start table, so compare within this chart, not against it). The result contradicted both recommendations:</p>
   <figure>
     <svg viewBox="0 0 640 268" role="img" aria-label="Line chart of decode speed versus spec-draft-n-max on an RTX 3090. The built-in MTP curve keeps rising to a peak of 81.7 tokens per second at n-max 10, then dips at 12. The DFlash2 curve peaks at 77.6 at n-max 4 and slowly declines through n-max 16. The no-speculation baseline is 39.8.">
@@ -358,7 +362,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   </ul>
   <div class="callout"><span class="tag">Reading acceptance tables</span><p>Published speculative-decoding tables (like the DFlash2 blog's "mean acceptance length") are <strong>speed numbers, not quality scores</strong>. The verify step guarantees every configuration writes exactly what the base model would have written — a higher acceptance number just means more tokens got through per check. Quality only changes when the <em>weights</em> change (a different quant); speed only changes when the <em>drafter</em> changes.</p></div>
 
-  <h2 style="margin-top:36px">Does FP4 beat INT4? A scored comparison</h2>
+  <h2 id="s05-scored" style="margin-top:36px; scroll-margin-top:24px">Does FP4 beat INT4? A scored comparison</h2>
   <p>A common belief says floating-point formats always beat integer formats at the same bit width. We tested it: the three quants above, graded for <em>correctness</em> on GSM8K and MATH-500 (20 problems each, greedy decoding, identical prompts, 4096-token budget; answers that ran out of budget mid-thinking count as wrong and are reported as truncations). Measured on the reference 3090:</p>
   <div class="tablebox">
   <table>
