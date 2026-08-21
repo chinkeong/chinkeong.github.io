@@ -229,7 +229,7 @@
     <tr><td>6-bit GGUF (quality, 32 GB cards)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q6_K</b></a> · lmstudio-community</td><td class="n">22.4 GB</td><td>wins its size class; near-Q8 quality</td></tr>
     <tr><td>8-bit GGUF (reference)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q8_0</b></a> · lmstudio-community</td><td class="n">29 GB</td><td>the reference-quality choice, for machines that can hold it (DGX Spark; 32 GB cards at short context)</td></tr>
     <tr class="hl"><td>NVFP4 (native on Blackwell)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4"><b>Qwen3.8-27B-NVFP4</b></a> · unsloth, via vLLM</td><td class="n">~15 GB</td><td>for Blackwell cards (RTX 50 / GB10 / B200): about 1.5× the speed of the unquantized model while keeping 92–97% of its accuracy. Runs only in vLLM — its FP8 output layer isn't supported by llama.cpp or SGLang</td></tr>
-    <tr><td>NVFP4 GGUF (any GPU — measured)</td><td><a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF"><b>NVFP4-MTP GGUF tiers</b></a> · community, via llama.cpp</td><td class="n">13.8–23.2 GiB</td><td>The model card claims these need a Blackwell GPU (sm_120). <strong>We tested that claim on an RTX 3090, and it's wrong</strong> — llama.cpp falls back to software decoding and the files run fine on older cards. The catch: on older cards you keep the small file size but lose the speed. Prompt processing is ~20% slower than Q4_K_M (1058 vs 1288 t/s), and speculative decoding is slower too (46.8 vs 58–60 t/s with the same MTP head). So if speed is what you want, stick with Q4_K_M. The one reason to pick NVFP4 on an older card: the 13.8 GiB VERY-LOW file is ~1.8 GiB smaller than Q4_K_M, and that spare VRAM buys roughly 60k extra tokens of context on a 24 GB card. One quirk to know: llama-bench reports these files as "Q8_0" — that's a metadata bug, so tell them apart by file size</td></tr>
+    <tr><td>NVFP4 GGUF (any GPU — measured)</td><td><a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF"><b>NVFP4-MTP GGUF tiers</b></a> · community, via llama.cpp</td><td class="n">13.8–23.2 GiB</td><td>The model card claims these need a Blackwell GPU (sm_120). <strong>We tested that claim on an RTX 3090, and it's wrong</strong> — llama.cpp falls back to software decoding and the files run fine on older cards. The catch: on older cards you keep the small file size but lose the speed. Prompt processing is ~20% slower than Q4_K_M (1058 vs 1288 t/s), and speculative decoding is slower too (46.8 vs 58–60 t/s with the same MTP head). So if speed is what you want, stick with Q4_K_M. The one reason to pick NVFP4 on an older card: the 13.8 GiB VERY-LOW file is ~1.8 GiB smaller than Q4_K_M, and that spare VRAM buys roughly 60k extra tokens of context on a 24 GB card (though VERY-LOW's built-in draft head drafts worse than the other tiers' — see the scored comparison below). One quirk to know: llama-bench reports these files as "Q8_0" — that's a metadata bug, so tell them apart by file size</td></tr>
     <tr><td>OpenVINO int4 (Intel Arc / iGPU)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov"><b>Qwen3.8-27B-int4-ov</b></a> · Intel official</td><td class="n">~16 GB</td><td>INT4_ASYM g128; first-party Intel runtime, OpenAI-compatible server; experimental — validate long runs</td></tr>
     <tr><td>OpenVINO int8 (32 GB Arc quality play)</td><td><a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov"><b>Qwen3.8-27B-int8-ov</b></a> · Intel official</td><td class="n">~28 GB</td><td>Intel's equivalent of the Q6/Q8 quality tier; needs a 32 GB card</td></tr>
   </table>
@@ -308,7 +308,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
 <span class="c">:: what each speculative flag means:</span>
 <span class="c">::   --spec-type            which drafting method: draft-mtp (built-in head) or draft-dflash (external drafter)</span>
 <span class="c">::   -md / --model-draft    path to the external drafter GGUF (DFlash2 only)</span>
-<span class="c">::   --spec-draft-n-max     how many tokens to draft per step - the main tuning knob, sweep 1-8 on your machine</span>
+<span class="c">::   --spec-draft-n-max     how many tokens to draft per step - the main tuning knob, sweep 2-12 on your machine</span>
 <span class="c">::   --spec-draft-p-min     drafter confidence floor 0-1; below it, drafting pauses for that step</span></pre>
   </details>
   <p>That table says two things. First, speculation gets a 3090 to ~70 t/s — the 100k reference run drops from 45 to under 26 minutes, which matches what this guide estimates for an <em>RTX 5090</em> without speculation (and the sweep below pushed it further still). Second, the NVFP4 rows show that the quant and the drafter interact: speculative decoding makes the GPU check several drafted tokens at once, and that batch-checking is exactly the work NVFP4's software fallback does slowest. So on cards older than Blackwell, pair speculation with normal K-quants, not NVFP4.</p>
@@ -438,85 +438,83 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   <p class="fno">07</p>
   <h2>Recipes per card class</h2>
 
+  <p>One recipe per class — the single best configuration we can defend, not a menu. Trade-offs and alternatives live in §05/§06; here you just copy the block for your card.</p>
+
   <p class="fno" style="margin-top:24px">NVIDIA 24–32 GB · 3090 / 4090 / 5090</p>
-  <pre><span class="c">:: the measured reference recipe — full speed, full fidelity</span>
+  <pre><span class="c">:: the measured reference recipe — full fidelity, tuned MTP (81.7 t/s on the 3090)</span>
 <span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q4_K_XL, 17.6 GB)</span>
 llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
   <span class="f">-c 122880</span>                     <span class="c">:: 24 GB cards; 5090 32 GB: -c 262144 fits (~7 GB KV)</span>
   <span class="f">-ngl 99  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
-  <span class="f">--spec-type draft-mtp --spec-draft-n-max 10 --spec-draft-p-min 0.5</span>  <span class="c">:: MTP: free decode speed,</span>
-                                <span class="c">:: any GPU. n-max 10 / p-min 0.5 = measured optimum on the</span>
-                                <span class="c">:: reference 3090 (81.7 t/s, +105%%); a 5090 peaked at 4 —</span>
-                                <span class="c">:: sweep n-max 2-12 AND p-min 0.5/0.75 on your card (§05)</span>
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 10 --spec-draft-p-min 0.5</span>  <span class="c">:: measured optimum on</span>
+                                <span class="c">:: the 3090 (+105%); a 5090 peaked at n-max 4 — the optimum</span>
+                                <span class="c">:: is per-card, so sweep n-max 2-12 and p-min 0.5/0.75 (§05)</span>
   --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"  <span class="c">:: xhigh for benchmarks only</span>
-<span class="c">:: RTX 5090 alternative: vLLM + unsloth NVFP4 — ~1.5x BF16 speed, FP8 KV (Blackwell only)</span></pre>
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"  <span class="c">:: xhigh for benchmarks only</span></pre>
 
   <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
-  <pre><span class="c">:: fidelity path — same Q4 model, ~22 layers on CPU (~8-12 t/s regardless of GPU tier)</span>
-<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
-llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
-  <span class="f">-c 112640  -ngl 42</span>            <span class="c">:: raise -ngl until &lt;500 MB VRAM free, back off 1</span>
-  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: no mmproj; CPU layers need ~6 GB RAM</span>
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
-<span class="c">:: speed path — <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q3_K_XL</a> (13.1 GB) fully resident: 25-50 t/s, mild quality loss</span></pre>
+  <pre><span class="c">:: best daily experience: 3-bit fully resident (25-50 t/s) + free MTP speed.</span>
+<span class="c">:: Q4-with-CPU-offload preserves more fidelity but crawls at ~8-12 t/s (§06) —</span>
+<span class="c">:: on 16 GB, resident UD-Q3_K_XL is the right call for everything but benchmarks.</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q3_K_XL, 13.1 GB)</span>
+llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf
+  <span class="f">-c 112640  -ngl 99</span>  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§05)</span>
+  --jinja --port 1234
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</pre>
 
   <p class="fno">12 GB class · RTX 3060 / RTX 5070 / Arc B580</p>
-  <pre><span class="c">:: honest framing first: this class runs the 27B poorly in every configuration.</span>
-<span class="c">:: If the exact model isn't required, a 14B-class Qwen at Q4 fits resident and flies.</span>
-<span class="c">:: fidelity path — Q4 with MOST of the model on CPU (~6-8 t/s, 100k run ≈ 4-4.5 h);</span>
-<span class="c">:: speed is set by your system RAM, so dual-channel DDR5 matters more than the GPU:</span>
-<span class="c">:: files (Q4 + Q2): <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
+  <pre><span class="c">:: honest framing: this class runs the 27B poorly in every configuration — if the</span>
+<span class="c">:: exact model isn't required, a 14B-class Qwen at Q4 fits resident and flies.</span>
+<span class="c">:: If it must be this model: Q4 with most layers on CPU (~6-8 t/s; speed is set by</span>
+<span class="c">:: your system RAM, so dual-channel DDR5 matters more than the GPU).</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q4_K_XL)</span>
 llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf
   <span class="f">-c 112640  -ngl 28</span>            <span class="c">:: ~28 of 64 layers fit; raise until &lt;500 MB VRAM free</span>
   --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: CPU layers need ~10 GB of real RAM</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
-<span class="c">:: last-resort resident path: UD-Q2_K_XL (~10 GB) fits all-GPU — fast, but 2-bit</span>
-<span class="c">:: quality loss compounds over a 100k reasoning chain; unfit for benchmark use</span>
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"
 <span class="c">:: Arc B580: use the Vulkan build (same Battlemage SYCL caveat as the Pro cards)</span></pre>
 
   <p class="fno">Intel Arc Pro B70 32 GB</p>
-  <pre><span class="c">:: VULKAN llama.cpp build — currently beats SYCL on Battlemage (SYCL has known</span>
-<span class="c">:: perf bugs there; IPEX-LLM is archived as of Jan 2026 — do not use it).</span>
-<span class="c">:: Backend speeds shift monthly on this card: keep drivers/Mesa current, re-benchmark.</span>
-llama-server.exe -m Qwen3.8-27B-Q6_K.gguf      <span class="c">:: 22.4 GB — <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a></span>
+  <pre><span class="c">:: VULKAN llama.cpp build — currently beats SYCL on Battlemage (SYCL has known perf</span>
+<span class="c">:: bugs there; IPEX-LLM is archived — do not use it). Re-benchmark after driver updates.</span>
+<span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a> (Q6_K, 22.4 GB — near-Q8 quality)</span>
+llama-server.exe -m Qwen3.8-27B-Q6_K.gguf
   <span class="f">-c 262144  -ngl 99</span>            <span class="c">:: full native context fits (~7 GB KV at Q8)</span>
   --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0   <span class="c">:: verify KV-quant support in your build</span>
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
-<span class="c">:: first-party alternative: OpenVINO Model Server + Intel's official models:</span>
-<span class="c">:: <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a> · <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int8-ov">int8-ov</a> (quality, ~28 GB)</span>
-<span class="c">:: (OpenAI-compatible API; experimental — validate a long thinking run first)</span></pre>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§05)</span>
+  --jinja --port 1234
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</pre>
 
   <p class="fno">Intel Arc Pro B50 16 GB</p>
-  <pre><span class="c">:: Q4 does not fit and 224 GB/s punishes offload — go fully resident 3-bit</span>
-<span class="c">:: Vulkan build here too (same Battlemage SYCL caveat as the B70)</span>
-llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  <span class="c">:: 13.1 GB — <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a></span>
-  <span class="f">-c 112640  -ngl 99</span>  --parallel 1  --no-mmap
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
-<span class="c">:: or Intel's official <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a> — same capacity math,</span>
-<span class="c">:: likely faster kernels on Arc via the first-party OpenVINO runtime</span></pre>
+  <pre><span class="c">:: Q4 does not fit and 224 GB/s punishes offload — fully resident 3-bit, Vulkan build</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q3_K_XL, 13.1 GB)</span>
+llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf
+  <span class="f">-c 112640  -ngl 99</span>  --parallel 1  --no-mmap  -ctk q8_0 -ctv q8_0
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§05)</span>
+  --jinja --port 1234
+  --chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</pre>
 
   <p class="fno">DGX Spark · GB10, 128 GB unified</p>
-  <pre><span class="c">:: speed path — NVFP4 on vLLM (Blackwell-native, ~30% faster than FP8, FP8 KV cache):</span>
-vllm serve unsloth/Qwen3.8-27B-NVFP4 --max-model-len 131072
+  <pre><span class="c">:: Blackwell-native NVFP4 on vLLM — the format's home turf: ~1.5x BF16 speed,</span>
+<span class="c">:: FP8 KV cache, 92-97% accuracy retention. Bandwidth (273 GB/s) is the ceiling here,</span>
+<span class="c">:: so the smallest high-quality format wins.</span>
 <span class="c">:: model: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4">huggingface.co/unsloth/Qwen3.8-27B-NVFP4</a> (vLLM only — FP8 lm_head)</span>
-<span class="c">:: reference-quality path — capacity is free, bandwidth isn't (~10 t/s at Q8):</span>
-<span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a> (Q8_0, 29 GB)</span>
-llama-server -m Qwen3.8-27B-Q8_0.gguf
-  <span class="f">-c 262144  -ngl 99</span>  --parallel 1
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234</pre>
+vllm serve unsloth/Qwen3.8-27B-NVFP4 --max-model-len 131072</pre>
 
   <p class="fno">Intel Panther Lake iGPU · Arc B390-class</p>
-  <pre><span class="c">:: RAM is the spec that matters: the B390 tier (Core Ultra X9 388H) is MANDATED to</span>
-<span class="c">:: ship with dual-channel LPDDR5X-9600 (128-bit) = 153.6 GB/s, up to 96 GB shared.</span>
-<span class="c">:: The lower B370 tier allows 7467-8533 MT/s = ~120-136 GB/s — check before buying.</span>
-<span class="c">:: Shipping products: ASUS Zenbook Duo UX8407, Lenovo X9 388H designs (64 GB @ 9600).</span>
-<span class="c">:: The model fits in shared memory easily; it's just slow (~5-7 t/s).</span>
-<span class="c">:: first-party path: OpenVINO GenAI / Model Server on the iGPU device with Intel's</span>
-<span class="c">:: official <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a></span>
-<span class="c">:: portable path: Vulkan llama.cpp build + <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q4_K_XL</a>, -ngl 99</span>
-<span class="c">:: mandatory sanity: reasoning_effort medium or low — an xhigh 100k run is ~5 hours</span></pre>
+  <pre><span class="c">:: RAM is the spec that matters: the B390 tier (Core Ultra X9 388H) mandates</span>
+<span class="c">:: dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared; the model fits</span>
+<span class="c">:: easily, it's just slow (~5-7 t/s) — so effort medium/low is mandatory, not advice.</span>
+<span class="c">:: best path: Intel's first-party OpenVINO Model Server (OpenAI-compatible) on the</span>
+<span class="c">:: iGPU device (target GPU), serving <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov</a> —</span>
+<span class="c">:: follow the <a href="https://docs.openvino.ai/2025/model-server/ovms_docs_llm_quickstart.html">OVMS LLM quickstart</a> for the current docker invocation, then point</span>
+<span class="c">:: clients at its /v3 OpenAI-compatible endpoint exactly like llama-server's</span></pre>
 
   <div class="callout"><span class="tag">Client side, all platforms</span><p>Point the client at the same OpenAI-compatible port and the config never changes: aider needs <code>--edit-format diff</code>, <code>--timeout</code> sized to the slowest expected run, temperature 1.0 override, and a metadata file matching the server's context/output limits.</p></div>
 </section>
@@ -524,7 +522,7 @@ llama-server -m Qwen3.8-27B-Q8_0.gguf
 <section id="appendix">
   <p class="fno">Appendix</p>
   <h2>Connecting aider to llama-server</h2>
-  <p>Every recipe above ends with an OpenAI-compatible server on port 1234 — which means <a href="https://aider.chat">aider</a> (the terminal AI pair-programmer) connects to any of them with one identical client setup. Nothing here is hardware-specific.</p>
+  <p>Every recipe above ends with an OpenAI-compatible server (llama-server on port 1234; vLLM and OpenVINO Model Server on their own default ports — adjust the base URL to match) — which means <a href="https://aider.chat">aider</a> (the terminal AI pair-programmer) connects to any of them with one identical client setup. Nothing here is hardware-specific.</p>
 
   <p class="fno" style="margin-top:24px">Step 1 · Install aider</p>
   <pre><span class="c"># needs Python 3.9+ — any one of these:</span>
@@ -645,6 +643,6 @@ qwen</pre>
   </ul>
 </section>
 
-<footer>Field guide · updated 2026-08-21 (DFlash2 + NVFP4-on-Ampere measurements) · measured base: RTX 3090 · companion doc: Qwen 3.8 27B on RTX 3090 (session field notes)</footer>
+<footer>Field guide · updated 2026-08-21 (DFlash2 + NVFP4-on-Ampere measurements, speculative-decoding sweep, scored FP4-vs-INT4 comparison) · measured base: RTX 3090 · companion doc: Qwen 3.8 27B on RTX 3090 (session field notes)</footer>
 </div>
 </div>
