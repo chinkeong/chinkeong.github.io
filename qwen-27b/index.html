@@ -154,6 +154,63 @@
     <li><strong>Vision is optional at serve time.</strong> The mmproj projector costs ~1.3&nbsp;GB of VRAM; drop it for text-only work.</li>
     <li><strong>Official thinking-mode sampling: temp 1.0 · top-p 0.95 · top-k 20 · min-p 0.</strong> Clients that silently send temperature 0 (aider does) cause repetition loops — override them.</li>
   </ul>
+  <figure>
+    <svg viewBox="0 0 640 218" role="img" aria-label="Diagram comparing memory use: standard attention appends one KV cell per token so its cache grows without bound, while Gated DeltaNet updates one fixed-size state in place, which is why this model's cache at 122k context is about 3 gigabytes instead of twenty.">
+      <text class="dlabel" x="16" y="24">standard attention (16 of 64 layers)</text>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="16"  y="36" width="34" height="24" rx="3"/>
+        <rect x="58"  y="36" width="34" height="24" rx="3"/>
+        <rect x="100" y="36" width="34" height="24" rx="3"/>
+        <rect x="142" y="36" width="34" height="24" rx="3"/>
+      </g>
+      <text class="axis-t" x="33"  y="52" text-anchor="middle">tok 1</text>
+      <text class="axis-t" x="75"  y="52" text-anchor="middle">tok 2</text>
+      <text class="axis-t" x="117" y="52" text-anchor="middle">tok 3</text>
+      <text class="axis-t" x="159" y="52" text-anchor="middle">tok 4</text>
+      <line x1="192" y1="48" x2="234" y2="48" stroke="var(--muted)" stroke-width="1.5"/>
+      <polygon points="234,48 226,44 226,52" fill="var(--muted)"/>
+      <text class="axis-t" x="213" y="40" text-anchor="middle">stores</text>
+      <g fill="var(--muted)" stroke="var(--ground)">
+        <rect x="244" y="38" width="20" height="20"/>
+        <rect x="264" y="38" width="20" height="20"/>
+        <rect x="284" y="38" width="20" height="20"/>
+        <rect x="304" y="38" width="20" height="20"/>
+      </g>
+      <g fill="var(--surface2)" stroke="var(--line)" stroke-dasharray="3 3">
+        <rect x="324" y="38" width="20" height="20"/>
+        <rect x="344" y="38" width="20" height="20"/>
+        <rect x="364" y="38" width="20" height="20"/>
+      </g>
+      <text class="dlabel-m" x="396" y="53">+1 cell per token, forever</text>
+      <text class="dlabel" x="16" y="106">Gated DeltaNet (48 of 64 layers)</text>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="16"  y="118" width="34" height="24" rx="3"/>
+        <rect x="58"  y="118" width="34" height="24" rx="3"/>
+        <rect x="100" y="118" width="34" height="24" rx="3"/>
+        <rect x="142" y="118" width="34" height="24" rx="3"/>
+      </g>
+      <text class="axis-t" x="33"  y="134" text-anchor="middle">tok 1</text>
+      <text class="axis-t" x="75"  y="134" text-anchor="middle">tok 2</text>
+      <text class="axis-t" x="117" y="134" text-anchor="middle">tok 3</text>
+      <text class="axis-t" x="159" y="134" text-anchor="middle">tok 4</text>
+      <line x1="192" y1="130" x2="234" y2="130" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="234,130 226,126 226,134" fill="var(--accent)"/>
+      <text class="axis-t" x="213" y="122" text-anchor="middle">updates</text>
+      <rect x="244" y="114" width="150" height="32" rx="6" fill="var(--accent)"/>
+      <text class="dlabel" x="319" y="134" text-anchor="middle" fill="var(--ground)">fixed-size state</text>
+      <path d="M 394 122 C 420 108, 420 152, 394 138" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="394,138 403,140 400,132" fill="var(--accent)"/>
+      <text class="dlabel-m" x="432" y="127">overwritten in place</text>
+      <text class="dlabel-m" x="432" y="142">— never grows</text>
+      <line x1="16" y1="170" x2="624" y2="170" stroke="var(--line)"/>
+      <text class="dlabel" x="16" y="196">KV at 122k:</text>
+      <rect x="116" y="184" width="18" height="14" rx="2" fill="var(--accent)"/>
+      <text class="dlabel-m" x="140" y="196">~3 GB this hybrid</text>
+      <rect x="290" y="184" width="120" height="14" rx="2" fill="var(--muted)"/>
+      <text class="dlabel-m" x="418" y="196">~20 GB if all 64 layers were standard</text>
+    </svg>
+    <figcaption>Why huge contexts are cheap here: 48 of 64 layers keep one fixed-size state instead of a per-token cache. Only the 16 standard layers pay the growing-KV cost.</figcaption>
+  </figure>
 </section>
 
 <section id="s02">
@@ -204,6 +261,27 @@
     <li><strong><code>--no-mmap</code> on RAM-tight machines.</strong> Otherwise the whole GGUF stays cached in system RAM even after the weights are in VRAM.</li>
     <li><strong>All layers on GPU or accept the cliff.</strong> Partial offload speed is set by CPU RAM bandwidth, not by the GPU — a 5080 and a 4060&nbsp;Ti offload at nearly the same ~8–12 t/s.</li>
   </ul>
+  <figure>
+    <svg viewBox="0 0 640 130" role="img" aria-label="Diagram of the context window as one fixed-length bar shared by three segments: the prompt, the thinking tokens which grow during the run, and the output. When thinking plus output reach the right wall set by the -c flag, generation is cut mid-sentence.">
+      <rect x="16" y="34" width="560" height="40" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+      <rect x="18" y="36" width="120" height="36" rx="4" fill="var(--surface2)"/>
+      <rect x="138" y="36" width="280" height="36" fill="var(--accent)"/>
+      <rect x="418" y="36" width="110" height="36" fill="var(--muted)"/>
+      <text class="dlabel" x="78" y="58" text-anchor="middle">prompt</text>
+      <text class="dlabel" x="278" y="58" text-anchor="middle" fill="var(--ground)">thinking — grows during the run</text>
+      <text class="dlabel" x="473" y="58" text-anchor="middle" fill="var(--ground)">output</text>
+      <line x1="528" y1="42" x2="560" y2="42" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <polygon points="566,42 558,38 558,46" fill="var(--bad)"/>
+      <line x1="576" y1="26" x2="576" y2="82" stroke="var(--bad)" stroke-width="2"/>
+      <text class="dlabel" x="590" y="50" fill="var(--bad)">the</text>
+      <text class="dlabel" x="590" y="64" fill="var(--bad)">wall</text>
+      <text class="axis-t" x="16" y="22">one shared pool — the model cannot budget it; your config does</text>
+      <text class="axis-t" x="16" y="100">|— window size = the server's -c flag —|</text>
+      <text class="axis-t" x="330" y="100">hit the wall mid-thought → the answer is cut off;</text>
+      <text class="axis-t" x="330" y="114">size max_tokens and timeouts to fit the whole run</text>
+    </svg>
+    <figcaption>The context window is one pot, not three: a 100k-token thinking run inside a 32k window fails by arithmetic, not by bug.</figcaption>
+  </figure>
 </section>
 
 <section id="s04">
@@ -242,11 +320,97 @@
 
   <h2 id="s05-mtp" style="margin-top:36px; scroll-margin-top:24px">MTP speculative decoding — free speed on every GPU</h2>
   <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong> — a small helper network that guesses several tokens ahead so the full model only has to check them, which is much faster than generating each one. The standard K-quant GGUFs above <a href="https://github.com/sudoingX/qwen38-mtp">already include it</a> (the head itself always stays at 8-bit, whatever the main quant). llama.cpp added support in <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">July 2026</a>, and because every guess is verified by the full model before it's accepted, <strong>the output is exactly what the model would have written anyway</strong> — you only gain speed. It works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
+  <figure>
+    <svg viewBox="0 0 640 216" role="img" aria-label="Diagram comparing normal decoding, where the full 27B model runs one pass per token, with MTP speculative decoding, where a tiny draft head guesses four tokens cheaply and one full-model pass verifies them all, keeping the correct guesses and discarding the wrong one.">
+      <text class="dlabel" x="16" y="22">normal decoding — one full-model pass per token</text>
+      <g>
+        <rect x="16"  y="34" width="76" height="26" rx="4" fill="var(--muted)"/>
+        <rect x="150" y="34" width="76" height="26" rx="4" fill="var(--muted)"/>
+        <rect x="284" y="34" width="76" height="26" rx="4" fill="var(--muted)"/>
+        <rect x="418" y="34" width="76" height="26" rx="4" fill="var(--muted)"/>
+      </g>
+      <text class="dlabel" x="54"  y="51" text-anchor="middle" fill="var(--ground)">27B pass</text>
+      <text class="dlabel" x="188" y="51" text-anchor="middle" fill="var(--ground)">27B pass</text>
+      <text class="dlabel" x="322" y="51" text-anchor="middle" fill="var(--ground)">27B pass</text>
+      <text class="dlabel" x="456" y="51" text-anchor="middle" fill="var(--ground)">27B pass</text>
+      <g stroke="var(--muted)" stroke-width="1.5">
+        <line x1="92"  y1="47" x2="118" y2="47"/><line x1="226" y1="47" x2="252" y2="47"/>
+        <line x1="360" y1="47" x2="386" y2="47"/><line x1="494" y1="47" x2="520" y2="47"/>
+      </g>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="118" y="36" width="22" height="22" rx="3"/><rect x="252" y="36" width="22" height="22" rx="3"/>
+        <rect x="386" y="36" width="22" height="22" rx="3"/><rect x="520" y="36" width="22" height="22" rx="3"/>
+      </g>
+      <text class="dlabel-m" x="554" y="51">= 4 tokens</text>
+      <line x1="16" y1="84" x2="624" y2="84" stroke="var(--line)"/>
+      <text class="dlabel" x="16" y="108">MTP speculative decoding — draft cheap, verify once</text>
+      <rect x="16" y="122" width="90" height="26" rx="4" fill="var(--accent)"/>
+      <text class="dlabel" x="61" y="139" text-anchor="middle" fill="var(--ground)">draft head</text>
+      <text class="axis-t" x="61" y="164" text-anchor="middle">tiny, ~free</text>
+      <line x1="106" y1="135" x2="130" y2="135" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="136,135 128,131 128,139" fill="var(--accent)"/>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="140" y="124" width="22" height="22" rx="3"/><rect x="166" y="124" width="22" height="22" rx="3"/>
+        <rect x="192" y="124" width="22" height="22" rx="3"/><rect x="218" y="124" width="22" height="22" rx="3"/>
+      </g>
+      <text class="axis-t" x="190" y="164" text-anchor="middle">4 guesses</text>
+      <line x1="246" y1="135" x2="272" y2="135" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="278,135 270,131 270,139" fill="var(--accent)"/>
+      <rect x="282" y="122" width="130" height="26" rx="4" fill="var(--muted)"/>
+      <text class="dlabel" x="347" y="139" text-anchor="middle" fill="var(--ground)">one 27B pass</text>
+      <text class="axis-t" x="347" y="164" text-anchor="middle">checks all 4 at once</text>
+      <line x1="418" y1="135" x2="444" y2="135" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="450,135 442,131 442,139" fill="var(--accent)"/>
+      <text class="dlabel" x="458" y="141" fill="var(--accent)">✓ ✓ ✓</text>
+      <text class="dlabel" x="506" y="141" fill="var(--bad)">✗</text>
+      <text class="dlabel-m" x="524" y="141">→ keep 3 + its fix</text>
+      <text class="axis-t" x="458" y="164">wrong guess discarded — output identical, just faster</text>
+    </svg>
+    <figcaption>Speculative decoding in one picture: guesses are free to make and cheap to check in bulk; the full model still has the final word on every token.</figcaption>
+  </figure>
   <pre>  --spec-type draft-mtp  --spec-draft-n-max 4  --spec-draft-p-min 0.75</pre>
   <p>How much speed it adds depends heavily on hardware and workload — reports range from <span class="num">+33%</span> to <span class="num">+145%</span>. An RTX 5090 tester saw <span class="num">148 avg / 203 peak t/s</span> on the NVFP4 tiers. On our reference 3090, generation went from 40.3 to 58–60 t/s — <strong><span class="num">+45%</span></strong> at the default-ish settings (n-max 4, 89% of drafted tokens accepted) — and tuning the draft settings pushed it to <strong><span class="num">81.7 t/s, +105%</span></strong> (n-max 10, p-min 0.5; the sweep below shows the full curve). The warning both numbers carry: <strong>benchmark on your own machine</strong>. That 5090 tester found n-max 4 fastest with 6–8 slower; our 3090 kept getting faster all the way to n-max 10. The two machines genuinely disagree — there is no universal best value. You'll need a llama.cpp build recent enough to have the draft-mtp feature.</p>
 
   <h2 id="s05-dflash2" style="margin-top:36px; scroll-margin-top:24px">DFlash2 — block drafting (PR stage)</h2>
   <p><a href="https://inco.ai/blog/dflash2/">DFlash2</a> drafts differently from MTP: instead of guessing one token at a time, it predicts a whole 7-token block in a single pass, then picks the most plausible sequence out of the candidates it considered for each position. Like MTP, every draft is verified before it's accepted, so <strong>the output is identical to running the model alone</strong>. The costs: a separate 1.14&nbsp;GB drafter model to download (<a href="https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF">incoai/Qwen3.8-27B-DFlash2-GGUF</a>, ~1.2&nbsp;GB of VRAM), and — until <a href="https://github.com/ggml-org/llama.cpp/pull/27342">llama.cpp PR 27342</a> is merged — building llama.cpp yourself from that branch.</p>
+  <figure>
+    <svg viewBox="0 0 640 196" role="img" aria-label="Diagram of DFlash2 block drafting: one pass proposes ranked candidate tokens for all seven positions at once, and a path selector threads the most coherent sequence through them, sometimes picking a second- or third-ranked candidate instead of the top one.">
+      <text class="dlabel" x="16" y="22">one drafter pass proposes candidates for all 7 positions at once</text>
+      <text class="axis-t" x="16" y="60">rank 1</text>
+      <text class="axis-t" x="16" y="96">rank 2</text>
+      <text class="axis-t" x="16" y="132">rank 3</text>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="76"  y="44" width="56" height="24" rx="3"/><rect x="152" y="44" width="56" height="24" rx="3"/>
+        <rect x="228" y="44" width="56" height="24" rx="3"/><rect x="304" y="44" width="56" height="24" rx="3"/>
+        <rect x="380" y="44" width="56" height="24" rx="3"/><rect x="456" y="44" width="56" height="24" rx="3"/>
+        <rect x="532" y="44" width="56" height="24" rx="3"/>
+        <rect x="76"  y="80" width="56" height="24" rx="3"/><rect x="152" y="80" width="56" height="24" rx="3"/>
+        <rect x="228" y="80" width="56" height="24" rx="3"/><rect x="304" y="80" width="56" height="24" rx="3"/>
+        <rect x="380" y="80" width="56" height="24" rx="3"/><rect x="456" y="80" width="56" height="24" rx="3"/>
+        <rect x="532" y="80" width="56" height="24" rx="3"/>
+        <rect x="76"  y="116" width="56" height="24" rx="3"/><rect x="152" y="116" width="56" height="24" rx="3"/>
+        <rect x="228" y="116" width="56" height="24" rx="3"/><rect x="304" y="116" width="56" height="24" rx="3"/>
+        <rect x="380" y="116" width="56" height="24" rx="3"/><rect x="456" y="116" width="56" height="24" rx="3"/>
+        <rect x="532" y="116" width="56" height="24" rx="3"/>
+      </g>
+      <g fill="var(--accent)">
+        <rect x="76"  y="44" width="56" height="24" rx="3"/><rect x="152" y="44" width="56" height="24" rx="3"/>
+        <rect x="228" y="80" width="56" height="24" rx="3"/><rect x="304" y="44" width="56" height="24" rx="3"/>
+        <rect x="380" y="116" width="56" height="24" rx="3"/><rect x="456" y="44" width="56" height="24" rx="3"/>
+        <rect x="532" y="80" width="56" height="24" rx="3"/>
+      </g>
+      <polyline points="104,56 180,56 256,92 332,56 408,128 484,56 560,92" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-dasharray="1 0"/>
+      <text class="axis-t" x="104" y="162" text-anchor="middle">pos 1</text>
+      <text class="axis-t" x="180" y="162" text-anchor="middle">pos 2</text>
+      <text class="axis-t" x="256" y="162" text-anchor="middle">pos 3</text>
+      <text class="axis-t" x="332" y="162" text-anchor="middle">pos 4</text>
+      <text class="axis-t" x="408" y="162" text-anchor="middle">pos 5</text>
+      <text class="axis-t" x="484" y="162" text-anchor="middle">pos 6</text>
+      <text class="axis-t" x="560" y="162" text-anchor="middle">pos 7</text>
+      <text class="dlabel-m" x="16" y="186">the selector threads the most coherent path — not always the top-ranked guess (MTP, by contrast, drafts one token at a time with no second choices)</text>
+    </svg>
+    <figcaption>Block drafting: seven positions proposed in one pass, then a lightweight selector picks the sequence most likely to survive verification.</figcaption>
+  </figure>
   <p>Measured on the reference RTX 3090, same prompt, temp 0, 600-token code generation:</p>
   <figure>
     <svg viewBox="0 0 640 286" role="img" aria-label="Bar chart of decode speed on an RTX 3090: Q4_K_M baseline 40.3 tokens per second, Q4_K_M with MTP at default settings 59, Q4_K_M with tuned MTP 81.7, Q4_K_M with DFlash2 70, NVFP4-HIGH with MTP 46.8, NVFP4-VERY-LOW with MTP 43">
@@ -324,6 +488,38 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   </details>
   <p>That table says two things. First, speculation gets a 3090 to 70–82 t/s — the 100k reference run drops from 45 to roughly 22–26 minutes, matching what this guide estimates for an <em>RTX 5090</em> without speculation (the tuned row comes from the sweep below, which explains the settings). Second, the NVFP4 rows show that the quant and the drafter interact: speculative decoding makes the GPU check several drafted tokens at once, and that batch-checking is exactly the work NVFP4's software fallback does slowest. So on cards older than Blackwell, pair speculation with normal K-quants, not NVFP4.</p>
   <h2 id="s05-sweep" style="margin-top:36px; scroll-margin-top:24px">Tuning the drafter — an 18-config sweep on the 3090</h2>
+  <p>Two knobs control the drafting behaviour, and both mattered more than the defaults suggest:</p>
+  <figure>
+    <svg viewBox="0 0 640 232" role="img" aria-label="Diagram of the two speculative-decoding knobs. spec-draft-n-max sets how many tokens the drafter may run ahead before each full-model check: at 4, four full checks are needed where at 10 fewer, larger batches suffice. spec-draft-p-min is a confidence floor: drafting stops early the moment the drafter's confidence dips below it, so a high floor keeps cancelling the long drafts that a big n-max allows.">
+      <text class="dlabel" x="16" y="20">--spec-draft-n-max · how far the drafter runs ahead before each check</text>
+      <text class="axis-t" x="16" y="46">n-max 4</text>
+      <g fill="var(--accent)"><rect x="80" y="34" width="56" height="16" rx="2"/><rect x="162" y="34" width="56" height="16" rx="2"/><rect x="244" y="34" width="56" height="16" rx="2"/></g>
+      <g fill="var(--muted)"><rect x="139" y="34" width="20" height="16" rx="2"/><rect x="221" y="34" width="20" height="16" rx="2"/><rect x="303" y="34" width="20" height="16" rx="2"/></g>
+      <text class="dlabel-m" x="336" y="47">…many full-model checks</text>
+      <text class="axis-t" x="16" y="76">n-max 10</text>
+      <g fill="var(--accent)"><rect x="80" y="64" width="140" height="16" rx="2"/><rect x="246" y="64" width="140" height="16" rx="2"/></g>
+      <g fill="var(--muted)"><rect x="223" y="64" width="20" height="16" rx="2"/><rect x="389" y="64" width="20" height="16" rx="2"/></g>
+      <text class="dlabel-m" x="422" y="77">…fewer, bigger checks</text>
+      <text class="axis-t" x="80" y="100">▪ drafting (cheap)   <tspan fill="var(--muted)">▪ full-model check (the expensive part)</tspan></text>
+      <line x1="16" y1="114" x2="624" y2="114" stroke="var(--line)"/>
+      <text class="dlabel" x="16" y="138">--spec-draft-p-min · confidence floor — drafting stops the moment confidence dips below it</text>
+      <g fill="var(--accent)">
+        <rect x="80"  y="168" width="26" height="40"/>
+        <rect x="116" y="176" width="26" height="32"/>
+        <rect x="152" y="182" width="26" height="26"/>
+      </g>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="188" y="192" width="26" height="16"/>
+        <rect x="224" y="196" width="26" height="12"/>
+      </g>
+      <line x1="70" y1="188" x2="264" y2="188" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text class="axis-t" x="272" y="192" fill="var(--bad)">floor 0.75 → stops here — long drafts keep dying</text>
+      <line x1="70" y1="202" x2="264" y2="202" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text class="axis-t" x="272" y="212" fill="var(--accent-ink)">floor 0.5 → keeps going — unlocked n-max 10 (+8 t/s)</text>
+      <text class="axis-t" x="80" y="226">drafter confidence per token →</text>
+    </svg>
+    <figcaption>The knobs interact: a big n-max only pays off when the p-min floor is low enough to let drafts actually run long. Tuning them together is what found 81.7 t/s.</figcaption>
+  </figure>
   <p>The table above used the settings each method's authors recommend. Then we swept <code>--spec-draft-n-max</code> across both methods (same prompt, temp 0, warm cache — numbers run a few t/s hotter than the cold-start table, so compare within this chart, not against it). The result contradicted both recommendations:</p>
   <figure>
     <svg viewBox="0 0 640 268" role="img" aria-label="Line chart of decode speed versus spec-draft-n-max on an RTX 3090. The built-in MTP curve keeps rising to a peak of 81.7 tokens per second at n-max 10, then dips at 12. The DFlash2 curve peaks at 77.6 at n-max 4 and slowly declines through n-max 16. The no-speculation baseline is 39.8.">
@@ -363,6 +559,32 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   <div class="callout"><span class="tag">Reading acceptance tables</span><p>Published speculative-decoding tables (like the DFlash2 blog's "mean acceptance length") are <strong>speed numbers, not quality scores</strong>. The verify step guarantees every configuration writes exactly what the base model would have written — a higher acceptance number just means more tokens got through per check. Quality only changes when the <em>weights</em> change (a different quant); speed only changes when the <em>drafter</em> changes.</p></div>
 
   <h2 id="s05-scored" style="margin-top:36px; scroll-margin-top:24px">Does FP4 beat INT4? A scored comparison</h2>
+  <p>First, what the two formats actually are. A 4-bit quant stores each weight as one of only 16 allowed values — the formats differ in <em>where those 16 values sit</em>:</p>
+  <figure>
+    <svg viewBox="0 0 640 210" role="img" aria-label="Diagram of the two 4-bit number grids. INT4 places its 16 allowed values at even spacing across the range. FP4 places them densely near zero, where most neural-network weights live, and sparsely at the extremes. Below, both formats store a separate scale factor per small block of weights, which is the shared mechanism that actually preserves quality.">
+      <text class="dlabel" x="16" y="20">INT4 — 16 allowed values, evenly spaced</text>
+      <line x1="40" y1="46" x2="600" y2="46" stroke="var(--muted)"/>
+      <g stroke="var(--muted)" stroke-width="1.5">
+        <line x1="40" y1="38" x2="40" y2="54"/><line x1="80" y1="38" x2="80" y2="54"/><line x1="120" y1="38" x2="120" y2="54"/><line x1="160" y1="38" x2="160" y2="54"/><line x1="200" y1="38" x2="200" y2="54"/><line x1="240" y1="38" x2="240" y2="54"/><line x1="280" y1="38" x2="280" y2="54"/><line x1="320" y1="38" x2="320" y2="54"/><line x1="360" y1="38" x2="360" y2="54"/><line x1="400" y1="38" x2="400" y2="54"/><line x1="440" y1="38" x2="440" y2="54"/><line x1="480" y1="38" x2="480" y2="54"/><line x1="520" y1="38" x2="520" y2="54"/><line x1="560" y1="38" x2="560" y2="54"/><line x1="600" y1="38" x2="600" y2="54"/>
+      </g>
+      <text class="axis-t" x="320" y="70" text-anchor="middle">same step size everywhere</text>
+      <text class="dlabel" x="16" y="96">FP4 — 16 allowed values, dense near zero</text>
+      <line x1="40" y1="122" x2="600" y2="122" stroke="var(--accent)"/>
+      <g stroke="var(--accent)" stroke-width="1.5">
+        <line x1="40" y1="114" x2="40" y2="130"/><line x1="133" y1="114" x2="133" y2="130"/><line x1="180" y1="114" x2="180" y2="130"/><line x1="227" y1="114" x2="227" y2="130"/><line x1="250" y1="114" x2="250" y2="130"/><line x1="273" y1="114" x2="273" y2="130"/><line x1="297" y1="114" x2="297" y2="130"/><line x1="320" y1="114" x2="320" y2="130"/><line x1="343" y1="114" x2="343" y2="130"/><line x1="367" y1="114" x2="367" y2="130"/><line x1="390" y1="114" x2="390" y2="130"/><line x1="413" y1="114" x2="413" y2="130"/><line x1="460" y1="114" x2="460" y2="130"/><line x1="507" y1="114" x2="507" y2="130"/><line x1="600" y1="114" x2="600" y2="130"/>
+      </g>
+      <text class="axis-t" x="320" y="146" text-anchor="middle">fine steps near zero (where most weights live) · coarse at the edges</text>
+      <line x1="16" y1="158" x2="624" y2="158" stroke="var(--line)"/>
+      <g fill="var(--surface2)" stroke="var(--line)">
+        <rect x="16" y="172" width="22" height="18"/><rect x="38" y="172" width="22" height="18"/><rect x="60" y="172" width="22" height="18"/><rect x="82" y="172" width="22" height="18"/><rect x="104" y="172" width="22" height="18"/><rect x="126" y="172" width="22" height="18"/><rect x="148" y="172" width="22" height="18"/><rect x="170" y="172" width="22" height="18"/>
+      </g>
+      <rect x="200" y="172" width="64" height="18" rx="9" fill="var(--accent)"/>
+      <text class="dlabel" x="232" y="185" text-anchor="middle" fill="var(--ground)">× scale</text>
+      <text class="dlabel-m" x="276" y="186">each small block of weights gets its own scale</text>
+      <text class="axis-t" x="16" y="206">this shared rescaling (K-quants: per 32 · NVFP4: per 16) — not the grid shape — is what preserves quality</text>
+    </svg>
+    <figcaption>The real difference between "integer" and "float" 4-bit is grid spacing; block scaling equalizes most of it in practice.</figcaption>
+  </figure>
   <p>A common belief says floating-point formats always beat integer formats at the same bit width. We tested it: the three quants above, graded for <em>correctness</em> on GSM8K and MATH-500 (20 problems each, greedy decoding, identical prompts, 4096-token budget; answers that ran out of budget mid-thinking count as wrong and are reported as truncations). Measured on the reference 3090:</p>
   <div class="tablebox">
   <table>
