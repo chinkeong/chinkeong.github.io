@@ -350,6 +350,24 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
     <li><strong>DFlash2's recommended n-max 7 was not its own best setting here</strong> — 4 and 5 both beat it (77.6/77.5 vs 74.0). Every recommendation in this space, including ours, is one machine's measurement.</li>
   </ul>
   <div class="callout"><span class="tag">Reading acceptance tables</span><p>Published speculative-decoding tables (like the DFlash2 blog's "mean acceptance length") are <strong>speed numbers, not quality scores</strong>. The verify step guarantees every configuration writes exactly what the base model would have written — a higher acceptance number just means more tokens got through per check. Quality only changes when the <em>weights</em> change (a different quant); speed only changes when the <em>drafter</em> changes.</p></div>
+
+  <h2 style="margin-top:36px">Does FP4 beat INT4? A scored comparison</h2>
+  <p>A common belief says floating-point formats always beat integer formats at the same bit width. We tested it: the three quants above, graded for <em>correctness</em> on GSM8K and MATH-500 (20 problems each, greedy decoding, identical prompts, 4096-token budget; answers that ran out of budget mid-thinking count as wrong and are reported as truncations). Measured on the reference 3090:</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>Quant</th><th>Format</th><th>GSM8K</th><th>MATH-500</th><th>Decode (MTP on)</th><th>Draft accept len</th></tr>
+    <tr class="hl"><td>Q4_K_M</td><td>K-quant (integer grid)</td><td class="n">85% (1 trunc)</td><td class="n"><b>75%</b> (5 trunc)</td><td class="n">63–70 t/s</td><td class="n">4.7–4.9</td></tr>
+    <tr><td>NVFP4-HIGH</td><td>FP4, most extras upgraded</td><td class="n">85% (1 trunc)</td><td class="n">65% (5 trunc)</td><td class="n">~55 t/s</td><td class="n">4.7–4.8</td></tr>
+    <tr><td>NVFP4-VERY-LOW</td><td>FP4, smallest tier</td><td class="n">85% (0 trunc)</td><td class="n">65% (5 trunc)</td><td class="n">~49 t/s</td><td class="n">3.33</td></tr>
+  </table>
+  </div>
+  <p>What the numbers say:</p>
+  <ul>
+    <li><strong>"Floating point always wins" did not survive the test.</strong> All three tied on GSM8K; on MATH-500 the integer-grid K-quant answered two more problems than either FP4 file. At 20 samples that edge is weak evidence — but it is the <em>opposite</em> direction from the belief. What actually decides 4-bit quality is how cleverly a format spends its bits — block sizes, scale precision, which layers stay high-precision — and mature K-quants are very good at that game. Both families use fine-grained scaling; the float-vs-integer grid underneath matters far less than people assume.</li>
+    <li><strong>The two NVFP4 tiers scored identically</strong> — expected once you know the family shares one byte-identical NVFP4 backbone, with tiers differing only in the surrounding layers. The surprise is where VERY-LOW's savings actually landed: <strong>its MTP draft head drafts noticeably worse (acceptance length 3.33 vs ~4.8)</strong>, so the cheap tier costs you speculative-decoding <em>speed</em>, not accuracy.</li>
+    <li><strong>Sample-size honesty: each problem is worth 5 points.</strong> Every gap in this table is one or two questions wide. Treat it as "no meaningful quality difference, mild edge to the K-quant" — not a ranking. We also ran the same prompts through a different serving stack and grader version and saw individual cells move by up to 10 points, which means <em>measurement variance is the same size as the differences being measured</em>. Anyone showing you a one-run quant ranking without error bars is selling something.</li>
+  </ul>
+  <div class="callout"><span class="tag">The takeaway</span><p>Pick your file by <strong>size and speed</strong>, not by format ideology: on a 24 GB Ampere card that means Q4_K_M (fastest, best-drafting MTP head, and the mild quality edge is on its side too). NVFP4's real advantages live on Blackwell hardware where the format runs natively.</p></div>
 </section>
 
 <section id="s06">
@@ -623,6 +641,7 @@ qwen</pre>
     <li>MTP speculative decoding: ships in standard GGUFs, +33–145% on consumer GPUs — <a href="https://github.com/sudoingX/qwen38-mtp">qwen38-mtp recipe & benchmarks</a>, <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">llama.cpp discussion</a>; RTX 5090 tier benchmarks — <a href="https://huggingface.co/esatapedico/Qwen3.8-27B-NVFP4-MTP-GGUF">NVFP4-MTP-GGUF card</a> (the card's Blackwell-only claim is contradicted by the Ampere measurements below, but its MTP data generalizes)</li>
     <li>DFlash2: block drafting + path selection — <a href="https://inco.ai/blog/dflash2/">inco.ai announcement</a>, <a href="https://github.com/ggml-org/llama.cpp/pull/27342">llama.cpp PR 27342</a>, <a href="https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF">drafter GGUFs</a></li>
     <li>3090 measurements in §05 (baseline / MTP / DFlash2 / NVFP4-on-Ampere, plus the 18-config n-max &amp; p-min sweep): this guide's own runs, 2026-08-21 — llama.cpp build 5ecbe1ac1 (PR 27342), CUDA 12.8, temp-0 600-token code generation, llama-bench pp512/tg128</li>
+    <li>FP4-vs-INT4 scored comparison: this guide's own runs, 2026-08-21 — GSM8K + MATH-500 (20 each), greedy, 4096-token budget, llama-server (build 10502) with MTP, graded via <a href="https://github.com/chinkeong/benchmark">chinkeong/benchmark</a> (final-number / boxed-answer exact match, truncations counted wrong)</li>
   </ul>
 </section>
 
