@@ -155,61 +155,95 @@
     <li><strong>Official thinking-mode sampling: temp 1.0 · top-p 0.95 · top-k 20 · min-p 0.</strong> Clients that silently send temperature 0 (aider does) cause repetition loops — override them.</li>
   </ul>
   <figure>
-    <svg viewBox="0 0 640 218" role="img" aria-label="Diagram comparing memory use: standard attention appends one KV cell per token so its cache grows without bound, while Gated DeltaNet updates one fixed-size state in place, which is why this model's cache at 122k context is about 3 gigabytes instead of twenty.">
-      <text class="dlabel" x="16" y="24">standard attention (16 of 64 layers)</text>
+    <svg viewBox="0 0 640 300" role="img" aria-label="Diagram using an everyday metaphor: standard attention is like a transcript that keeps one page per token and re-reads all of it for every new word, so memory grows forever. Gated DeltaNet is like a whiteboard summary: every new token is blended into the same fixed-size board, overwriting old detail, so memory never grows. Result: about 3 gigabytes of cache at 122k context instead of twenty.">
+      <text class="dlabel" x="16" y="22">standard attention (16 of 64 layers) — like keeping a full transcript</text>
       <g fill="var(--surface2)" stroke="var(--line)">
-        <rect x="16"  y="36" width="34" height="24" rx="3"/>
-        <rect x="58"  y="36" width="34" height="24" rx="3"/>
-        <rect x="100" y="36" width="34" height="24" rx="3"/>
-        <rect x="142" y="36" width="34" height="24" rx="3"/>
+        <rect x="30"  y="36" width="30" height="40" rx="2"/>
+        <rect x="70"  y="36" width="30" height="40" rx="2"/>
+        <rect x="110" y="36" width="30" height="40" rx="2"/>
+        <rect x="150" y="36" width="30" height="40" rx="2"/>
       </g>
-      <text class="axis-t" x="33"  y="52" text-anchor="middle">tok 1</text>
-      <text class="axis-t" x="75"  y="52" text-anchor="middle">tok 2</text>
-      <text class="axis-t" x="117" y="52" text-anchor="middle">tok 3</text>
-      <text class="axis-t" x="159" y="52" text-anchor="middle">tok 4</text>
-      <line x1="192" y1="48" x2="234" y2="48" stroke="var(--muted)" stroke-width="1.5"/>
-      <polygon points="234,48 226,44 226,52" fill="var(--muted)"/>
-      <text class="axis-t" x="213" y="40" text-anchor="middle">stores</text>
-      <g fill="var(--muted)" stroke="var(--ground)">
-        <rect x="244" y="38" width="20" height="20"/>
-        <rect x="264" y="38" width="20" height="20"/>
-        <rect x="284" y="38" width="20" height="20"/>
-        <rect x="304" y="38" width="20" height="20"/>
+      <g stroke="var(--muted)" stroke-width="1">
+        <line x1="36" y1="46" x2="54" y2="46"/><line x1="36" y1="54" x2="54" y2="54"/><line x1="36" y1="62" x2="54" y2="62"/>
+        <line x1="76" y1="46" x2="94" y2="46"/><line x1="76" y1="54" x2="94" y2="54"/><line x1="76" y1="62" x2="94" y2="62"/>
+        <line x1="116" y1="46" x2="134" y2="46"/><line x1="116" y1="54" x2="134" y2="54"/><line x1="116" y1="62" x2="134" y2="62"/>
+        <line x1="156" y1="46" x2="174" y2="46"/><line x1="156" y1="54" x2="174" y2="54"/><line x1="156" y1="62" x2="174" y2="62"/>
       </g>
       <g fill="var(--surface2)" stroke="var(--line)" stroke-dasharray="3 3">
-        <rect x="324" y="38" width="20" height="20"/>
-        <rect x="344" y="38" width="20" height="20"/>
-        <rect x="364" y="38" width="20" height="20"/>
+        <rect x="190" y="36" width="30" height="40" rx="2"/>
+        <rect x="230" y="36" width="30" height="40" rx="2"/>
       </g>
-      <text class="dlabel-m" x="396" y="53">+1 cell per token, forever</text>
-      <text class="dlabel" x="16" y="106">Gated DeltaNet (48 of 64 layers)</text>
-      <g fill="var(--surface2)" stroke="var(--line)">
-        <rect x="16"  y="118" width="34" height="24" rx="3"/>
-        <rect x="58"  y="118" width="34" height="24" rx="3"/>
-        <rect x="100" y="118" width="34" height="24" rx="3"/>
-        <rect x="142" y="118" width="34" height="24" rx="3"/>
+      <text class="axis-t" x="45"  y="92" text-anchor="middle">word 1</text>
+      <text class="axis-t" x="85"  y="92" text-anchor="middle">word 2</text>
+      <text class="axis-t" x="125" y="92" text-anchor="middle">word 3</text>
+      <text class="axis-t" x="165" y="92" text-anchor="middle">word 4</text>
+      <text class="axis-t" x="225" y="92" text-anchor="middle">…forever</text>
+      <text class="dlabel-m" x="286" y="52">every word adds a page — none thrown away;</text>
+      <text class="dlabel-m" x="286" y="68">the whole pile is re-read for each new word</text>
+      <line x1="16" y1="110" x2="624" y2="110" stroke="var(--line)"/>
+      <text class="dlabel" x="16" y="134">Gated DeltaNet (48 of 64 layers) — like a whiteboard summary</text>
+      <g stroke="var(--ink)" stroke-width="1.5" fill="var(--surface)">
+        <rect x="30"  y="148" width="110" height="62" rx="4"/>
+        <rect x="250" y="148" width="110" height="62" rx="4"/>
+        <rect x="470" y="148" width="110" height="62" rx="4"/>
       </g>
-      <text class="axis-t" x="33"  y="134" text-anchor="middle">tok 1</text>
-      <text class="axis-t" x="75"  y="134" text-anchor="middle">tok 2</text>
-      <text class="axis-t" x="117" y="134" text-anchor="middle">tok 3</text>
-      <text class="axis-t" x="159" y="134" text-anchor="middle">tok 4</text>
-      <line x1="192" y1="130" x2="234" y2="130" stroke="var(--accent)" stroke-width="1.5"/>
-      <polygon points="234,130 226,126 226,134" fill="var(--accent)"/>
-      <text class="axis-t" x="213" y="122" text-anchor="middle">updates</text>
-      <rect x="244" y="114" width="150" height="32" rx="6" fill="var(--accent)"/>
-      <text class="dlabel" x="319" y="134" text-anchor="middle" fill="var(--ground)">fixed-size state</text>
-      <path d="M 394 122 C 420 108, 420 152, 394 138" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
-      <polygon points="394,138 403,140 400,132" fill="var(--accent)"/>
-      <text class="dlabel-m" x="432" y="127">overwritten in place</text>
-      <text class="dlabel-m" x="432" y="142">— never grows</text>
-      <line x1="16" y1="170" x2="624" y2="170" stroke="var(--line)"/>
-      <text class="dlabel" x="16" y="196">KV at 122k:</text>
-      <rect x="116" y="184" width="18" height="14" rx="2" fill="var(--accent)"/>
-      <text class="dlabel-m" x="140" y="196">~3 GB this hybrid</text>
-      <rect x="290" y="184" width="120" height="14" rx="2" fill="var(--muted)"/>
-      <text class="dlabel-m" x="418" y="196">~20 GB if all 64 layers were standard</text>
+      <g>
+        <rect x="38"  y="156" width="60" height="12" rx="2" fill="var(--accent)"/>
+        <rect x="38"  y="174" width="90" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="38"  y="192" width="40" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="258" y="156" width="60" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="258" y="174" width="90" height="12" rx="2" fill="var(--accent)"/>
+        <rect x="258" y="192" width="40" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="478" y="156" width="30" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="478" y="174" width="50" height="12" rx="2" fill="var(--surface2)"/>
+        <rect x="478" y="192" width="94" height="12" rx="2" fill="var(--accent)"/>
+      </g>
+      <line x1="146" y1="179" x2="242" y2="179" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="248,179 240,175 240,183" fill="var(--accent)"/>
+      <text class="axis-t" x="194" y="170" text-anchor="middle">word 2:</text>
+      <text class="axis-t" x="194" y="196" text-anchor="middle">rewrite board</text>
+      <line x1="366" y1="179" x2="462" y2="179" stroke="var(--accent)" stroke-width="1.5"/>
+      <polygon points="468,179 460,175 460,183" fill="var(--accent)"/>
+      <text class="axis-t" x="414" y="170" text-anchor="middle">word 3:</text>
+      <text class="axis-t" x="414" y="196" text-anchor="middle">rewrite board</text>
+      <text class="axis-t" x="30" y="228">the SAME board — never bigger</text>
+      <text class="dlabel-m" x="250" y="228">new words are blended in over old detail —</text>
+      <text class="dlabel-m" x="250" y="244">"gated" = choose what to keep, what to erase</text>
+      <line x1="16" y1="258" x2="624" y2="258" stroke="var(--line)"/>
+      <text class="dlabel" x="16" y="282">memory at 122k:</text>
+      <rect x="140" y="270" width="18" height="14" rx="2" fill="var(--accent)"/>
+      <text class="dlabel-m" x="164" y="282">~3 GB this hybrid</text>
+      <rect x="300" y="270" width="110" height="14" rx="2" fill="var(--muted)"/>
+      <text class="dlabel-m" x="418" y="282">~20 GB if all 64 kept transcripts</text>
     </svg>
-    <figcaption>Why huge contexts are cheap here: 48 of 64 layers keep one fixed-size state instead of a per-token cache. Only the 16 standard layers pay the growing-KV cost.</figcaption>
+    <figcaption>Transcript vs whiteboard: 16 layers keep the transcript (that's the part that grows), 48 keep only a rewritten summary — which is why 122k of context costs ~3 GB here, not ~20.</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 640 222" role="img" aria-label="Line chart of cache memory versus context length. A same-size model with all-standard attention climbs steeply and exceeds a 24 gigabyte card around 146k context. This hybrid model's line stays shallow, reaching only about 3 gigabytes at 122k and about 7 at the full 262k.">
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="60" y1="180" x2="600" y2="180"/>
+        <line x1="60" y1="113" x2="600" y2="113"/>
+        <line x1="60" y1="46"  x2="600" y2="46"/>
+      </g>
+      <text class="axis-t" x="52" y="184" text-anchor="end">0</text>
+      <text class="axis-t" x="52" y="117" text-anchor="end">10</text>
+      <text class="axis-t" x="52" y="50"  text-anchor="end">20</text>
+      <line x1="60" y1="20" x2="600" y2="20" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text class="axis-t" x="596" y="34" text-anchor="end" fill="var(--bad)">24 GB — the whole card (weights still need ~17 of it)</text>
+      <polyline points="60,180 311,46 361,20" fill="none" stroke="var(--muted)" stroke-width="2"/>
+      <polygon points="361,20 353,24 359,30" fill="var(--muted)"/>
+      <circle cx="311" cy="46" r="4" fill="var(--muted)" stroke="var(--ground)" stroke-width="2"/>
+      <text class="dlabel-m" x="150" y="70">all-standard attention:</text>
+      <text class="dlabel-m" x="150" y="85">~20 GB at 122k, off the card by ~146k</text>
+      <polyline points="60,180 311,160 600,133" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <circle cx="311" cy="160" r="4" fill="var(--accent)" stroke="var(--ground)" stroke-width="2"/>
+      <text class="dlabel" x="330" y="168">this hybrid: 3 GB at 122k · 7 GB at 262k</text>
+      <text class="axis-t" x="60"  y="200">0</text>
+      <text class="axis-t" x="311" y="200" text-anchor="middle">122k</text>
+      <text class="axis-t" x="600" y="200" text-anchor="middle">262k</text>
+      <text class="axis-t" x="620" y="214" text-anchor="end">context length → · cache GB on y</text>
+    </svg>
+    <figcaption>The same fact as a curve: the transcript line runs off a 24 GB card before 150k context; the whiteboard-heavy hybrid never comes close.</figcaption>
   </figure>
 </section>
 
