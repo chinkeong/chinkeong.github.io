@@ -361,8 +361,8 @@
   <div class="tablebox">
   <table>
     <tr><th>Effort</th><th>Tokens (2 runs)</th><th>Wall-clock</th><th>Blind quality score /100</th><th>GSM8K n=200</th></tr>
-    <tr><td><code>low</code></td><td class="n">16.7k–29.8k</td><td class="n">4:34–8:34</td><td class="n"><b>40, 47 — both pages fatally broken</b></td><td class="n">96.0%</td></tr>
-    <tr class="hl"><td><code>medium</code></td><td class="n">20.7k–23.4k</td><td class="n">5:54–7:04</td><td class="n">86, 93</td><td class="n">97.5%</td></tr>
+    <tr><td><code>low</code></td><td class="n">16.7k–29.8k</td><td class="n">4:34–8:34</td><td class="n"><b>40, 47 — both runs produced pages whose JavaScript crashes</b> (one never draws a frame, one freezes on its first)</td><td class="n">96.0% (0 truncated — cap-independent)</td></tr>
+    <tr class="hl"><td><code>medium</code></td><td class="n">20.7k–23.4k</td><td class="n">5:54–7:04</td><td class="n">86, 93</td><td class="n">97.5% (0 truncated — cap-independent)</td></tr>
     <tr><td><code>xhigh</code></td><td class="n">73.1k–75.8k</td><td class="n">24:58–26:48</td><td class="n">92, 95 · 100% of spec, both runs</td><td class="n">95.0% (94.0 under a 4,096 cap†)</td></tr>
   </table>
   </div>
