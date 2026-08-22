@@ -461,7 +461,7 @@
   </table>
   </div>
   <p>Read it with its one limit attached: this is a single corpus, and wikitext rewards plain-text prediction while unsloth's UD calibration targets chat-style data — so the ordering among the top files may not carry over perfectly to instruct workloads (the n=200 GSM8K comparison agreed within noise: Q4_K_M 94.0%, UD-Q4_K_XL 94.5%, UD-IQ4_XS 93.0% — and NVFP4-HIGH 92.5%, NVFP4-VERY-LOW 90.5%, trailing the K-quants in the same direction as this table, all ±~3–4 pts). Two robust findings: <strong>both NVFP4 tiers trail the K-quants</strong> — the same direction the scored table's MATH-500 column hinted, reached by an independent measurement — and <strong>none of the unsloth Dynamic variants beat the plain lmstudio Q4_K_M on this corpus, including at identical size</strong>. Two cheap metrics agreeing beats one expensive one.</p>
-  <div class="callout"><span class="tag">The dark horse: UD-IQ4_XS</span><p>The table's second row is the night's discovery. At <span class="num">13.3</span>&nbsp;GiB — 2.1&nbsp;GiB smaller than Q4_K_M — UD-IQ4_XS ties it on quality (perplexity within ~1σ, GSM8K within noise) and, because decode is bandwidth-bound, the smaller file is <em>faster everywhere it was measured</em>: prefill 1365 vs 1303 t/s, plain decode <span class="num">43.8</span> vs 39.9, GSM8K with speculation <span class="num">73</span> vs 63. The saved VRAM becomes context: its measured fully-resident ceiling is ~<span class="num">180–190k</span> (vs Q4_K_M's ~131k), shallow probes stayed at 65–70&nbsp;t/s all the way to the full native <span class="num">262,144</span> with no collapse anywhere, and by §02's arithmetic a text-only launch (no mmproj) holds the <em>entire native context fully resident</em> — the capability this guide previously reserved for 3-bit files, now at Q4-class quality. Why still name Q4_K_M the default? Both quality metrics lean the same whisker in its favor, it is the file every number in this guide was measured on, and IQ-format decode support varies more across backends (measured on CUDA). <strong>Context- or speed-hungry: pick UD-IQ4_XS. Maximum measured quality at 122k: stay on Q4_K_M.</strong> Either is right.</p></div>
+  <div class="callout"><span class="tag">The dark horse: UD-IQ4_XS</span><p>The table's second row is the night's discovery. At <span class="num">13.3</span>&nbsp;GiB — 2.1&nbsp;GiB smaller than Q4_K_M — UD-IQ4_XS ties it on quality (perplexity within ~1σ, GSM8K within noise) and, because decode is bandwidth-bound, the smaller file is <em>faster everywhere it was measured</em>: prefill 1365 vs 1303 t/s, plain decode <span class="num">43.8</span> vs 39.9, GSM8K with speculation <span class="num">73</span> vs 63. The saved VRAM becomes context: its measured fully-resident ceiling is ~<span class="num">180–190k</span> (vs Q4_K_M's ~131k), shallow probes stayed at 65–70&nbsp;t/s all the way to the full native <span class="num">262,144</span> with no collapse anywhere, and by §02's arithmetic a text-only launch (no mmproj) holds the <em>entire native context fully resident</em> — the capability this guide previously reserved for 3-bit files, now at Q4-class quality (a headless/bare-desktop configuration: its ~1 GiB slack does not survive a browser — §08's Choice B ships the desktop-safe 196k instead). Why still name Q4_K_M the default? Both quality metrics lean the same whisker in its favor, it is the file every number in this guide was measured on, and IQ-format decode support varies more across backends (measured on CUDA). <strong>Context- or speed-hungry: pick UD-IQ4_XS. Maximum measured quality at 122k: stay on Q4_K_M.</strong> Either is right.</p></div>
 </section>
 
 <section id="s05b">
@@ -838,15 +838,19 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: verify on Vulkan/Metal backends before committing.</span>
 <span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">unsloth/Qwen3.8-27B-GGUF</a> (UD-IQ4_XS, 14.25 GB)</span>
 llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
-  <span class="f">-c 262144</span>                     <span class="c">:: THE FULL NATIVE CONTEXT, fully resident, on a 24 GB</span>
-                                <span class="c">:: card — text-only: 13.3 GiB weights + 8.5 GiB q8 KV +</span>
-                                <span class="c">:: buffers ≈ 23 GiB. The job that used to need a 3-bit file.</span>
-                                <span class="c">:: Shallow probes measured 65-70 t/s at every size to native max</span>
+  <span class="f">-c 196608</span>                     <span class="c">:: text-only, ~3 GiB slack — a 196k window (1.6x Choice A)</span>
+                                <span class="c">:: that stays fast with a real desktop and browser-based</span>
+                                <span class="c">:: agent UIs open. This is the number to ship.</span>
+<span class="c">:: FULL native context — headless / bare desktop ONLY:  -c 262144  holds all 262,144</span>
+<span class="c">:: resident text-only (≈ 23 GiB, ~1 GiB slack; shallow probes 65-70 t/s). But that</span>
+<span class="c">:: slack is a trap on a working desktop: measured live, a browser agent UI pushed the</span>
+<span class="c">:: Windows compositor to 3.6 GiB, spilled 3.5 GiB to shared memory, and decode fell</span>
+<span class="c">:: to ~26 t/s (§10's signature). Do not run 262144 with anything else on the GPU.</span>
 <span class="c">:: vision variant: add  --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024</span>
-<span class="c">:: and drop to  -c 180224  — measured fully resident with the projector loaded</span>
-<span class="c">:: (24,017 MiB, ~560 MiB slack, 66.6 t/s). The general rule this teaches: the BF16</span>
-<span class="c">:: projector costs ~0.9 GiB ≈ 27k tokens of q8 window — on EVERY card class, a</span>
-<span class="c">:: text-only server buys context. Serve two ways; don't pay for vision you aren't using</span>
+<span class="c">:: and drop to  -c 147456  desktop-safe (or 180224 bare-desktop, measured resident at</span>
+<span class="c">:: 24,017 MiB / 66.6 t/s). The rule all of this teaches: the projector costs ~0.9 GiB</span>
+<span class="c">:: ≈ 27k tokens of q8 window, and slack is what keeps you off §10's spill cliff —</span>
+<span class="c">:: budget for BOTH the vision you use and the desktop you actually run</span>
   <span class="f">-ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: same tuning as A</span>
