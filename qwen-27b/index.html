@@ -1157,7 +1157,12 @@ llm-pi-ai:
         maxTokensField: max_tokens
       models:
         - id: qwen/qwen3.8-27b
-          input: [text, image]        <span class="c"># vision works when the server runs with --mmproj</span></pre>
+          input: [text, image]        <span class="c"># vision works when the server runs with --mmproj</span>
+          contextWindow: 122880       <span class="c"># match the server's -c value</span>
+          maxTokens: 106496           <span class="c"># REQUIRED: dsh enforces this client-side (same Pi</span>
+                                      <span class="c"># schema). Without it the small default cap cuts long</span>
+                                      <span class="c"># thinking replies mid-run — the symptom is "Output token</span>
+                                      <span class="c"># limit reached … send continue" on any xhigh answer (§03)</span></pre>
   <p style="font-size:14px">The harness's headline trick is routing: it plans with heavy reasoning, then fans the plan out to sub-agents that execute with light reasoning. Two things to know when backing it with llama-server. First, llama-server ignores a per-request <code>reasoning_effort</code> field (same dialect issue as Pi above) — effort is fixed server-side via <code>--chat-template-kwargs</code>, so either run one server at <code>xhigh</code> (this guide's quality-first default), or run two llama-server instances (one <code>xhigh</code> planner on one port, one <code>low</code> executor on another) and register both as separate models in <code>settings.yaml</code> — the harness can then route between them. Second, its parallel sub-agents each hold their own context: with <code>--parallel 1</code> (this guide's recipes) requests queue rather than run concurrently, which is correct on a single 24 GB card — raising <code>--parallel</code> multiplies KV cache and walks you off the §02 cliff. For non-thinking "fast mode" runs, Qwen's official instruct sampling is temp 0.7 · top-p 0.8 · presence penalty 1.5.</p>
 
   <div class="callout"><span class="tag">One rule for all agents</span><p>Whatever the agent, its context and max-output settings must match the server's <code>-c</code> value — the client-side limits are what prevent the silent mid-generation cut-offs, because the model itself cannot budget its own tokens (§03).</p></div>
