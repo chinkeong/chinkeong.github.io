@@ -839,35 +839,30 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
                                 <span class="c">:: when the wait matters (§04 price list)</span></pre>
 
-  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (full native context / more speed, quality tied)</p>
-  <pre><span class="c">:: CHOOSE B when window or wall-clock matters: quality statistically tied with A</span>
-<span class="c">:: (§05's dark-horse callout has all six comparisons), measured FASTER everywhere</span>
-<span class="c">:: (decode 43.8 vs 39.9 base, prefill 1365 vs 1303, GSM8K 73 vs 63 t/s), and 2.1 GiB</span>
-<span class="c">:: smaller — which becomes window. Caveat: IQ-format decode was measured on CUDA;</span>
-<span class="c">:: verify on Vulkan/Metal backends before committing.</span>
-<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">unsloth/Qwen3.8-27B-GGUF</a> (UD-IQ4_XS, 14.25 GB)</span>
+  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (the daily default: vision + speed, quality tied)</p>
+  <pre><span class="c">:: CHOOSE B for everyday use: quality statistically tied with A (§05's dark-horse</span>
+<span class="c">:: callout has all six comparisons), measured FASTER everywhere (decode 43.8 vs 39.9</span>
+<span class="c">:: base, prefill 1365 vs 1303, GSM8K 73 vs 63 t/s), 2.1 GiB smaller — and this block</span>
+<span class="c">:: ships vision ON: screenshots to 4K detail for agent feedback loops (§11).</span>
+<span class="c">:: Caveat: IQ-format decode measured on CUDA; verify on Vulkan/Metal first.</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">unsloth/Qwen3.8-27B-GGUF</a> (UD-IQ4_XS, 14.25 GB) + the BF16 mmproj from either repo</span>
 llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
-  <span class="f">-c 196608</span>                     <span class="c">:: text-only, ~3 GiB slack — a 196k window (1.6x Choice A)</span>
-                                <span class="c">:: that stays fast with a real desktop and browser-based</span>
-                                <span class="c">:: agent UIs open. This is the number to ship.</span>
-<span class="c">:: FULL native context — headless / bare desktop ONLY:  -c 262144  holds all 262,144</span>
-<span class="c">:: resident text-only (≈ 23 GiB, ~1 GiB slack; shallow probes 65-70 t/s at pre-re-sweep</span>
-<span class="c">:: flags — tuned-MTP near-empty on the 196k config measures 79.3–79.9, §08 menu). But that</span>
-<span class="c">:: slack is a trap on a working desktop: measured live, a browser agent UI pushed the</span>
-<span class="c">:: Windows compositor to 3.6 GiB, spilled 3.5 GiB to shared memory, and decode fell</span>
-<span class="c">:: to ~26 t/s (§10's signature). Do not run 262144 with anything else on the GPU.</span>
-<span class="c">:: vision variant — the menu's shipped DEFAULT (row 1): add</span>
-<span class="c">::   --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024 --image-max-tokens 10580</span>
-<span class="c">:: at  -c 122880  (verified 71.3 t/s, ~3 GiB slack — §11's screenshot-loop config);</span>
-<span class="c">:: or  -c 147456  desktop-safe without the hi-res cap (or 180224 bare-desktop, measured resident at</span>
-<span class="c">:: 24,017 MiB / 66.6 t/s, pre-re-sweep flags). The rule all of this teaches: the projector costs ~0.9 GiB</span>
-<span class="c">:: ≈ 27k tokens of q8 window, and slack is what keeps you off §10's spill cliff —</span>
-<span class="c">:: budget for BOTH the vision you use and the desktop you actually run</span>
+  <span class="f">--mmproj mmproj-Qwen3.8-27B-BF16.gguf  --image-min-tokens 1024  --image-max-tokens 10580</span>
+                                <span class="c">:: min 1024 = grounding-accuracy floor; max 10580 = 4K-class</span>
+                                <span class="c">:: screenshot detail (token budgets per image: §11)</span>
+  <span class="f">-c 122880</span>                     <span class="c">:: verified live: 71.3 t/s, ~21.6 GiB total, ~3 GiB slack —</span>
+                                <span class="c">:: survives a real desktop and browser agent UIs (§10)</span>
   <span class="f">-ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: same tuning as A</span>
   --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
+  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"
+<span class="c">:: text-only variants — drop the --mmproj/--image-* line and the window grows:</span>
+<span class="c">::   -c 196608  desktop-safe 196k window (1.6x Choice A), still ~3 GiB slack</span>
+<span class="c">::   -c 262144  THE FULL NATIVE CONTEXT resident (≈23 GiB, ~1 GiB slack) — headless/bare</span>
+<span class="c">::   desktop ONLY: measured live, a browser UI pushed the compositor to 3.6 GiB, spilled</span>
+<span class="c">::   3.5 GiB, and decode fell to ~26 t/s (§10). The rule: the projector costs ~0.9 GiB</span>
+<span class="c">::   ≈ 27k tokens of q8 window — budget for BOTH the vision you use and the desktop you run</span></pre>
 
   <p>The whole class fits on one table — the decision menu the reference machine's launcher actually uses, every option carrying its measured expectation so nobody picks a trap by accident. Two scopes coexist: the shipped daily default is the vision-capable IQ4_XS row, while Q4_K_M remains the guide's measurement base and maximum-quality pick (§05's dark-horse callout).</p>
   <div class="tablebox">
