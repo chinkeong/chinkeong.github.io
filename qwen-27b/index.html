@@ -366,12 +366,21 @@
   <div class="tablebox">
   <table>
     <tr><th>Effort</th><th>Use for</th><th>Cost</th></tr>
-    <tr class="hl"><td><code>xhigh</code></td><td><b>the quality-first default this guide ships — 100% spec coverage and zero fatal defects in the judged runs; worth it whenever a shipped bug or missed requirement costs more than ~20 minutes of GPU time</b></td><td class="n">~4× medium's wall-clock, measured twice; raise max_tokens or thinking eats the budget</td></tr>
+    <tr class="hl"><td><code>xhigh</code></td><td>the quality-first default this guide ships — 100% spec coverage and zero fatal defects in the judged runs; worth it whenever a shipped bug or missed requirement costs more than ~20 minutes of GPU time</td><td class="n">~4× medium's wall-clock, measured twice; raise max_tokens or thinking eats the budget</td></tr>
     <tr><td><code>medium</code></td><td>the value setting — ~90%+ of the judged quality in a quarter of the wall-clock; interactive sessions where the wait matters</td><td class="n">minutes, not hours</td></tr>
     <tr><td><code>low</code> / <code>none</code></td><td>short, simple tasks only (it matched the others on easy math) — <b>measured shipping broken code on complex tasks, 2 of 2 runs</b></td><td class="n">not reliably cheaper on hard tasks, and the output may not run</td></tr>
   </table>
   </div>
-  <p>Set it server-side in llama.cpp: <code>--chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</code> (GUI front-ends typically expose it as a reasoning-effort setting). This guide ships <code>xhigh</code> in every recipe: a local card's tokens are free, so the only thing an effort downgrade buys is time — pay it knowingly, with the measured table above as the price list, and drop to <code>medium</code> per-session when you're waiting at the keyboard.</p>
+  <p>Set it server-side in llama.cpp: <code>--chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</code> (GUI front-ends typically expose it as a reasoning-effort setting). This guide ships <code>xhigh</code> in every recipe <em>whose context window can hold it</em> — because effort has a second price besides time: <strong>thinking tokens live inside the context window (§03's shared pool), so your window sets an effort ceiling.</strong> Measured appetite on one hard task: xhigh 73–76k thinking tokens (twice), medium 21–23k, low 17–30k. That maps onto windows directly:</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>Your <code>-c</code> window</th><th>Effort ceiling</th><th>Why</th></tr>
+    <tr><td class="n">≥ 100k (24 GB+, Spark, B70, 12 GB offload)</td><td><code>xhigh</code></td><td>the 73–76k measured appetite fits with room for prompt and answer</td></tr>
+    <tr><td class="n">~50–80k (Panther Lake at 65k)</td><td><code>medium</code></td><td>xhigh's appetite alone can overflow the window mid-thinking — a truncated xhigh run scores <em>worse</em> than a completed medium one (the §04 truncation effect, but fatal)</td></tr>
+    <tr><td class="n">&lt; 50k (16 GB cards, B50 at 49k)</td><td><code>medium</code></td><td>same physics, harder wall: on these cards the window cannot grow, so medium is not the budget option — it is the best quality the VRAM affords</td></tr>
+  </table>
+  </div>
+  <p>Within your ceiling, the trade is time: a local card's tokens are free, so pay wall-clock knowingly with the tables above as the price list, and drop one notch per-session when you're waiting at the keyboard.</p>
 </section>
 
 <section id="s05">
@@ -836,7 +845,9 @@ llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§06)</span>
   --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
+  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: NOT xhigh here: its measured</span>
+                                <span class="c">:: 73-76k thinking appetite overflows this 49k window mid-run (§04's</span>
+                                <span class="c">:: effort-ceiling table) — medium is the best quality 16 GB affords</span></pre>
 
   <p class="fno">12 GB class · RTX 3060 / RTX 5070 / Arc B580</p>
   <pre><span class="c">:: honest framing: this class runs the 27B poorly in every configuration — if the</span>
@@ -876,7 +887,8 @@ llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§06)</span>
   --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
+  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: NOT xhigh: 73-76k thinking</span>
+                                <span class="c">:: appetite vs a 49k window — see §04's effort-ceiling table</span></pre>
 
   <p class="fno">DGX Spark · GB10, 128 GB unified</p>
   <pre><span class="c">:: llama-server (ARM64 Linux build — no .exe here), same stack as every other card.</span>
@@ -913,7 +925,9 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§06);</span>
                                 <span class="c">:: unmeasured on iGPUs — drop the spec flags if it doesn't help</span>
   --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"
+  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: NOT xhigh: 73-76k thinking</span>
+<span class="c">:: appetite vs this 65k window (§04's effort-ceiling table) — and at 5-7 t/s an xhigh</span>
+<span class="c">:: answer is 3-4 hours anyway. Raise -c and effort together only if you accept both costs</span>
 <span class="c">:: possibly-faster vendor alternative: Intel's OpenVINO Model Server on the iGPU with</span>
 <span class="c">:: <a href="https://huggingface.co/OpenVINO/Qwen3.8-27B-int4-ov">OpenVINO/Qwen3.8-27B-int4-ov</a> (<a href="https://docs.openvino.ai/2025/model-server/ovms_docs_llm_quickstart.html">OVMS LLM quickstart</a>; OpenAI-compatible /v3 endpoint) —</span>
 <span class="c">:: Intel tunes that stack for its own silicon; benchmark both if the t/s matters to you</span></pre>
