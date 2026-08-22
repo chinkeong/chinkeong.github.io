@@ -916,9 +916,11 @@ llama-server -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <p class="fno">Intel Core Ultra iGPU · Arc B390-class</p>
   <pre><span class="c">:: llama-server.exe, VULKAN build (SYCL has known perf bugs on current Intel GPUs;</span>
 <span class="c">:: IPEX-LLM is archived). RAM is the spec that matters: the B390 tier (Core Ultra X9</span>
-<span class="c">:: 388H) mandates dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared; other</span>
-<span class="c">:: Core Ultra configs may ship slower RAM or one module (single channel = half the</span>
-<span class="c">:: bandwidth) — the ~5-7 t/s scales with YOUR bandwidth via §02's formula — the</span>
+<span class="c">:: 388H) ships only with dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared.</span>
+<span class="c">:: Intel's formal Arc-branding floor for B390/B370 is 7,467 MT/s — slower RAM relabels</span>
+<span class="c">:: the iGPU as generic "Intel Graphics" — and other Core Ultra configs may ship slower</span>
+<span class="c">:: RAM or one module (single channel = half the bandwidth): the ~5-7 t/s scales with</span>
+<span class="c">:: YOUR bandwidth via §02's formula — the</span>
 <span class="c">:: model fits easily, it's just slow (~5-7 t/s). Even here the recipe ships xhigh for</span>
 <span class="c">:: max quality — but know the price: an xhigh coding answer can run 3-4 HOURS at this</span>
 <span class="c">:: speed. Drop to medium/low per-session when you need the machine to talk back today.</span>
@@ -928,8 +930,9 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <span class="f">-c 65536  -ngl 99</span>             <span class="c">:: interactive default, NOT a memory limit: an iGPU borrows</span>
                                 <span class="c">:: system RAM, ~57% by default. To raise it: Intel Graphics</span>
                                 <span class="c">:: Software ≥25.26.1602.2 with driver ≥32.0.101.6974 → the GPU's</span>
-                                <span class="c">:: General tab → "Shared GPU Memory Override" slider (to ~87%,</span>
-                                <span class="c">:: RAM-dependent) → reboot. Needs ≥10 GB RAM, select Core Ultra</span>
+                                <span class="c">:: General tab → "Shared GPU Memory Override" slider (~87%; up to</span>
+                                <span class="c">:: ~93% on B390/B370 with current Arc Pro drivers, RAM-dependent)</span>
+                                <span class="c">:: → reboot. Needs ≥10 GB RAM, select Core Ultra</span>
                                 <span class="c">:: systems. With 96 GB RAM even -c 262144 fits — raise it for</span>
                                 <span class="c">:: xhigh runs (§04 effort table); the costs are slower prefill</span>
                                 <span class="c">:: and starving the CPU/OS of working RAM (keep some for both)</span>
