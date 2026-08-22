@@ -476,6 +476,7 @@
     <tr><td>Realistic code, temp 0</td><td class="n">0.81</td><td class="n">57.9 t/s</td><td>the tuned-flags benchmark number</td></tr>
     <tr class="hl"><td><b>Production coding, temp 1.0</b></td><td class="n">—</td><td class="n"><b>55–61 t/s</b></td><td><b>what a normal session feels like</b></td></tr>
     <tr><td>Long xhigh run, sustained over 73k tokens</td><td class="n">—</td><td class="n">48.8 t/s</td><td>KV deepens, thinking drafts worse</td></tr>
+    <tr><td>Deep context — a 27k-token prompt already loaded (IQ4_XS)</td><td class="n">0.82</td><td class="n">39.3 t/s</td><td>acceptance steady; the cost is per-token KV reads growing with depth — expect this band in agent sessions, with nothing wrong</td></tr>
     <tr><td>Floor — speculation off</td><td class="n">—</td><td class="n">39.7 t/s</td><td>pure bandwidth: 936 GB/s ÷ 16.5 GB × 0.7</td></tr>
   </table>
   </div>
@@ -856,6 +857,24 @@ llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: same tuning as A</span>
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
+
+  <p>The whole class fits on one screen — this is the launcher menu the reference machine actually uses, every option carrying its measured expectation so nobody picks a trap by accident. Turning your measurements into a menu like this is the pattern worth copying:</p>
+  <pre><span class="c">:: 24-32 GB class - the measured menu (RTX 3090, 2026-08-22; the top rows are A/B above)</span>
+[1] UD-IQ4_XS   text-only  -c 196608   ~55-70 t/s   desktop-safe 196k window  (DEFAULT)
+[2] UD-IQ4_XS   text-only  -c 262144   full native   HEADLESS ONLY - measured ~26 t/s
+                                                     the moment anything else touches the GPU
+[3] UD-IQ4_XS   + vision   -c 147456   ~55-70 t/s   desktop-safe with the projector
+[4] Q4_K_M      + vision   -c 122880   ~55-65 t/s   quality champion - the reference config
+[5] UD-Q4_K_XL  text-only  -c 122880   ~55-65 t/s   quality tied, 1 GiB bigger:
+                                                     the extra size buys nothing on 24 GB
+[6] UD-Q4_K_M   + vision   -c 122880   ~55-65 t/s   measured worse than plain Q4_K_M (PPL +1.8%)
+[7] DFlash2 external drafter           ~46 t/s      loses to the built-in MTP on real code
+[8] NVFP4 HIGH                         ~48-54 t/s   Ampere dequant fallback - slower AND lower quality
+
+t/s figures are short-context. Decode falls with DEPTH, not just spill: measured on [1],
+79.9 t/s near-empty -&gt; 39.3 t/s with a 27,321-token prompt loaded, draft acceptance
+steady at 0.82 - the cost is per-token KV reads. Agent sessions carrying 10-30k of
+context should expect the 40-60 band even when nothing is wrong.</pre>
 
   <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
   <pre><span class="c">:: best daily experience: 3-bit fully resident (25-50 t/s) + free MTP speed.</span>
