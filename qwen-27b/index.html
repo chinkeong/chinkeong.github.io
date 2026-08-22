@@ -325,7 +325,7 @@
     <li><strong>One token pool.</strong> <code>prompt + thinking + output ≤ context</code>. The model has no awareness of its limits and cannot budget its own thinking; limits are enforced by your config only.</li>
     <li><strong>Cut-offs are client-side.</strong> The server generates until told to stop. Truncations come from the client's <code>max_tokens</code>, its request timeout, or Ctrl+C — and with OpenAI-compatible APIs a cut generation cannot seamlessly resume. Size <code>max_tokens</code> and the client timeout so the whole run fits one response.</li>
     <li><strong>One slot, quantized KV.</strong> <code>--parallel 1</code> (some UIs default to 2 = double KV) and <code>-ctk q8_0 -ctv q8_0</code> (halves KV, negligible loss — but never q4_0 for the KV cache; why: §02).</li>
-    <li><strong><code>--load-mode none</code> — harmless everywhere, essential on RAM-tight machines; every §08 recipe ships it by default</strong> (replaces the deprecated <code>--no-mmap</code>). Without it the whole GGUF stays cached in system RAM even after the weights are in VRAM — ~15&nbsp;GB freed for the Q4 file, at the cost of a slower model load.</li>
+    <li><strong><code>--load-mode none</code> — harmless everywhere, essential on RAM-tight machines; every §08 recipe ships it by default</strong> (replaces the deprecated <code>--no-mmap</code>). Without it the whole GGUF stays cached in system RAM even after the weights are in VRAM — ~15&nbsp;GB freed for the Q4 file. The cost is a slower model load: measured <span class="num">~10–30</span>&nbsp;s to first health check across tonight's dozens of restarts (SSD-dependent).</li>
     <li><strong>All layers on GPU or accept the cliff.</strong> Partial offload speed is set by CPU RAM bandwidth, not by the GPU — a 5080 and a 4060&nbsp;Ti offload at nearly the same ~8–12 t/s (assuming two sticks of DDR5 in dual channel, ~90&nbsp;GB/s; a single stick halves the bandwidth and the t/s with it). And this is a dense model: the MoE escape hatch of parking expert tensors on CPU (<code>-ot</code>) has nothing to target here, so every offloaded layer sits on the critical path of every token. (Two ways this rule silently breaks: §10.)</li>
   </ul>
   <figure>
@@ -381,7 +381,7 @@
     <tr><td class="n">unified-memory iGPUs (any window)</td><td><code>xhigh</code> <em>if you raise <code>-c</code> and accept the hours</em></td><td>an iGPU's window is borrowed system RAM, not a wall — Windows grants ~57% of RAM by default and Intel's driver can override to ~87% (§08 recipe) — so its effort ceiling is patience (~3–4 h per xhigh answer at 5–7 t/s), not memory</td></tr>
   </table>
   </div>
-  <p>Within your ceiling, the trade is time: a local card's tokens are free, so pay wall-clock knowingly with the tables above as the price list, and drop one notch per-session when you're waiting at the keyboard.</p>
+  <p>Within your ceiling, the trade is time: a local card's tokens are free, so pay wall-clock knowingly with the tables above as the price list, and drop one notch per-session when you're waiting at the keyboard. "Free" holds for electricity too — the card draws a measured ~<span class="num">310</span>&nbsp;W under load, so even the priciest measured answer (xhigh, ~26&nbsp;min) costs ≈<span class="num">0.13</span>&nbsp;kWh — a few cents; a medium answer is ≈<span class="num">0.03</span>&nbsp;kWh. The wall-clock is the only bill that matters.</p>
 </section>
 
 <section id="s05">
@@ -796,7 +796,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
     <tr><td>Intel Arc Pro B50</td><td class="n">16 GB</td><td class="n">224 GB/s</td><td>UD-Q3_K_XL resident or OpenVINO int4 (tight: ~15 GiB weights on 16 GB — small context only) — Q4 does not fit</td><td class="n">~8–12 t/s</td><td class="n">~2.5–3.5 h†</td></tr>
     <tr><td>Intel Arc B580</td><td class="n">12 GB</td><td class="n">456 GB/s</td><td>even 3-bit doesn't fit — heavy offload (Vulkan) or 2-bit; better served by a 14B model</td><td class="n">~6–8 t/s</td><td class="n">~4–4.5 h</td></tr>
     <tr><td>DGX Spark (GB10)</td><td class="n">128 GB unified</td><td class="n">273 GB/s</td><td>Q4_K_M on llama-server (§08 recipe, ~11–12 t/s) · NVFP4/vLLM for max speed · Q8_0 for reference quality</td><td class="n">~10–15 t/s</td><td class="n">~2–2.8 h</td></tr>
-    <tr><td>Intel Arc B390-class iGPU (Core Ultra)</td><td class="n">shared, ≤96 GB</td><td class="n">153.6 GB/s (LPDDR5X-9600, 2ch)</td><td>Vulkan Q4_K_M on llama-server (§08 recipe) or OpenVINO int4; effort ≤ medium</td><td class="n">~5–7 t/s</td><td class="n">~4.5–5.5 h</td></tr>
+    <tr><td>Intel Arc B390-class iGPU (Core Ultra)</td><td class="n">shared, ≤96 GB</td><td class="n">153.6 GB/s<br><span style="color:var(--muted); font-size:12px">(LPDDR5X-9600, 2ch)</span></td><td>Vulkan Q4_K_M on llama-server (§08 recipe) or OpenVINO int4; effort ≤ medium</td><td class="n">~5–7 t/s</td><td class="n">~4.5–5.5 h</td></tr>
   </table>
   </div>
   <p>† 3-bit rows trade quality for that speed — a different model for benchmark purposes (§05). They also trade window: on 16&nbsp;GiB the resident 3-bit file caps context near ~49k by §02's budget arithmetic, so a single &gt;100k run must either checkpoint across windows or take the offload path. The pattern to internalize: <strong>capacity decides the strategy; bandwidth decides the wait.</strong> A 5080's 960&nbsp;GB/s is worthless for this model the moment one layer lands on the CPU.</p>
@@ -1084,6 +1084,23 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   </table>
   </div>
   <div class="callout"><span class="tag">High CPU alone proves nothing</span><p>llama.cpp worker threads busy-spin while waiting on the GPU, so ~50–70% CPU during perfectly healthy all-GPU decode is normal on a 20-thread machine. The trouble signal is the combination — high CPU <em>and</em> low t/s. Either failure above shows both.</p></div>
+
+  <p class="fno" style="margin-top:24px">The commands that actually work on Windows</p>
+  <p>One tooling trap cost this guide's own debugging session real time: on Windows, <code>nvidia-smi</code>'s per-process listing shows <code>[N/A]</code> or "Insufficient Permissions" for memory, and its <code>memory.used</code> only counts dedicated VRAM — <strong>it cannot see the spill</strong>. The tools that exposed both failure modes:</p>
+  <pre><span class="c"># totals + who's on the GPU (dedicated only - spill NOT visible here):</span>
+nvidia-smi --query-gpu=memory.used,memory.total,utilization.gpu --format=csv
+
+<span class="c"># the spill itself - total shared GPU memory in use (PowerShell):</span>
+(Get-Counter '\GPU Process Memory(*)\Shared Usage').CounterSamples |
+  Measure-Object CookedValue -Sum   <span class="c"># divide Sum by 1MB; growing = spilling</span>
+
+<span class="c"># per-process dedicated commitment - this is what caught the compositor (dwm)</span>
+<span class="c"># holding 3.6 GiB during a browser-UI session:</span>
+(Get-Counter '\GPU Process Memory(*)\Dedicated Usage').CounterSamples |
+  Where-Object { $_.CookedValue -gt 200MB }
+
+<span class="c"># or simply Task Manager - Performance - GPU: the dedicated/shared split and,</span>
+<span class="c"># under Performance - Memory, your RAM speed and "Slots used" (the §07 channel check)</span></pre>
 </section>
 
 <section id="vision">
