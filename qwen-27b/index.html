@@ -827,10 +827,13 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: re-swept optimum on</span>
                                 <span class="c">:: the 3090 (57.9 t/s on real code; the old n-max 10 / p-min 0.5</span>
                                 <span class="c">:: fell to 48.3 there) — still per-card: sweep n-max 2-12 (§06)</span>
-<span class="c">:: vision: add --mmproj when you need it — the ~0.9 GB BF16 projector + this Q4_K_M</span>
-<span class="c">:: file at -c 122880 is exactly the measured ~23.7 GiB reference config: it fits, but</span>
-<span class="c">:: BARE-DESKTOP ONLY (~0.3 GiB slack) — §10 measured this very config spilling ~1.9 GB</span>
-<span class="c">:: with browsers open and falling to 20–35 t/s; with a desktop, drop -c or go text-only.</span>
+<span class="c">:: vision: add  --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024</span>
+<span class="c">:: --image-max-tokens 10580  when you need it (min 1024 = grounding-accuracy floor;</span>
+<span class="c">:: max 10580 = 4K-class screenshot detail — §11 has the token budgets). The ~0.9 GB</span>
+<span class="c">:: projector + this Q4_K_M file at -c 122880 is exactly the measured ~23.7 GiB</span>
+<span class="c">:: reference config: it fits, but BARE-DESKTOP ONLY (~0.3 GiB slack) — §10 measured</span>
+<span class="c">:: this very config spilling ~1.9 GB with browsers open and falling to 20–35 t/s;</span>
+<span class="c">:: with a desktop, drop -c or go text-only. Vision + desktop-safe = Choice B below.</span>
 <span class="c">:: On the 1 GiB-larger UD-Q4_K_XL, projector + full context busts 24 GB — drop to -c 98304</span>
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
@@ -853,8 +856,10 @@ llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: slack is a trap on a working desktop: measured live, a browser agent UI pushed the</span>
 <span class="c">:: Windows compositor to 3.6 GiB, spilled 3.5 GiB to shared memory, and decode fell</span>
 <span class="c">:: to ~26 t/s (§10's signature). Do not run 262144 with anything else on the GPU.</span>
-<span class="c">:: vision variant: add  --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024</span>
-<span class="c">:: and drop to  -c 147456  desktop-safe (or 180224 bare-desktop, measured resident at</span>
+<span class="c">:: vision variant — the menu's shipped DEFAULT (row 1): add</span>
+<span class="c">::   --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024 --image-max-tokens 10580</span>
+<span class="c">:: at  -c 122880  (verified 71.3 t/s, ~3 GiB slack — §11's screenshot-loop config);</span>
+<span class="c">:: or  -c 147456  desktop-safe without the hi-res cap (or 180224 bare-desktop, measured resident at</span>
 <span class="c">:: 24,017 MiB / 66.6 t/s, pre-re-sweep flags). The rule all of this teaches: the projector costs ~0.9 GiB</span>
 <span class="c">:: ≈ 27k tokens of q8 window, and slack is what keeps you off §10's spill cliff —</span>
 <span class="c">:: budget for BOTH the vision you use and the desktop you actually run</span>
