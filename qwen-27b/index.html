@@ -161,7 +161,7 @@
     <li><strong>Hybrid attention.</strong> Most of its 64 layers use Gated DeltaNet, a linear-attention design whose memory use stays constant no matter how long the context gets; only 16 of the 64 are standard attention layers (and those use GQA with 4 KV heads). The result: KV costs just 64&nbsp;KiB per token at fp16 — 4.0&nbsp;GiB at 122k context with a Q8 cache, 7.5&nbsp;GiB unquantized — where a dense 27B storing KV in every layer would need exactly 4× as much. Huge contexts are cheap in memory, and speed falls off gently as they fill rather than collapsing.</li>
     <li><strong>Native 262,144 context.</strong> No YaRN or rope tricks needed below that; the limit you'll actually hit is VRAM, not the model. (The model card lists extension to 1M via YaRN — out of scope here: the KV cache alone would run ~34&nbsp;GiB even at q8_0.)</li>
     <li><strong>Thinking always on, defaulting to <code>xhigh</code>.</strong> Reasoning tokens share the context window with your prompt and output — a 100k-token thinking run needs a &gt;100k window (§04).</li>
-    <li><strong>Vision is optional at serve time.</strong> The BF16 mmproj projector costs ~0.9&nbsp;GB of VRAM; drop it for text-only work.</li>
+    <li><strong>Vision is optional at serve time — and it costs context.</strong> The BF16 mmproj projector takes ~0.9&nbsp;GB of VRAM, which at a Q8 cache is ~<span class="num">27k</span> tokens of window (§02's arithmetic). Serving text-only converts vision you aren't using directly into context: it's what lets UD-IQ4_XS hold the <em>full native 262,144</em> on a 24&nbsp;GB card (§08 Choice B prints both variants).</li>
     <li><strong>Official thinking-mode sampling: temp 1.0 · top-p 0.95 · top-k 20 · min-p 0.</strong> Clients that silently send temperature 0 (aider does) cause repetition loops — override them.</li>
   </ul>
   <figure>
@@ -830,7 +830,7 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
                                 <span class="c">:: when the wait matters (§04 price list)</span></pre>
 
-  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (more context, more speed, quality tied)</p>
+  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (full native context / more speed, quality tied)</p>
   <pre><span class="c">:: CHOOSE B when window or wall-clock matters: quality statistically tied with A</span>
 <span class="c">:: (§05's dark-horse callout has all six comparisons), measured FASTER everywhere</span>
 <span class="c">:: (decode 43.8 vs 39.9 base, prefill 1365 vs 1303, GSM8K 73 vs 63 t/s), and 2.1 GiB</span>
@@ -838,10 +838,15 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: verify on Vulkan/Metal backends before committing.</span>
 <span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">unsloth/Qwen3.8-27B-GGUF</a> (UD-IQ4_XS, 14.25 GB)</span>
 llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
-  <span class="f">-c 180224</span>                     <span class="c">:: measured fully resident WITH the vision projector</span>
-                                <span class="c">:: (24,017 MiB, ~560 MiB slack, 66.6 t/s). Text-only, the FULL</span>
-                                <span class="c">:: native -c 262144 fits resident (13.3 weights + 8.5 KV +</span>
-                                <span class="c">:: buffers ≈ 23 GiB) — the job that used to need a 3-bit file</span>
+  <span class="f">-c 262144</span>                     <span class="c">:: THE FULL NATIVE CONTEXT, fully resident, on a 24 GB</span>
+                                <span class="c">:: card — text-only: 13.3 GiB weights + 8.5 GiB q8 KV +</span>
+                                <span class="c">:: buffers ≈ 23 GiB. The job that used to need a 3-bit file.</span>
+                                <span class="c">:: Shallow probes measured 65-70 t/s at every size to native max</span>
+<span class="c">:: vision variant: add  --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024</span>
+<span class="c">:: and drop to  -c 180224  — measured fully resident with the projector loaded</span>
+<span class="c">:: (24,017 MiB, ~560 MiB slack, 66.6 t/s). The general rule this teaches: the BF16</span>
+<span class="c">:: projector costs ~0.9 GiB ≈ 27k tokens of q8 window — on EVERY card class, a</span>
+<span class="c">:: text-only server buys context. Serve two ways; don't pay for vision you aren't using</span>
   <span class="f">-ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: same tuning as A</span>
