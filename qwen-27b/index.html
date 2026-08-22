@@ -1133,7 +1133,7 @@ chrome --headless --disable-gpu --window-size=2560,1440 ^
   <div class="tablebox">
   <table>
     <tr><th>Agent</th><th>Vision headless</th><th>How — and the trap</th></tr>
-    <tr><td>OpenCode</td><td><b>✘ headless <code>run</code> fails</b></td><td>its file tools read the PNG as bytes — plain reference and <code>@</code>-attach both tested; the model never receives an image. Scoped verdict: still excellent for text sessions, wrong carrier for scripted vision loops (interactive-TUI attachment untested and versions move fast — re-test on updates)</td></tr>
+    <tr><td>OpenCode</td><td>✔ with config</td><td><strong>a bare model entry silently reads the PNG as bytes</strong> (tested — the model honestly saw nothing). Declare <code>"attachment": true</code> and <code>"modalities": {"input": ["text","image"]}</code> on the model (the config below includes them), and headless <code>opencode run "@shot.png …"</code> passes — verified on v1.18.21 after tracing <a href="https://github.com/anomalyco/opencode/issues/15728">issue #15728</a></td></tr>
     <tr><td>aider</td><td>✔ passes</td><td>image path as a plain file argument (<code>aider … --message "…" shot.png</code>); requires <code>supports_vision: true</code> in the model metadata file</td></tr>
     <tr><td>Qwen Code</td><td>✔ with config</td><td><strong>env-vars-only setup silently drops images.</strong> Declare the model in <code>settings.json</code> <code>modelProviders</code> with <code>capabilities: {vision: true}</code>, then <code>qwen -p "@shot.png …"</code> works</td></tr>
     <tr><td>Pi</td><td>✔ passes</td><td>image path as a positional argument after <code>-p</code>; the provider's models.json must list <code>"image"</code> in <code>input</code></td></tr>
@@ -1185,13 +1185,17 @@ chrome --headless --disable-gpu --window-size=2560,1440 ^
       "models": {
         "qwen/qwen3.8-27b": {
           "name": "Qwen3.8 27B (local)",
+          "attachment": true,
+          "modalities": { "input": ["text", "image"], "output": ["text"] },
           "limit": { "context": 122880, "output": 106496 }
         }
       }
     }
   }
 }
-<span class="c"># run:  opencode --model llamacpp/qwen/qwen3.8-27b   (or pick via /models)</span></pre>
+<span class="c"># run:  opencode --model llamacpp/qwen/qwen3.8-27b   (or pick via /models)</span>
+<span class="c"># the attachment/modalities pair is REQUIRED for images: without it OpenCode</span>
+<span class="c"># silently reads a referenced PNG as text bytes (§11's vision table)</span></pre>
   <p style="font-size:14px">Two gotchas from the docs: <code>baseURL</code> must sit inside <code>options</code>, not at the provider root, and the provider id must be a custom name ("llamacpp", "local") — reusing a built-in provider name breaks resolution. (<a href="https://njannasch.dev/snippets/opencode-llamacpp-config/">llama.cpp example</a>)</p>
 
   <h2 id="appendix-aider" style="margin-top:36px; scroll-margin-top:24px"><a href="https://aider.chat">aider</a> · the git-native pair-programmer</h2>
