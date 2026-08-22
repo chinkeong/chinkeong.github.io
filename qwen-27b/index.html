@@ -805,15 +805,14 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   <p class="fno">08</p>
   <h2>Recipes per card class</h2>
 
-  <p>One recipe per class — the single best configuration we can defend, not a menu. Trade-offs and alternatives live in §05/§07; here you just copy the block for your card.</p>
+  <p>One recipe per class — the single best configuration we can defend, not a menu. The 24–32 GB class is the one exception: two measured winners exist there, split by what you value, so both are printed with the choosing rule up front. Trade-offs live in §05/§07; here you just copy the block for your card.</p>
 
-  <p class="fno" style="margin-top:24px">NVIDIA 24–32 GB · 3090 / 4090 / 5090</p>
-  <pre><span class="c">:: the measured reference recipe — full fidelity, MTP speculation at the re-swept</span>
-<span class="c">:: everyday optimum (57.9 t/s on code on the 3090; speedup is content-dependent — §06)</span>
-<span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">lmstudio-community/Qwen3.8-27B-GGUF</a> (Q4_K_M, 16.5 GB). Settled by measurement</span>
-<span class="c">:: 2026-08-22: n=200 GSM8K tied with UD-Q4_K_XL (94.0% vs 94.5%, within noise), wikitext</span>
-<span class="c">:: perplexity 2.3% in Q4_K_M's favor, and its spare GiB buys ~30k more resident context</span>
-<span class="c">:: or the vision projector (§05, §09). UD-Q4_K_XL is the fine alternative if VRAM is spare</span>
+  <p class="fno" style="margin-top:24px">NVIDIA 24–32 GB · 3090 / 4090 / 5090 — Choice A · Q4_K_M (maximum measured quality)</p>
+  <pre><span class="c">:: CHOOSE A when quality at ~122k context is everything: both quality metrics lean a</span>
+<span class="c">:: whisker its way (perplexity 6.535 vs IQ4_XS 6.596; GSM8K 94.0% vs 93.0% — each</span>
+<span class="c">:: within noise, but two independent metrics agreeing), and it is the file every</span>
+<span class="c">:: number in this guide was measured on. CHOOSE B below for more context or speed.</span>
+<span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">lmstudio-community/Qwen3.8-27B-GGUF</a> (Q4_K_M, 16.5 GB)</span>
 <span class="c">:: before first run: set "Prefer No Sysmem Fallback" (NVIDIA Control Panel) and never</span>
 <span class="c">:: write -ngl 64 — both explained in §10</span>
 llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
@@ -827,13 +826,27 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: vision: add --mmproj when you need it — the ~0.9 GB BF16 projector + this Q4_K_M</span>
 <span class="c">:: file at -c 122880 is exactly the measured ~23.7 GiB reference config: it fits. On</span>
 <span class="c">:: the 1 GiB-larger UD-Q4_K_XL, projector + full context busts 24 GB — drop to -c 98304</span>
-<span class="c">:: context-hungry or full-256k jobs: UD-IQ4_XS (14.25 GB) — Q4-class quality (§05's</span>
-<span class="c">:: dark-horse callout), measured resident to ~180-190k with mmproj, and text-only it</span>
-<span class="c">:: holds the FULL native -c 262144 resident (13.3 weights + 8.5 KV + buffers ≈ 23 GiB).</span>
-<span class="c">:: 3-bit second files (UD-Q3_K_XL / UD-IQ3_XXS) are no longer needed for this on 24 GB</span>
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
                                 <span class="c">:: when the wait matters (§04 price list)</span></pre>
+
+  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (more context, more speed, quality tied)</p>
+  <pre><span class="c">:: CHOOSE B when window or wall-clock matters: quality statistically tied with A</span>
+<span class="c">:: (§05's dark-horse callout has all six comparisons), measured FASTER everywhere</span>
+<span class="c">:: (decode 43.8 vs 39.9 base, prefill 1365 vs 1303, GSM8K 73 vs 63 t/s), and 2.1 GiB</span>
+<span class="c">:: smaller — which becomes window. Caveat: IQ-format decode was measured on CUDA;</span>
+<span class="c">:: verify on Vulkan/Metal backends before committing.</span>
+<span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">unsloth/Qwen3.8-27B-GGUF</a> (UD-IQ4_XS, 14.25 GB)</span>
+llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
+  <span class="f">-c 180224</span>                     <span class="c">:: measured fully resident WITH the vision projector</span>
+                                <span class="c">:: (24,017 MiB, ~560 MiB slack, 66.6 t/s). Text-only, the FULL</span>
+                                <span class="c">:: native -c 262144 fits resident (13.3 weights + 8.5 KV +</span>
+                                <span class="c">:: buffers ≈ 23 GiB) — the job that used to need a 3-bit file</span>
+  <span class="f">-ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0</span>
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: same tuning as A</span>
+  --jinja --port 1234
+  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
 
   <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
   <pre><span class="c">:: best daily experience: 3-bit fully resident (25-50 t/s) + free MTP speed.</span>
