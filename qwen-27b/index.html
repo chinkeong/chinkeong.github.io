@@ -143,7 +143,7 @@
 <header>
   <p class="eyebrow">Field guide · Local inference</p>
   <h1>Qwen 3.8 27B Optimal settings</h1>
-  <p class="lede">How to run Qwen3.8-27B well on whatever you have — RTX 30/40/50 series, DGX Spark (GB10), Intel Arc Pro B50/B70, or a Panther Lake iGPU. Grounded in measured runs on an RTX 3090 and fact-checked against published specs and community benchmarks.</p>
+  <p class="lede">How to run Qwen3.8-27B well on whatever you have — RTX 30/40/50 series, DGX Spark (GB10), Intel Arc Pro B50/B70, or an Intel Arc B390-class iGPU. Grounded in measured runs on an RTX 3090 and fact-checked against published specs and community benchmarks.</p>
 </header>
 
 <div class="specs">
@@ -376,7 +376,7 @@
   <table>
     <tr><th>Your <code>-c</code> window</th><th>Effort ceiling</th><th>Why</th></tr>
     <tr><td class="n">≥ 100k (24 GB+, Spark, B70, 12 GB offload)</td><td><code>xhigh</code></td><td>the 73–76k measured appetite fits with room for prompt and answer</td></tr>
-    <tr><td class="n">~50–80k (Panther Lake at 65k)</td><td><code>medium</code></td><td>xhigh's appetite alone can overflow the window mid-thinking — a truncated xhigh run scores <em>worse</em> than a completed medium one (the §04 truncation effect, but fatal)</td></tr>
+    <tr><td class="n">~50–80k (the Arc B390-class iGPU at 65k)</td><td><code>medium</code></td><td>xhigh's appetite alone can overflow the window mid-thinking — a truncated xhigh run scores <em>worse</em> than a completed medium one (the §04 truncation effect, but fatal)</td></tr>
     <tr><td class="n">&lt; 50k (16 GB cards, B50 at 49k)</td><td><code>medium</code></td><td>same physics, harder wall: on these cards the window cannot grow, so medium is not the budget option — it is the best quality the VRAM affords</td></tr>
   </table>
   </div>
@@ -738,7 +738,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   <h2>The hardware matrix</h2>
   <p>Estimated wall-clock time for the reference benchmark run (~2k prompt + ~100k thinking/output), with each card using the settings that keep quality highest. The 3090 row is one measured data point — from a single machine and workload, so treat it as an anchor, not a promise; the other rows follow the bandwidth calculation from §02 at ~0.7 efficiency (less on Intel's stack). All times exclude speculative decoding (§06), which varies per system but can help a lot: on the reference 3090, MTP at the re-swept everyday flags (n-max 4, p-min 0.75) measured 57.9 t/s on real code, and the temp-1.0 xhigh sweep sustained 48.8 t/s over 73k thinking tokens — putting the benchmark run at roughly 34 minutes, down from 45 — while the verbatim-copy demonstration marks the content ceiling at 119.8 t/s (all dated in §06). Treat speculation as moving a card up this chart — furthest on predictable content — not as a new baseline.</p>
   <figure>
-    <svg viewBox="0 0 640 340" role="img" aria-label="Bar chart of estimated time for a 100k-token run: RTX 5090 about 25 minutes, RTX 4090 about 40, RTX 3090 45 measured, Arc B70 about 1.4 hours, DGX Spark about 2.2, RTX 5080 offloading about 2.8, Arc B50 about 3, Panther Lake iGPU about 5.2 hours">
+    <svg viewBox="0 0 640 340" role="img" aria-label="Bar chart of estimated time for a 100k-token run: RTX 5090 about 25 minutes, RTX 4090 about 40, RTX 3090 45 measured, Arc B70 about 1.4 hours, DGX Spark about 2.2, RTX 5080 offloading about 2.8, Arc B50 about 3, Arc B390-class iGPU about 5.2 hours">
       <g stroke="var(--line)" stroke-width="1">
         <line x1="215" y1="4" x2="215" y2="312"/>
         <line x1="304" y1="4" x2="304" y2="312"/>
@@ -753,7 +753,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
       <text class="axis-t" x="118" y="177" text-anchor="end">DGX Spark GB10</text>
       <text class="axis-t" x="118" y="215" text-anchor="end">RTX 16GB class</text>
       <text class="axis-t" x="118" y="253" text-anchor="end">Arc B50 16GB</text>
-      <text class="axis-t" x="118" y="291" text-anchor="end">PTL iGPU B390</text>
+      <text class="axis-t" x="118" y="291" text-anchor="end">Arc B390 iGPU</text>
       <rect x="126" y="8"   width="37"  height="26" rx="3" fill="var(--accent)"/>
       <rect x="126" y="46"  width="60"  height="26" rx="3" fill="var(--accent)"/>
       <rect x="126" y="84"  width="67"  height="26" rx="3" fill="var(--accent)"/>
@@ -791,7 +791,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
     <tr><td>Intel Arc Pro B50</td><td class="n">16 GB</td><td class="n">224 GB/s</td><td>UD-Q3_K_XL resident or OpenVINO int4 (tight: ~15 GiB weights on 16 GB — small context only) — Q4 does not fit</td><td class="n">~8–12 t/s</td><td class="n">~2.5–3.5 h†</td></tr>
     <tr><td>Intel Arc B580</td><td class="n">12 GB</td><td class="n">456 GB/s</td><td>even 3-bit doesn't fit — heavy offload (Vulkan) or 2-bit; better served by a 14B model</td><td class="n">~6–8 t/s</td><td class="n">~4–4.5 h</td></tr>
     <tr><td>DGX Spark (GB10)</td><td class="n">128 GB unified</td><td class="n">273 GB/s</td><td>Q4_K_M on llama-server (§08 recipe, ~11–12 t/s) · NVFP4/vLLM for max speed · Q8_0 for reference quality</td><td class="n">~10–15 t/s</td><td class="n">~2–2.8 h</td></tr>
-    <tr><td>Panther Lake iGPU (B390)</td><td class="n">shared, ≤96 GB</td><td class="n">153.6 GB/s (LPDDR5X-9600, 2ch)</td><td>Vulkan Q4_K_M on llama-server (§08 recipe) or OpenVINO int4; effort ≤ medium</td><td class="n">~5–7 t/s</td><td class="n">~4.5–5.5 h</td></tr>
+    <tr><td>Intel Arc B390-class iGPU (Core Ultra)</td><td class="n">shared, ≤96 GB</td><td class="n">153.6 GB/s (LPDDR5X-9600, 2ch)</td><td>Vulkan Q4_K_M on llama-server (§08 recipe) or OpenVINO int4; effort ≤ medium</td><td class="n">~5–7 t/s</td><td class="n">~4.5–5.5 h</td></tr>
   </table>
   </div>
   <p>† 3-bit rows trade quality for that speed — a different model for benchmark purposes (§05). They also trade window: on 16&nbsp;GiB the resident 3-bit file caps context near ~49k by §02's budget arithmetic, so a single &gt;100k run must either checkpoint across windows or take the offload path. The pattern to internalize: <strong>capacity decides the strategy; bandwidth decides the wait.</strong> A 5080's 960&nbsp;GB/s is worthless for this model the moment one layer lands on the CPU.</p>
@@ -908,7 +908,7 @@ llama-server -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: 92-97% accuracy) — vllm serve <a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4">unsloth/Qwen3.8-27B-NVFP4</a> --max-model-len 131072.</span>
 <span class="c">:: llama.cpp cannot load that release (FP8 lm_head); switching stacks buys the FP4 path</span></pre>
 
-  <p class="fno">Intel Panther Lake iGPU · Arc B390-class</p>
+  <p class="fno">Intel Core Ultra iGPU · Arc B390-class</p>
   <pre><span class="c">:: llama-server.exe, VULKAN build (SYCL has known perf bugs on current Intel GPUs;</span>
 <span class="c">:: IPEX-LLM is archived). RAM is the spec that matters: the B390 tier (Core Ultra X9</span>
 <span class="c">:: 388H) mandates dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared — the</span>
@@ -1129,7 +1129,7 @@ llm-pi-ai:
     <li>Arc Pro B70 32 GB, 256-bit, 608 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/intel-arc-pro-b70-and-arc-pro-b65-gpus-bring-32gb-of-ram-to-ai-and-pro-apps-bigger-battlemage-finally-arrives-but-its-not-for-gaming">Tom's Hardware</a>, <a href="https://www.pugetsystems.com/labs/articles/intel-arc-pro-b70-review/">Puget Systems</a>, <a href="https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b70-gpu.pdf">Intel datasheet</a></li>
     <li>RTX 50-series bandwidth (5090 1792, 5080 960, 5060 Ti 448 GB/s) — <a href="https://gamersnexus.net/gpus/nvidia-rtx-5090-575-watts-rtx-5080-5070-ti-5070-specs">GamersNexus</a>, <a href="https://www.techspot.com/specs/gpu/303357-nvidia-geforce-rtx-5090.html">TechSpot</a></li>
     <li>DGX Spark GB10: 128 GB unified LPDDR5X, 273 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/nvidia-dgx-spark-review/2">Tom's Hardware review</a>, <a href="https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark/">LMSYS</a></li>
-    <li>Panther Lake iGPU: dual-channel LPDDR5X-9600 mandate for B390, 153.6 GB/s, ≤96 GB, shipping in Core Ultra X9 388H laptops — <a href="https://www.tomshardware.com/pc-components/gpus/intels-xe3-graphics-architecture-breaks-cover-panther-lakes-12-xe-core-igpu-promises-50-percent-better-performance-than-lunar-lake">Tom's Hardware</a>, <a href="https://www.techpowerup.com/345897/intel-mandates-7-467-mt-s-memory-for-panther-lake-arc-b390-b370-integrated-graphics">TechPowerUp</a>, <a href="https://hothardware.com/reviews/intel-core-ultra-x9-388h-panther-lake-review?page=2">HotHardware 388H review</a>, <a href="https://www.intel.com/content/www/us/en/products/sku/245526/intel-core-ultra-x9-processor-388h-18m-cache-up-to-5-10-ghz/specifications.html">Intel ARK</a>, <a href="https://www.ultrabookreview.com/74624-intel-panther-lake-laptops/">shipping laptop list</a></li>
+    <li>Arc B390-class iGPU (Core Ultra): dual-channel LPDDR5X-9600 mandate for B390, 153.6 GB/s, ≤96 GB, shipping in Core Ultra X9 388H laptops — <a href="https://www.tomshardware.com/pc-components/gpus/intels-xe3-graphics-architecture-breaks-cover-panther-lakes-12-xe-core-igpu-promises-50-percent-better-performance-than-lunar-lake">Tom's Hardware</a>, <a href="https://www.techpowerup.com/345897/intel-mandates-7-467-mt-s-memory-for-panther-lake-arc-b390-b370-integrated-graphics">TechPowerUp</a>, <a href="https://hothardware.com/reviews/intel-core-ultra-x9-388h-panther-lake-review?page=2">HotHardware 388H review</a>, <a href="https://www.intel.com/content/www/us/en/products/sku/245526/intel-core-ultra-x9-processor-388h-18m-cache-up-to-5-10-ghz/specifications.html">Intel ARK</a>, <a href="https://www.ultrabookreview.com/74624-intel-panther-lake-laptops/">shipping laptop list</a></li>
     <li>NVFP4: Blackwell-only, vLLM, ~1.5× BF16, 92–97% accuracy, FP8 KV — <a href="https://unsloth.ai/docs/models/qwen3.8">Unsloth docs</a>, <a href="https://forums.developer.nvidia.com/t/qwen3-8-27b-on-dgx-spark-using-vllm-nvfp4-vs-fp8-performance/380258">NVIDIA forums</a>, <a href="https://kaitchup.substack.com/p/qwen36-27b-quantization-fp8-vs-int4">Kaitchup</a></li>
     <li>Quant quality (UD V3, AD-IQ3_S, lmstudio Q6_K KLD comparison) — <a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">HF discussion #65</a>, <a href="https://kingy.ai/blog/qwen3-8-27b-best-quantization-gguf/">kingy.ai</a></li>
     <li>xhigh overthinking (22,276 thinking tokens / 21 min for a simple SVG) — <a href="https://simonw.substack.com/p/qwen-38-27b-is-excellent-but-it-defaults">Simon Willison</a></li>
