@@ -864,7 +864,10 @@ llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: no MTP flags here on purpose: speculation is unmeasured on the CPU-offload path —</span>
 <span class="c">:: verify a speedup on your machine before adding it</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"
+  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: unlike 16 GB this is NOT a</span>
+<span class="c">:: window limit — the 112k window (mostly in system RAM) holds xhigh's 73-76k appetite</span>
+<span class="c">:: fine. It is a patience limit: at ~6-8 t/s an xhigh answer runs ~3 HOURS vs ~1 h for</span>
+<span class="c">:: medium (§04 effort table). Switch to xhigh for overnight/unattended runs only</span>
 <span class="c">:: Arc B580: use the Vulkan build (same Battlemage SYCL caveat as the Pro cards)</span></pre>
 
   <p class="fno">Intel Arc Pro B70 32 GB</p>
@@ -1013,7 +1016,7 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <section id="agents">
   <p class="fno">Coding agents</p>
   <h2>Coding agents — one server, any agent</h2>
-  <p>Every recipe above ends with an OpenAI-compatible server (llama-server on port 1234; the vendor-alternative stacks on their own default ports — adjust the base URL to match). Any OpenAI-compatible client connects with the same three facts: base URL <code>http://localhost:1234/v1</code>, the model id the server reports (<code>qwen/qwen3.8-27b</code> via <code>--alias</code>), and the context/output limits from your <code>-c</code> setting. The clients below are ordered by popularity (GitHub stars, August 2026); nothing here is hardware-specific.</p>
+  <p>Every recipe above ends with an OpenAI-compatible server (llama-server on port 1234; the vendor-alternative stacks on their own default ports — adjust the base URL to match). Any OpenAI-compatible client connects with the same three facts: base URL <code>http://localhost:1234/v1</code>, the model id the server reports (<code>qwen/qwen3.8-27b</code> via <code>--alias</code>), and the context/output limits from your <code>-c</code> setting. The agents below are ordered by popularity (GitHub stars, August 2026); nothing here is hardware-specific. <strong>Every setup was verified end-to-end on the reference machine (2026-08-22): each agent installed, configured exactly as printed, and run through a live one-shot request against llama-server.</strong></p>
 
   <h2 id="appendix-opencode" style="margin-top:36px; scroll-margin-top:24px"><a href="https://opencode.ai/docs/providers/">OpenCode</a> · the most-starred coding agent</h2>
   <pre><span class="c"># install:  npm i -g opencode-ai   (or the curl installer / brew)</span>
@@ -1107,13 +1110,21 @@ qwen</pre>
       ]
     }
   }
-}</pre>
+}
+<span class="c"># headless one-shot:  pi --model llamacpp/qwen/qwen3.8-27b --no-session -p "task"</span></pre>
   <p style="font-size:14px">The <code>compat</code> flags matter: they tell Pi to send a plain <code>system</code> role and skip the <code>reasoning_effort</code> request parameter — the dialect llama-server expects. Pi enforces <code>maxTokens</code> client-side, so size it like aider's (this is the client whose default cap causes the mid-generation cut-offs described in §03). (<a href="https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/custom-provider.md">docs</a>)</p>
 
   <h2 id="appendix-dsh" style="margin-top:36px; scroll-margin-top:24px"><a href="https://deepseek-harness.github.io/deepseek-harness/guide/quickstart">DeepSeek Harness</a> · plugin-based agent framework (developer preview)</h2>
-  <pre><span class="c"># run the web UI:</span>
-npx @deepseek-ai/dsh web
-<span class="c"># custom OpenAI-compatible providers live in $DSH_HOME/settings.yaml:</span>
+  <pre><span class="c"># install globally, then run the web UI (npx cold-cache can hang for minutes):</span>
+npm i -g @deepseek-ai/dsh
+dsh web
+<span class="c"># custom OpenAI-compatible providers live in $DSH_HOME/settings.yaml.</span>
+<span class="c"># BOTH blocks are required: registering the provider is not enough — without the</span>
+<span class="c"># routing block the harness silently keeps its cloud default and fails with</span>
+<span class="c"># MISSING_CREDENTIAL (verified end-to-end on the reference machine, 2026-08-22):</span>
+agent-default-model:
+  provider: llamacpp
+  model: qwen/qwen3.8-27b
 llm-pi-ai:
   providers:
     llamacpp:
