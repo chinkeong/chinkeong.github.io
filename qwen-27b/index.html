@@ -76,6 +76,7 @@
   section { margin-top: 52px; scroll-margin-top: 24px; }
   .fno { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
   .fno::before { content: "§ "; color: var(--accent); }
+  .rt { font-family: var(--mono); font-size: 14.5px; font-weight: 600; letter-spacing: 0.06em; color: var(--ink); margin: 30px 0 8px; padding-left: 10px; border-left: 3px solid var(--accent); }
   h2 { font-family: var(--mono); font-size: 20px; line-height: 1.35; margin: 0 0 14px; text-wrap: balance; }
   p { margin: 0 0 14px; max-width: 74ch; }
   p:last-child { margin-bottom: 0; }
@@ -811,7 +812,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
 
   <p>One recipe per class — the single best configuration we can defend, not a menu. The 24–32 GB class is the one exception: two measured winners exist there, split by what you value, so both are printed with the choosing rule up front. Trade-offs live in §05/§07; here you just copy the block for your card.</p>
 
-  <p class="fno" style="margin-top:24px">NVIDIA 24–32 GB · 3090 / 4090 / 5090 — Choice A · Q4_K_M (maximum measured quality)</p>
+  <p class="rt">NVIDIA 24–32 GB · 3090 / 4090 / 5090 — Choice A · Q4_K_M (maximum measured quality)</p>
   <pre><span class="c">:: CHOOSE A when quality at ~122k context is everything: both quality metrics lean a</span>
 <span class="c">:: whisker its way (perplexity 6.535 vs IQ4_XS 6.596; GSM8K 94.0% vs 93.0% — each</span>
 <span class="c">:: within noise, but two independent metrics agreeing), and it is the file every</span>
@@ -839,7 +840,7 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
                                 <span class="c">:: when the wait matters (§04 price list)</span></pre>
 
-  <p class="fno">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (the daily default: vision + speed, quality tied)</p>
+  <p class="rt">NVIDIA 24–32 GB — Choice B · UD-IQ4_XS (the daily default: vision + speed, quality tied)</p>
   <pre><span class="c">:: CHOOSE B for everyday use: quality statistically tied with A (§05's dark-horse</span>
 <span class="c">:: callout has all six comparisons), measured FASTER everywhere (decode 43.8 vs 39.9</span>
 <span class="c">:: base, prefill 1365 vs 1303, GSM8K 73 vs 63 t/s), 2.1 GiB smaller — and this block</span>
@@ -926,7 +927,7 @@ llama-server.exe -m "%MODEL%" %MM% --alias qwen/qwen3.8-27b -c %CTX% ^
   --jinja --host 127.0.0.1 --port 1234</pre>
   </details>
 
-  <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
+  <p class="rt">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
   <pre><span class="c">:: best daily experience: 3-bit fully resident (25-50 t/s) + free MTP speed.</span>
 <span class="c">:: Q4-with-CPU-offload preserves more fidelity but crawls at ~8-12 t/s (§07) —</span>
 <span class="c">:: on 16 GB, resident UD-Q3_K_XL is the right call for everything but benchmarks.</span>
@@ -944,7 +945,7 @@ llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
                                 <span class="c">:: 73-76k thinking appetite overflows this 49k window mid-run (§04's</span>
                                 <span class="c">:: effort-ceiling table) — medium is the best quality 16 GB affords</span></pre>
 
-  <p class="fno">12 GB class · RTX 3060 / RTX 5070 / Arc B580</p>
+  <p class="rt">12 GB class · RTX 3060 / RTX 5070 / Arc B580</p>
   <pre><span class="c">:: honest framing: this class runs the 27B poorly in every configuration — if the</span>
 <span class="c">:: exact model isn't required, a 14B-class Qwen at Q4 fits resident and flies.</span>
 <span class="c">:: If it must be this model: Q4 with most layers on CPU (~6-8 t/s; speed is set by</span>
@@ -966,7 +967,7 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: medium (§04 effort table). Switch to xhigh for overnight/unattended runs only</span>
 <span class="c">:: Arc B580: use the Vulkan build (same Battlemage SYCL caveat as the Pro cards)</span></pre>
 
-  <p class="fno">Intel Arc Pro B70 32 GB</p>
+  <p class="rt">Intel Arc Pro B70 32 GB</p>
   <pre><span class="c">:: VULKAN llama.cpp build — currently beats SYCL on Battlemage (SYCL has known perf</span>
 <span class="c">:: bugs there; IPEX-LLM is archived — do not use it). Re-benchmark after driver updates.</span>
 <span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a> (Q6_K, 22.4 GB — near-Q8 quality)</span>
@@ -978,7 +979,7 @@ llama-server.exe -m Qwen3.8-27B-Q6_K.gguf  --alias qwen/qwen3.8-27b
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
 
-  <p class="fno">Intel Arc Pro B50 16 GB</p>
+  <p class="rt">Intel Arc Pro B50 16 GB</p>
   <pre><span class="c">:: Q4 does not fit and 224 GB/s punishes offload — fully resident 3-bit, Vulkan build</span>
 <span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q3_K_XL, 13.1 GB)</span>
 llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
@@ -991,7 +992,7 @@ llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
   <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: NOT xhigh: 73-76k thinking</span>
                                 <span class="c">:: appetite vs a 49k window — see §04's effort-ceiling table</span></pre>
 
-  <p class="fno">DGX Spark · GB10, 128 GB unified</p>
+  <p class="rt">DGX Spark · GB10, 128 GB unified</p>
   <pre><span class="c">:: llama-server (ARM64 Linux build — no .exe here), same stack as every other card.</span>
 <span class="c">:: Bandwidth (273 GB/s) is the ceiling, so the smallest high-quality file wins:</span>
 <span class="c">:: Q4_K_M (16.5 GB) over UD-Q4_K_XL (17.6 GB) is ~6% more t/s on a bandwidth-bound box</span>
@@ -1009,7 +1010,7 @@ llama-server -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: 92-97% accuracy) — vllm serve <a href="https://huggingface.co/unsloth/Qwen3.8-27B-NVFP4">unsloth/Qwen3.8-27B-NVFP4</a> --max-model-len 131072.</span>
 <span class="c">:: llama.cpp cannot load that release (FP8 lm_head); switching stacks buys the FP4 path</span></pre>
 
-  <p class="fno">Intel Core Ultra iGPU · Arc B390-class</p>
+  <p class="rt">Intel Core Ultra iGPU · Arc B390-class</p>
   <pre><span class="c">:: llama-server.exe, VULKAN build (SYCL has known perf bugs on current Intel GPUs;</span>
 <span class="c">:: IPEX-LLM is archived). RAM is the spec that matters: the B390 tier (Core Ultra X9</span>
 <span class="c">:: 388H) ships only with dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared.</span>
