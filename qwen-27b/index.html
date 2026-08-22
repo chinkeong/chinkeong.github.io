@@ -129,7 +129,8 @@
   <a href="#s07">08 · Recipes per card</a>
   <a href="#s09">09 · Benchmark sample size</a>
   <a href="#s08">10 · Troubleshooting</a>
-  <a href="#s11">11 · When 27B is enough</a>
+  <a href="#vision">11 · Vision</a>
+  <a href="#s11">12 · When 27B is enough</a>
   <a href="#agents">Coding agents</a>
   <a href="#appendix-opencode" style="padding-left:22px">OpenCode</a>
   <a href="#appendix-aider" style="padding-left:22px">aider</a>
@@ -150,7 +151,7 @@
   <div class="spec"><b>Model</b>Qwen3.8-27B · hybrid attention</div>
   <div class="spec"><b>Native context</b>262,144 tok</div>
   <div class="spec"><b>Q4 weights</b>~16.5 GB</div>
-  <div class="spec"><b>Reference</b>RTX 3090 · 40 t/s floor · 49–70 real work · 120 ceiling</div>
+  <div class="spec"><b>Reference</b>RTX 3090 · 39.7 t/s floor (short-context, no spec) · 49–70 short-context work · ~39–60 deep agent sessions (39.3 measured at 27k) · 119.8 ceiling</div>
   <div class="spec"><b>Benchmark run</b>~2k in + ~100k thinking/out</div>
 </div>
 
@@ -390,7 +391,7 @@
   <div class="tablebox">
   <table>
     <tr><th>Size class</th><th>Best file</th><th>Weights</th><th>Notes</th></tr>
-    <tr><td>4-bit GGUF (the default choice)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q4_K_M</b></a> · lmstudio-community (or <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q4_K_XL</a>)</td><td class="n">16.5 GB</td><td>settled by measurement 2026-08-22: n=200 GSM8K tied (the numbers live in the perplexity discussion below; §09 for why the ±3-pt band makes it a tie), and wikitext-2 perplexity (the table below) came out 2.3% in Q4_K_M's favor. Unsloth's ~10%-lower-KLD claim for the XL file is a relative logit metric on their calibration set, worth ~1–3 true accuracy points at most. With quality tied, the 1 GiB decides: Q4_K_M's headroom buys ~30k more resident context or the vision projector (§08). Pick UD-Q4_K_XL only when VRAM is spare</td></tr>
+    <tr><td>4-bit GGUF (the default class — the dark-horse callout below splits Q4_K_M vs the shipped UD-IQ4_XS)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q4_K_M</b></a> · lmstudio-community (or <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">UD-Q4_K_XL</a>)</td><td class="n">16.5 GB</td><td>settled by measurement 2026-08-22: n=200 GSM8K tied (the numbers live in the perplexity discussion below; §09 for why the ±3-pt band makes it a tie), and wikitext-2 perplexity (the table below) came out 2.3% in Q4_K_M's favor. Unsloth's ~10%-lower-KLD claim for the XL file is a relative logit metric on their calibration set, worth ~1–3 true accuracy points at most. With quality tied, the 1 GiB decides: Q4_K_M's headroom buys ~30k more resident context or the vision projector (§08). Pick UD-Q4_K_XL only when VRAM is spare</td></tr>
     <tr><td>3-bit GGUF (16 GB cards)</td><td><a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF"><b>UD-Q3_K_XL</b></a> · unsloth</td><td class="n">13.1 GB</td><td>today's 3-bit methods are far better than older ones; Qwen's own AD-IQ3_S reportedly scores slightly better (<a href="https://huggingface.co/Qwen/Qwen3.8-27B/discussions/65">KLD data</a>) but you have to request access to download it</td></tr>
     <tr><td>6-bit GGUF (quality, 32 GB cards)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q6_K</b></a> · lmstudio-community</td><td class="n">22.4 GB</td><td>wins its size class; near-Q8 quality</td></tr>
     <tr><td>8-bit GGUF (reference)</td><td><a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF"><b>Q8_0</b></a> · lmstudio-community</td><td class="n">29 GB</td><td>the reference-quality choice, for machines that can hold it (DGX Spark; 32 GB cards at short context)</td></tr>
@@ -446,7 +447,7 @@
     <li><strong>The two NVFP4 tiers were indistinguishable at this sample size</strong> — which is expected under noise, not evidence of equivalence. The file structure does predict a tie, though: the family shares one byte-identical NVFP4 backbone, with tiers differing only in the surrounding layers. The surprise is where VERY-LOW's savings actually landed: <strong>on these math prompts at n-max 10 its MTP draft head drafted noticeably worse (acceptance length 3.33 vs ~4.8)</strong> — a speculative-decoding <em>speed</em> cost, not an accuracy one. The penalty is config-dependent, though (n-max and p-min are the speculation knobs §06 tunes): re-measured 2026-08-22 at the tuned n-max&nbsp;4 / p-min&nbsp;0.75 on code generation, both tiers accepted identically (<span class="num">0.83</span>) and VERY-LOW was the <em>faster</em> file (<span class="num">54.6</span> vs <span class="num">48.2</span>&nbsp;t/s) — smaller weights, less memory traffic per token.</li>
     <li><strong>Sample-size honesty: each problem is worth 5 points.</strong> Every gap in this table is one or two questions wide. Treat it as "no meaningful quality difference, mild edge to the K-quant" — not a ranking. We also ran the same prompts through a different serving stack and grader version and saw individual cells move by up to 10 points, which means <em>measurement variance is the same size as the differences being measured</em>. Anyone showing you a one-run quant ranking without error bars is selling something. §09 puts numbers on exactly how underpowered a 20-question run is.</li>
   </ul>
-  <div class="callout"><span class="tag">The takeaway</span><p>Pick your file by <strong>size and speed</strong>, not by format ideology: on a 24 GB Ampere card that means Q4_K_M (fastest, best-drafting MTP head — the n=20 smoke test found nothing against it, and the measured wikitext perplexity below comes out in its favor). NVFP4's real advantages live on Blackwell hardware where the format runs natively.</p></div>
+  <div class="callout"><span class="tag">The takeaway</span><p>Pick your file by <strong>size and speed</strong>, not by format ideology: on a 24 GB Ampere card that means Q4_K_M or the smaller UD-IQ4_XS. Q4_K_M is the fastest of the three files smoke-tested <em>here</em> (best-drafting MTP head — the n=20 smoke test found nothing against it, and the measured wikitext perplexity below comes out in its favor); the dark-horse callout below splits it against UD-IQ4_XS. NVFP4's real advantages live on Blackwell hardware where the format runs natively.</p></div>
 
   <p>Accuracy at 20 questions cannot separate healthy quant files (§09 carries the full arithmetic) — but per-token metrics can. <strong>Perplexity</strong> here is the classic model-quality metric, not the search engine (which named itself after it): run the model over real text and score how well it predicted each actual next token. A perplexity of <span class="num">6.5</span> means that at every step the model was, on average, as uncertain as choosing between ~6.5 equally likely words — perfect prediction would be 1, and lower is better. Because quantization damage makes prediction slightly worse <em>everywhere</em>, this metric feels it at all ~<span class="num">330k</span> token positions instead of collecting one right/wrong bit per benchmark question. Measured 2026-08-22 on the reference 3090: <code>llama-perplexity</code> over the full wikitext-2-raw test set (<code>-c 8192</code>) for six 4-bit-class contenders:</p>
   <div class="tablebox">
@@ -461,26 +462,26 @@
   </table>
   </div>
   <p>Read it with its one limit attached: this is a single corpus, and wikitext rewards plain-text prediction while unsloth's UD calibration targets chat-style data — so the ordering among the top files may not carry over perfectly to instruct workloads (the n=200 GSM8K comparison agreed within noise: Q4_K_M 94.0%, UD-Q4_K_XL 94.5%, UD-IQ4_XS 93.0% — and NVFP4-HIGH 92.5%, NVFP4-VERY-LOW 90.5%, trailing the K-quants in the same direction as this table, all ±~3–4 pts). Two robust findings: <strong>both NVFP4 tiers trail the K-quants</strong> — the same direction the scored table's MATH-500 column hinted, reached by an independent measurement — and <strong>none of the unsloth Dynamic variants beat the plain lmstudio Q4_K_M on this corpus, including at identical size</strong>. Two cheap metrics agreeing beats one expensive one.</p>
-  <div class="callout"><span class="tag">The dark horse: UD-IQ4_XS</span><p>The table's second row is the night's discovery. At <span class="num">13.3</span>&nbsp;GiB — 2.1&nbsp;GiB smaller than Q4_K_M — UD-IQ4_XS ties it on quality (perplexity within ~1σ, GSM8K within noise) and, because decode is bandwidth-bound, the smaller file is <em>faster everywhere it was measured</em>: prefill 1365 vs 1303 t/s, plain decode <span class="num">43.8</span> vs 39.9, GSM8K with speculation <span class="num">73</span> vs 63. The saved VRAM becomes context: its measured fully-resident ceiling is ~<span class="num">180–190k</span> (vs Q4_K_M's ~131k), shallow probes stayed at 65–70&nbsp;t/s all the way to the full native <span class="num">262,144</span> with no collapse anywhere, and by §02's arithmetic a text-only launch (no mmproj) holds the <em>entire native context fully resident</em> — the capability this guide previously reserved for 3-bit files, now at Q4-class quality (a headless/bare-desktop configuration: its ~1 GiB slack does not survive a browser — §08's Choice B ships the desktop-safe 196k instead). Why still name Q4_K_M the default? Both quality metrics lean the same whisker in its favor, it is the file every number in this guide was measured on, and IQ-format decode support varies more across backends (measured on CUDA). <strong>Context- or speed-hungry: pick UD-IQ4_XS. Maximum measured quality at 122k: stay on Q4_K_M.</strong> Either is right.</p></div>
+  <div class="callout"><span class="tag">The dark horse: UD-IQ4_XS</span><p>The table's second row is the night's discovery. At <span class="num">13.3</span>&nbsp;GiB — 2.1&nbsp;GiB smaller than Q4_K_M — UD-IQ4_XS ties it on quality (perplexity within ~1σ, GSM8K within noise) and, because decode is bandwidth-bound, the smaller file is <em>faster everywhere it was measured</em>: prefill 1365 vs 1303 t/s, plain decode <span class="num">43.8</span> vs 39.9, GSM8K with speculation <span class="num">73</span> vs 63. The saved VRAM becomes context: its measured fully-resident ceiling <em>with the vision projector loaded</em> is ~<span class="num">180–190k</span> (vs Q4_K_M's ~131k), shallow probes stayed at 65–70&nbsp;t/s all the way to the full native <span class="num">262,144</span> with no collapse anywhere (pre-re-sweep flags at the larger -c allocations — the tuned-MTP near-empty measure on the 196k config is 79.3–79.9&nbsp;t/s, §08's menu), and by §02's arithmetic a text-only launch (no mmproj) holds the <em>entire native context fully resident</em> — the capability this guide previously reserved for 3-bit files, now at Q4-class quality (a headless/bare-desktop configuration: its ~1 GiB slack does not survive a browser — §08's Choice B ships the desktop-safe 196k instead). Why still name Q4_K_M the default? Two defaults, two scopes: <strong>Q4_K_M is this guide's measurement base and maximum-quality pick</strong> — both quality metrics lean the same whisker in its favor, it is the file every number in this guide was measured on, and IQ-format decode support varies more across backends (measured on CUDA) — while <strong>UD-IQ4_XS at -c 196608 is the reference machine's shipped daily default</strong> (§08's launcher menu, row [1]). <strong>Context- or speed-hungry: pick UD-IQ4_XS. Maximum measured quality at 122k: stay on Q4_K_M.</strong> Either is right.</p></div>
 </section>
 
 <section id="s05b">
   <p class="fno">06</p>
   <h2>Speculative decoding — free speed, priced in acceptance</h2>
-  <p>Speculation is lossless: every drafted token is verified by the full model before it counts, so quality is never on the table — only speed is, and the speedup is set by <strong>draft acceptance</strong>, which your content decides. The subsections below measure it, tune it, and show how a clean benchmark overstated it. First, the zoomed-out result — every speed this guide measured on the reference 3090 (Q4_K_M, tuned flags, 2026-08-22), one config, one acceptance curve:</p>
+  <p>Speculation is lossless: every drafted token is verified by the full model before it counts, so quality is never on the table — only speed is, and the speedup is set by <strong>draft acceptance</strong>, which your content decides. The subsections below measure it, tune it, and show how a clean benchmark overstated it. First, the zoomed-out result — every speed this guide measured on the reference 3090: one card, conditions noted per row (Q4_K_M at the tuned flags, 2026-08-22, unless a row says otherwise):</p>
   <div class="tablebox">
   <table>
     <tr><th>Workload</th><th>Acceptance</th><th>Decode</th><th>What it means</th></tr>
-    <tr><td>Ceiling — copying text verbatim</td><td class="n">0.93</td><td class="n">119.8 t/s</td><td>drafts nearly always accepted</td></tr>
-    <tr><td>Short math, greedy (GSM8K)</td><td class="n">0.90</td><td class="n">63–70 t/s</td><td>short, predictable reasoning</td></tr>
+    <tr><td>Ceiling — copying text verbatim (pre-re-sweep flags: n-max 10 / p-min 0.5)</td><td class="n">0.93</td><td class="n">119.8 t/s</td><td>drafts nearly always accepted</td></tr>
+    <tr><td>Short math, greedy (GSM8K — §05 scored table's build &amp; workload, not this table's)</td><td class="n">0.90</td><td class="n">63–70 t/s</td><td>short, predictable reasoning</td></tr>
     <tr><td>Realistic code, temp 0</td><td class="n">0.81</td><td class="n">57.9 t/s</td><td>the tuned-flags benchmark number</td></tr>
     <tr class="hl"><td><b>Production coding, temp 1.0</b></td><td class="n">—</td><td class="n"><b>55–61 t/s</b></td><td><b>what a normal session feels like</b></td></tr>
     <tr><td>Long xhigh run, sustained over 73k tokens</td><td class="n">—</td><td class="n">48.8 t/s</td><td>KV deepens, thinking drafts worse</td></tr>
-    <tr><td>Deep context — a 27k-token prompt already loaded (IQ4_XS)</td><td class="n">0.82</td><td class="n">39.3 t/s</td><td>acceptance steady; the cost is per-token KV reads growing with depth — expect this band in agent sessions, with nothing wrong</td></tr>
+    <tr><td>Deep context — a 27k-token prompt already loaded (<strong>measured on UD-IQ4_XS, the faster file — not Q4_K_M</strong>)</td><td class="n">0.82</td><td class="n">39.3 t/s</td><td>acceptance steady; the cost is per-token KV reads growing with depth — expect this band in agent sessions, with nothing wrong. Q4_K_M at equal depth is expected <em>lower</em> (no measurement exists)</td></tr>
     <tr><td>Floor — speculation off</td><td class="n">—</td><td class="n">39.7 t/s</td><td>pure bandwidth: 936 GB/s ÷ 16.5 GB × 0.7</td></tr>
   </table>
   </div>
-  <p>Read the band, not a number: <strong>the floor is physics, everything above it is acceptance.</strong> Plan wall-clock on the row that matches your work — and for contrast, the two §10 failure modes both land <em>below</em> the floor (25.7 t/s with the <code>-ngl</code> off-by-one, 20–35 spilled), which is how you know something is broken rather than merely unlucky content.</p>
+  <p>Read the band, not a number: <strong>the floor is physics, everything above it is acceptance.</strong> Plan wall-clock on the row that matches your work. One caveat on the floor before using it as a diagnostic: 39.7 is a <em>short-context</em> figure, and depth itself legitimately takes you below it, gradually (39.3 at a 27k-deep prompt, acceptance steady). The two §10 failure modes are different in kind: they land <em>far</em> below it at <em>short</em> context (25.7 t/s with the <code>-ngl</code> off-by-one, 20–35 spilled, against ~40 expected) — well below 40 at short context is the broken signature, not "below 39.7" and not honest depth or merely unlucky content.</p>
 
   <h2 id="s05-mtp" style="margin-top:36px; scroll-margin-top:24px">MTP speculative decoding — free speed on every GPU</h2>
   <p>Qwen3.8-27B ships with a built-in <strong>multi-token prediction (MTP) draft head</strong> — a small helper network that guesses several tokens ahead so the full model only has to check them, which is much faster than generating each one. The standard K-quant GGUFs (§05's table) <a href="https://github.com/sudoingX/qwen38-mtp">already include it</a> (the head itself always stays at 8-bit, whatever the main quant). llama.cpp added support in <a href="https://github.com/ggml-org/llama.cpp/discussions/27164">July 2026</a>, and because every guess is verified by the full model before it's accepted, <strong>the output is exactly what the model would have written anyway</strong> — you only gain speed. It works on any GPU llama.cpp supports: Ampere, Ada, Blackwell, Arc, iGPUs.</p>
@@ -825,8 +826,10 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
                                 <span class="c">:: the 3090 (57.9 t/s on real code; the old n-max 10 / p-min 0.5</span>
                                 <span class="c">:: fell to 48.3 there) — still per-card: sweep n-max 2-12 (§06)</span>
 <span class="c">:: vision: add --mmproj when you need it — the ~0.9 GB BF16 projector + this Q4_K_M</span>
-<span class="c">:: file at -c 122880 is exactly the measured ~23.7 GiB reference config: it fits. On</span>
-<span class="c">:: the 1 GiB-larger UD-Q4_K_XL, projector + full context busts 24 GB — drop to -c 98304</span>
+<span class="c">:: file at -c 122880 is exactly the measured ~23.7 GiB reference config: it fits, but</span>
+<span class="c">:: BARE-DESKTOP ONLY (~0.3 GiB slack) — §10 measured this very config spilling ~1.9 GB</span>
+<span class="c">:: with browsers open and falling to 20–35 t/s; with a desktop, drop -c or go text-only.</span>
+<span class="c">:: On the 1 GiB-larger UD-Q4_K_XL, projector + full context busts 24 GB — drop to -c 98304</span>
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: quality-first default; medium</span>
                                 <span class="c">:: when the wait matters (§04 price list)</span></pre>
@@ -843,13 +846,14 @@ llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
                                 <span class="c">:: that stays fast with a real desktop and browser-based</span>
                                 <span class="c">:: agent UIs open. This is the number to ship.</span>
 <span class="c">:: FULL native context — headless / bare desktop ONLY:  -c 262144  holds all 262,144</span>
-<span class="c">:: resident text-only (≈ 23 GiB, ~1 GiB slack; shallow probes 65-70 t/s). But that</span>
+<span class="c">:: resident text-only (≈ 23 GiB, ~1 GiB slack; shallow probes 65-70 t/s at pre-re-sweep</span>
+<span class="c">:: flags — tuned-MTP near-empty on the 196k config measures 79.3–79.9, §08 menu). But that</span>
 <span class="c">:: slack is a trap on a working desktop: measured live, a browser agent UI pushed the</span>
 <span class="c">:: Windows compositor to 3.6 GiB, spilled 3.5 GiB to shared memory, and decode fell</span>
 <span class="c">:: to ~26 t/s (§10's signature). Do not run 262144 with anything else on the GPU.</span>
 <span class="c">:: vision variant: add  --mmproj mmproj-Qwen3.8-27B-BF16.gguf --image-min-tokens 1024</span>
 <span class="c">:: and drop to  -c 147456  desktop-safe (or 180224 bare-desktop, measured resident at</span>
-<span class="c">:: 24,017 MiB / 66.6 t/s). The rule all of this teaches: the projector costs ~0.9 GiB</span>
+<span class="c">:: 24,017 MiB / 66.6 t/s, pre-re-sweep flags). The rule all of this teaches: the projector costs ~0.9 GiB</span>
 <span class="c">:: ≈ 27k tokens of q8 window, and slack is what keeps you off §10's spill cliff —</span>
 <span class="c">:: budget for BOTH the vision you use and the desktop you actually run</span>
   <span class="f">-ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0</span>
@@ -858,23 +862,67 @@ llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
   --jinja --port 1234
   --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"</pre>
 
-  <p>The whole class fits on one screen — this is the launcher menu the reference machine actually uses, every option carrying its measured expectation so nobody picks a trap by accident. Turning your measurements into a menu like this is the pattern worth copying:</p>
-  <pre><span class="c">:: 24-32 GB class - the measured menu (RTX 3090, 2026-08-22; the top rows are A/B above)</span>
-[1] UD-IQ4_XS   text-only  -c 196608   ~55-70 t/s   desktop-safe 196k window  (DEFAULT)
-[2] UD-IQ4_XS   text-only  -c 262144   full native   HEADLESS ONLY - measured ~26 t/s
-                                                     the moment anything else touches the GPU
-[3] UD-IQ4_XS   + vision   -c 147456   ~55-70 t/s   desktop-safe with the projector
-[4] Q4_K_M      + vision   -c 122880   ~55-65 t/s   quality champion - the reference config
-[5] UD-Q4_K_XL  text-only  -c 122880   ~55-65 t/s   quality tied, 1 GiB bigger:
-                                                     the extra size buys nothing on 24 GB
-[6] UD-Q4_K_M   + vision   -c 122880   ~55-65 t/s   measured worse than plain Q4_K_M (PPL +1.8%)
-[7] DFlash2 external drafter           ~46 t/s      loses to the built-in MTP on real code
-[8] NVFP4 HIGH                         ~48-54 t/s   Ampere dequant fallback - slower AND lower quality
-
-t/s figures are short-context. Decode falls with DEPTH, not just spill: measured on [1],
-79.9 t/s near-empty -&gt; 39.3 t/s with a 27,321-token prompt loaded, draft acceptance
-steady at 0.82 - the cost is per-token KV reads. Agent sessions carrying 10-30k of
-context should expect the 40-60 band even when nothing is wrong.</pre>
+  <p>The whole class fits on one table — the decision menu the reference machine's launcher actually uses, every option carrying its measured expectation so nobody picks a trap by accident. Two scopes coexist: the shipped daily default is the vision-capable IQ4_XS row, while Q4_K_M remains the guide's measurement base and maximum-quality pick (§05's dark-horse callout).</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>#</th><th>Config</th><th>Window</th><th>Expect</th><th>When to pick it</th></tr>
+    <tr class="hl"><td class="n">1</td><td><b>UD-IQ4_XS + hi-res vision</b> (max-tokens 10580)</td><td class="n">122880</td><td class="n">~55–70 t/s · verified ~3 GiB slack</td><td><b>the daily default</b> — screenshot loops to 4K detail (§11); a full xhigh cycle plus ~10 shots fit</td></tr>
+    <tr><td class="n">2</td><td>UD-IQ4_XS text-only</td><td class="n">196608</td><td class="n">~55–70 t/s · desktop-safe</td><td>maximum desktop-safe window for long text/agent sessions</td></tr>
+    <tr><td class="n">3</td><td>UD-IQ4_XS text-only</td><td class="n">262144</td><td class="n"><b>~26 t/s if anything else touches the GPU</b></td><td>full native context — headless / bare desktop only</td></tr>
+    <tr><td class="n">4</td><td>Q4_K_M + vision</td><td class="n">122880</td><td class="n">~55–65 t/s · ~0.3 GiB slack</td><td>maximum measured quality — bare desktop only (browsers spill it to 20–35, §10); with a desktop, drop <code>-c</code> or go text-only</td></tr>
+    <tr><td class="n">5</td><td>UD-Q4_K_XL text-only</td><td class="n">122880</td><td class="n">~55–65 t/s</td><td>quality tied with Q4_K_M, 1 GiB bigger — the extra size buys nothing on 24 GB</td></tr>
+    <tr><td class="n">6</td><td>UD-Q4_K_M + vision</td><td class="n">122880</td><td class="n">~55–65 t/s</td><td>measured worse than plain Q4_K_M (PPL +1.8%) — skip</td></tr>
+    <tr><td class="n">7</td><td>DFlash2 external drafter</td><td class="n">—</td><td class="n">~46 t/s on real code</td><td>loses to the built-in MTP — historical interest</td></tr>
+    <tr><td class="n">8</td><td>NVFP4 HIGH</td><td class="n">—</td><td class="n">~48–54 t/s</td><td>Ampere dequant fallback — slower and lower quality; Blackwell is its home turf</td></tr>
+  </table>
+  </div>
+  <p style="font-size:14px">Expect columns are short-context wall-clock bands. Decode falls with <em>depth</em>, not just spill — §06's deep-context row carries the lesson (near-empty probe 79.3–79.9 → 39.3 t/s at a 27k-deep prompt, acceptance steady at 0.82; the probe methodology differs from these bands, so don't cross-compare). Agent sessions holding 10–30k of context live in the ~39–60 band with nothing wrong.</p>
+  <details class="cmds"><summary>The launcher behind this table — a menu batch you can adapt (edit the paths)</summary>
+  <pre>@echo off
+rem serve-qwen.bat - measured-menu launcher for llama.cpp (24 GB class)
+rem usage: serve-qwen.bat [low^|medium^|xhigh] [context-override] [1-8]
+set EFFORT=%1
+if "%EFFORT%"=="" set EFFORT=xhigh
+set CTXARG=%2
+set PICK=%3
+set MODELS=C:\path\to\your\models
+set MMPROJ=%MODELS%\mmproj-Qwen3.8-27B-BF16.gguf
+if not "%PICK%"=="" goto pick_%PICK%
+echo  [1] IQ4_XS + hi-res vision -c 122880  (default)
+echo  [2] IQ4_XS text-only       -c 196608
+echo  [3] IQ4_XS text-only       -c 262144  headless only
+echo  [4] Q4_K_M + vision        -c 122880  bare desktop only
+choice /C 12345678 /T 8 /D 1 /M "Choice"
+goto pick_%ERRORLEVEL%
+:pick_1
+set MODEL=%MODELS%\Qwen3.8-27B-UD-IQ4_XS.gguf
+set CTX=122880
+set MM=--mmproj "%MMPROJ%" --image-min-tokens 1024 --image-max-tokens 10580
+goto launch
+:pick_2
+set MODEL=%MODELS%\Qwen3.8-27B-UD-IQ4_XS.gguf
+set CTX=196608
+set MM=
+goto launch
+:pick_3
+set MODEL=%MODELS%\Qwen3.8-27B-UD-IQ4_XS.gguf
+set CTX=262144
+set MM=
+goto launch
+:pick_4
+set MODEL=%MODELS%\Qwen3.8-27B-Q4_K_M.gguf
+set CTX=122880
+set MM=--mmproj "%MMPROJ%" --image-min-tokens 1024
+goto launch
+:launch
+if not "%CTXARG%"=="" set CTX=%CTXARG%
+llama-server.exe -m "%MODEL%" %MM% --alias qwen/qwen3.8-27b -c %CTX% ^
+  -ngl 99 --parallel 1 --load-mode none -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
+  --chat-template-kwargs "{\"reasoning_effort\":\"%EFFORT%\"}" ^
+  --jinja --host 127.0.0.1 --port 1234</pre>
+  </details>
 
   <p class="fno">NVIDIA 16 GB · 5080 / 4080 / 4070 Ti S / 5060 Ti</p>
   <pre><span class="c">:: best daily experience: 3-bit fully resident (25-50 t/s) + free MTP speed.</span>
@@ -1038,8 +1086,34 @@ llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <div class="callout"><span class="tag">High CPU alone proves nothing</span><p>llama.cpp worker threads busy-spin while waiting on the GPU, so ~50–70% CPU during perfectly healthy all-GPU decode is normal on a 20-thread machine. The trouble signal is the combination — high CPU <em>and</em> low t/s. Either failure above shows both.</p></div>
 </section>
 
-<section id="s11">
+<section id="vision">
   <p class="fno">11</p>
+  <h2>Vision — screenshots in, critiques out</h2>
+  <p>The optional mmproj projector (§01) turns this model into something genuinely useful for a coding loop: a critic that can <em>look at what your code rendered</em>. Proven end-to-end on the reference 3090, 2026-08-22: Chrome captured a 4K screenshot (<span class="num">3840×2160</span>, a 2.3&nbsp;MB PNG) of this guide's own test page — an animated canvas aquarium — and the model, served with the config below, named the visible creatures individually, identified the weakest visual element (kelp drawn as wire-thin polylines), and wrote working replacement drawing code with tapered, phase-offset swaying blades. Round trip: ~<span class="num">39</span> s, of which the 4K image cost <span class="num">8,244</span> prompt tokens.</p>
+  <p><strong>Image cost is resolution, not file size.</strong> Any png/jpg is smart-resized into visual tokens; the server flags set the budget: <code>--image-min-tokens 1024</code> is the community floor for grounding accuracy, and the default cap of 4,096 tokens (≈3.2&nbsp;MP) rises with <code>--image-max-tokens</code> — this guide's vision config uses <span class="num">10,580</span> for 4K-class detail (<a href="https://github.com/ggml-org/llama.cpp/discussions/17172">4K handling upstream still has open quirks</a>, so 1440p is the sweet spot):</p>
+  <div class="tablebox">
+  <table>
+    <tr><th>Screenshot</th><th>Context cost</th><th>Feedback rounds alongside a full xhigh cycle (~80–90k) at -c 122880</th></tr>
+    <tr><td>1080p</td><td class="n">~2.6k tokens</td><td class="n">~12–15</td></tr>
+    <tr class="hl"><td><b>1440p — recommended</b></td><td class="n">~4.7k</td><td class="n">~7–9</td></tr>
+    <tr><td>4K (measured)</td><td class="n">8.2k</td><td class="n">~3–4</td></tr>
+  </table>
+  </div>
+  <p>The serving config (verified: loads at ~21.6&nbsp;GiB with ~3&nbsp;GiB desktop slack, 71.3&nbsp;t/s short-context) and the capture command:</p>
+  <pre>llama-server -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
+  -c 122880  -ngl 99  --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0
+  <span class="f">--mmproj mmproj-Qwen3.8-27B-BF16.gguf  --image-min-tokens 1024  --image-max-tokens 10580</span>
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0  --jinja  --port 1234
+
+<span class="c"># capture the page your code just rendered (Chrome headless):</span>
+chrome --headless --disable-gpu --window-size=2560,1440 ^
+  --screenshot=shot.png --virtual-time-budget=6000 file:///path/to/page.html</pre>
+  <div class="callout"><span class="tag">How the harness must send images</span><p><strong>Measured caveat: coding agents' file tools do not attach images.</strong> OpenCode's headless <code>run</code> was tested directly — both a plain reference and <code>@</code>-attachment made it <em>Read</em> the PNG as bytes, and the model correctly answered that it saw no image. The dependable route for a screenshot loop is the OpenAI-compatible API itself: send the image as a <code>data:image/png;base64,…</code> entry in an <code>image_url</code> content part alongside the text prompt — that is the exact path the proof above used. Budget <code>max_tokens</code> generously: a thinking model spends tokens reasoning about the image before answering, and a tight cap returns an empty answer with the thinking complete (measured — the §03 cut-off rule applies to vision too). Clear old screenshots from the conversation between iterations; each one keeps its thousands of tokens in the window.</p></div>
+</section>
+
+<section id="s11">
+  <p class="fno">12</p>
   <h2>When 27B is enough — and when the frontier earns its keep</h2>
   <p>A closing dose of perspective — with a disclosure up front: unlike everything above, this section is argued from the published literature, not measured on this machine. The question it answers is the one every local-inference guide dodges: <em>which tasks should you trust this machine with?</em> A model does not need trillions of parameters to act as an encyclopedia. High-frequency knowledge — geography, mainstream history, standard biology, common coding syntax — compresses comfortably into 27B (a model stores <a href="https://arxiv.org/abs/2404.05405">on the order of 2 bits of factual knowledge per parameter</a>), which is why local factual Q&amp;A feels frontier-grade. What frontier models buy with their scale looks like a difference in kind but is built from differences in degree: per-step reliability <a href="https://arxiv.org/abs/2304.15004">improves smoothly with capability</a>, and because a long task succeeds only if every step does, those smooth gains compound into cliff-like gaps on exactly the work below — as <em>reasoning engines, software architects, and autonomous agents</em>. The boundary runs through five territories:</p>
   <ul>
@@ -1201,7 +1275,7 @@ llm-pi-ai:
   <p class="fno">Sources</p>
   <h2>Fact-check trail</h2>
   <ul style="font-size:14px">
-    <li>§11 task boundaries — long-tail knowledge: <a href="https://arxiv.org/abs/2211.08411">Kandpal et al., ICML 2023</a>, <a href="https://aclanthology.org/2023.acl-long.546/">PopQA / Mallen et al., ACL 2023</a>, <a href="https://arxiv.org/abs/2404.05405">knowledge-capacity scaling laws</a>, <a href="https://arxiv.org/abs/2509.04664">Why Language Models Hallucinate</a> · long-horizon reasoning: <a href="https://arxiv.org/abs/2305.18654">Faith and Fate (NeurIPS 2023)</a>, <a href="https://arxiv.org/abs/2304.15004">emergent-abilities mirage (NeurIPS 2023)</a>, <a href="https://arxiv.org/abs/2503.14499">METR time horizons</a>, <a href="https://arxiv.org/abs/2505.05115">agent half-life (Ord, 2025)</a> · long context: <a href="https://arxiv.org/abs/2404.06654">RULER (COLM 2024)</a>, <a href="https://aclanthology.org/2024.tacl-1.9/">Lost in the Middle (TACL 2024)</a>, <a href="https://arxiv.org/abs/2502.05167">NoLiMa (ICML 2025)</a> · constraint stacking: <a href="https://arxiv.org/abs/2310.20410">FollowBench (ACL 2024)</a>, <a href="https://arxiv.org/abs/2507.11538">IFScale</a>, <a href="https://arxiv.org/abs/2407.03978">ComplexBench (NeurIPS 2024)</a> · agentic reliability: <a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/">METR blog</a>, <a href="https://arxiv.org/abs/2509.09677">self-conditioning in long-horizon execution</a></li>
+    <li>§12 task boundaries — long-tail knowledge: <a href="https://arxiv.org/abs/2211.08411">Kandpal et al., ICML 2023</a>, <a href="https://aclanthology.org/2023.acl-long.546/">PopQA / Mallen et al., ACL 2023</a>, <a href="https://arxiv.org/abs/2404.05405">knowledge-capacity scaling laws</a>, <a href="https://arxiv.org/abs/2509.04664">Why Language Models Hallucinate</a> · long-horizon reasoning: <a href="https://arxiv.org/abs/2305.18654">Faith and Fate (NeurIPS 2023)</a>, <a href="https://arxiv.org/abs/2304.15004">emergent-abilities mirage (NeurIPS 2023)</a>, <a href="https://arxiv.org/abs/2503.14499">METR time horizons</a>, <a href="https://arxiv.org/abs/2505.05115">agent half-life (Ord, 2025)</a> · long context: <a href="https://arxiv.org/abs/2404.06654">RULER (COLM 2024)</a>, <a href="https://aclanthology.org/2024.tacl-1.9/">Lost in the Middle (TACL 2024)</a>, <a href="https://arxiv.org/abs/2502.05167">NoLiMa (ICML 2025)</a> · constraint stacking: <a href="https://arxiv.org/abs/2310.20410">FollowBench (ACL 2024)</a>, <a href="https://arxiv.org/abs/2507.11538">IFScale</a>, <a href="https://arxiv.org/abs/2407.03978">ComplexBench (NeurIPS 2024)</a> · agentic reliability: <a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/">METR blog</a>, <a href="https://arxiv.org/abs/2509.09677">self-conditioning in long-horizon execution</a></li>
     <li>Arc Pro B70 32 GB, 256-bit, 608 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/intel-arc-pro-b70-and-arc-pro-b65-gpus-bring-32gb-of-ram-to-ai-and-pro-apps-bigger-battlemage-finally-arrives-but-its-not-for-gaming">Tom's Hardware</a>, <a href="https://www.pugetsystems.com/labs/articles/intel-arc-pro-b70-review/">Puget Systems</a>, <a href="https://www.intel.com/content/dam/www/central-libraries/us/en/documents/2026-03/datasheet-b70-gpu.pdf">Intel datasheet</a></li>
     <li>RTX 50-series bandwidth (5090 1792, 5080 960, 5060 Ti 448 GB/s) — <a href="https://gamersnexus.net/gpus/nvidia-rtx-5090-575-watts-rtx-5080-5070-ti-5070-specs">GamersNexus</a>, <a href="https://www.techspot.com/specs/gpu/303357-nvidia-geforce-rtx-5090.html">TechSpot</a></li>
     <li>DGX Spark GB10: 128 GB unified LPDDR5X, 273 GB/s — <a href="https://www.tomshardware.com/pc-components/gpus/nvidia-dgx-spark-review/2">Tom's Hardware review</a>, <a href="https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark/">LMSYS</a></li>
