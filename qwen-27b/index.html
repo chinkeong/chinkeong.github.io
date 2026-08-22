@@ -376,8 +376,8 @@
   <table>
     <tr><th>Your <code>-c</code> window</th><th>Effort ceiling</th><th>Why</th></tr>
     <tr><td class="n">≥ 100k (24 GB+, Spark, B70, 12 GB offload)</td><td><code>xhigh</code></td><td>the 73–76k measured appetite fits with room for prompt and answer</td></tr>
-    <tr><td class="n">~50–80k (the Arc B390-class iGPU at 65k)</td><td><code>medium</code></td><td>xhigh's appetite alone can overflow the window mid-thinking — a truncated xhigh run scores <em>worse</em> than a completed medium one (the §04 truncation effect, but fatal)</td></tr>
-    <tr><td class="n">&lt; 50k (16 GB cards, B50 at 49k)</td><td><code>medium</code></td><td>same physics, harder wall: on these cards the window cannot grow, so medium is not the budget option — it is the best quality the VRAM affords</td></tr>
+    <tr><td class="n">&lt; 50k (16 GB cards, B50 at 49k)</td><td><code>medium</code></td><td>xhigh's appetite alone can overflow the window mid-thinking — a truncated xhigh run scores <em>worse</em> than a completed medium one. On these cards the window cannot grow, so medium is not the budget option — it is the best quality the VRAM affords</td></tr>
+    <tr><td class="n">unified-memory iGPUs (any window)</td><td><code>xhigh</code> <em>if you raise <code>-c</code> and accept the hours</em></td><td>an iGPU's window is borrowed system RAM, not a wall — Windows grants ~57% of RAM by default and Intel's driver can override to ~87% (§08 recipe) — so its effort ceiling is patience (~3–4 h per xhigh answer at 5–7 t/s), not memory</td></tr>
   </table>
   </div>
   <p>Within your ceiling, the trade is time: a local card's tokens are free, so pay wall-clock knowingly with the tables above as the price list, and drop one notch per-session when you're waiting at the keyboard.</p>
@@ -918,8 +918,12 @@ llama-server -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
 <span class="c">:: file: <a href="https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF">huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF</a> (Q4_K_M — smallest strong Q4;</span>
 <span class="c">:: every GB re-read per token hurts at 153 GB/s)</span>
 llama-server.exe -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
-  <span class="f">-c 65536  -ngl 99</span>             <span class="c">:: shared memory fits far more, but bigger windows slow</span>
-                                <span class="c">:: prefill on weak iGPU compute — raise only if you need it</span>
+  <span class="f">-c 65536  -ngl 99</span>             <span class="c">:: interactive default, NOT a memory limit: an iGPU borrows</span>
+                                <span class="c">:: system RAM (Windows grants ~57% by default; Intel Graphics</span>
+                                <span class="c">:: Software ≥25.26.1602.2 / driver ≥32.0.101.6974 adds a "Shared</span>
+                                <span class="c">:: GPU Memory Override" slider up to ~87%). With 96 GB RAM even</span>
+                                <span class="c">:: -c 262144 fits — raise it for xhigh runs (§04 effort table);</span>
+                                <span class="c">:: the costs are slower prefill and starving the CPU of RAM</span>
   --parallel 1  --load-mode none  -ctk q8_0 -ctv q8_0   <span class="c">:: verify KV-quant support in the Vulkan build</span>
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (§06);</span>
