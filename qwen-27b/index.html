@@ -325,7 +325,7 @@
     <li><strong>Cut-offs are client-side.</strong> The server generates until told to stop. Truncations come from the client's <code>max_tokens</code>, its request timeout, or Ctrl+C — and with OpenAI-compatible APIs a cut generation cannot seamlessly resume. Size <code>max_tokens</code> and the client timeout so the whole run fits one response.</li>
     <li><strong>One slot, quantized KV.</strong> <code>--parallel 1</code> (some UIs default to 2 = double KV) and <code>-ctk q8_0 -ctv q8_0</code> (halves KV, negligible loss — but never q4_0 for the KV cache; why: §02).</li>
     <li><strong><code>--load-mode none</code> on RAM-tight machines</strong> (replaces the deprecated <code>--no-mmap</code>). Otherwise the whole GGUF stays cached in system RAM even after the weights are in VRAM — ~15&nbsp;GB freed for the Q4 file, at the cost of a slower model load.</li>
-    <li><strong>All layers on GPU or accept the cliff.</strong> Partial offload speed is set by CPU RAM bandwidth, not by the GPU — a 5080 and a 4060&nbsp;Ti offload at nearly the same ~8–12 t/s. And this is a dense model: the MoE escape hatch of parking expert tensors on CPU (<code>-ot</code>) has nothing to target here, so every offloaded layer sits on the critical path of every token. (Two ways this rule silently breaks: §10.)</li>
+    <li><strong>All layers on GPU or accept the cliff.</strong> Partial offload speed is set by CPU RAM bandwidth, not by the GPU — a 5080 and a 4060&nbsp;Ti offload at nearly the same ~8–12 t/s (assuming two sticks of DDR5 in dual channel, ~90&nbsp;GB/s; a single stick halves the bandwidth and the t/s with it). And this is a dense model: the MoE escape hatch of parking expert tensors on CPU (<code>-ot</code>) has nothing to target here, so every offloaded layer sits on the critical path of every token. (Two ways this rule silently breaks: §10.)</li>
   </ul>
   <figure>
     <svg viewBox="0 0 640 130" role="img" aria-label="Diagram of the context window as one fixed-length bar shared by three segments: the prompt, the thinking tokens which grow during the run, and the output. When thinking plus output reach the right wall set by the -c flag, generation is cut mid-sentence.">
@@ -795,6 +795,7 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   </table>
   </div>
   <p>† 3-bit rows trade quality for that speed — a different model for benchmark purposes (§05). They also trade window: on 16&nbsp;GiB the resident 3-bit file caps context near ~49k by §02's budget arithmetic, so a single &gt;100k run must either checkpoint across windows or take the offload path. The pattern to internalize: <strong>capacity decides the strategy; bandwidth decides the wait.</strong> A 5080's 960&nbsp;GB/s is worthless for this model the moment one layer lands on the CPU.</p>
+  <p><strong>System-RAM assumption for every offload and shared-memory row:</strong> those t/s figures are derived from §02's formula at <em>dual-channel</em> bandwidth — two sticks: desktop DDR5-5600 ≈ 90&nbsp;GB/s, the iGPU row's LPDDR5X-9600 ≈ 153.6&nbsp;GB/s. <strong>A single stick runs single-channel at half that bandwidth — halve the t/s and double the hours</strong>, and slower DDR5 grades scale down proportionally. If your machine reads slower than this table, check the assumption before blaming the table: Task Manager → Performance → Memory shows your speed and slots used, and §02's formula (your GB/s ÷ file GB × 0.7) predicts <em>your</em> number. dGPU-resident rows are unaffected — their bandwidth is fixed VRAM.</p>
 </section>
 
 <section id="s07">
@@ -853,7 +854,8 @@ llama-server.exe -m Qwen3.8-27B-UD-Q3_K_XL.gguf  --alias qwen/qwen3.8-27b
   <pre><span class="c">:: honest framing: this class runs the 27B poorly in every configuration — if the</span>
 <span class="c">:: exact model isn't required, a 14B-class Qwen at Q4 fits resident and flies.</span>
 <span class="c">:: If it must be this model: Q4 with most layers on CPU (~6-8 t/s; speed is set by</span>
-<span class="c">:: your system RAM, so dual-channel DDR5 matters more than the GPU).</span>
+<span class="c">:: your system RAM. The ~6-8 t/s assumes TWO sticks of DDR5 in dual channel (~90 GB/s);</span>
+<span class="c">:: one stick = single channel = half the bandwidth = roughly half the t/s).</span>
 <span class="c">:: file: <a href="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF">huggingface.co/unsloth/Qwen3.8-27B-GGUF</a> (UD-Q4_K_XL)</span>
 llama-server.exe -m Qwen3.8-27B-UD-Q4_K_XL.gguf  --alias qwen/qwen3.8-27b
   <span class="f">-c 112640  -ngl 28</span>            <span class="c">:: ~28 of the 65 offloadable layers (64 + output — §10);</span>
@@ -911,7 +913,9 @@ llama-server -m Qwen3.8-27B-Q4_K_M.gguf  --alias qwen/qwen3.8-27b
   <p class="fno">Intel Core Ultra iGPU · Arc B390-class</p>
   <pre><span class="c">:: llama-server.exe, VULKAN build (SYCL has known perf bugs on current Intel GPUs;</span>
 <span class="c">:: IPEX-LLM is archived). RAM is the spec that matters: the B390 tier (Core Ultra X9</span>
-<span class="c">:: 388H) mandates dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared — the</span>
+<span class="c">:: 388H) mandates dual-channel LPDDR5X-9600 = 153.6 GB/s, up to 96 GB shared; other</span>
+<span class="c">:: Core Ultra configs may ship slower RAM or one module (single channel = half the</span>
+<span class="c">:: bandwidth) — the ~5-7 t/s scales with YOUR bandwidth via §02's formula — the</span>
 <span class="c">:: model fits easily, it's just slow (~5-7 t/s). Even here the recipe ships xhigh for</span>
 <span class="c">:: max quality — but know the price: an xhigh coding answer can run 3-4 HOURS at this</span>
 <span class="c">:: speed. Drop to medium/low per-session when you need the machine to talk back today.</span>
