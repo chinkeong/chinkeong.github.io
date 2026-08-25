@@ -237,12 +237,16 @@
   throughput. Measured 2026-08-25, 25 alternating pairs of one prompt in one
   server load on a host-load-gated quiet machine
   (<code>-c 32768</code>, n-max&nbsp;4 / p-min&nbsp;0.75, 700 tokens):
-  greedy read <span class="num">73.69</span>&nbsp;t/s with a
-  <strong>3.4%</strong> spread, the recommended sampler
-  <span class="num">71.84</span>&nbsp;t/s with a <strong>24.7%</strong> spread
-  &mdash; <span class="num">59.0</span> to <span class="num">76.8</span>&nbsp;t/s.
+  greedy read <span class="num">73.93</span>&nbsp;t/s with a
+  <strong>3.8%</strong> spread, the recommended sampler
+  <span class="num">72.17</span>&nbsp;t/s with a <strong>25.5%</strong> spread
+  &mdash; <span class="num">59.1</span> to <span class="num">77.5</span>&nbsp;t/s.
   The extra scatter attributable to sampling alone is <strong>5.6%</strong>, and
-  a repeat run agreed (5.76% against 5.61%). <strong>So do not judge your setup
+  <strong>the whole measurement was run three separate times</strong>: greedy
+  0.99 / 0.76 / <strong>0.77</strong>% and the recommended sampler
+  5.76 / 5.61 / <strong>5.68</strong>%, the third being the one whose data file
+  is published. Within that run, decode speed tracks mean draft length at
+  <strong>r&nbsp;=&nbsp;0.923</strong> &mdash; the mechanism, not just the spread. <strong>So do not judge your setup
   on one request.</strong> A single generation can land anywhere in that band
   with nothing wrong; the average over several is what is stable, and the
   recommended sampler also runs about <strong>2.5%</strong> slower on average
