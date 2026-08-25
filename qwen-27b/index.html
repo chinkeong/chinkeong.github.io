@@ -434,9 +434,14 @@ llama-server.exe -m Qwen3.8-27B-UD-IQ4_XS.gguf  --alias qwen/qwen3.8-27b
                                 <span class="c">:: (38.7 vs 36.6 t/s). Put n10/p0.5 on the text-only rows.</span>
                                 <span class="c">:: On PROSE, drop speculation entirely: 1.16x for ~1.8 GiB</span>
   --jinja --host 127.0.0.1 --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: all three levels fit this</span>
-                                <span class="c">:: window; xhigh is the quality-first pick, medium when you are</span>
-                                <span class="c">:: waiting at the keyboard (section 09 is the price list)</span>
+  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: all three levels fit this window ONLY IF you leave</span>
+                                <span class="c">:: room for them. The window is one POT: prompt + thinking +</span>
+                                <span class="c">:: answer share it. xhigh wants 61,500-75,800 tokens of</span>
+                                <span class="c">:: THINKING, so your prompt and history must stay under about</span>
+                                <span class="c">:: 47,000 of these 122,880 - 38%% of the window. Past that,</span>
+                                <span class="c">:: xhigh truncates and returns NOTHING (section 09). medium</span>
+                                <span class="c">:: when you are waiting at the keyboard, and whenever the</span>
+                                <span class="c">:: context is deep</span>
 <span class="c">:: FLAGS DELIBERATELY OMITTED HERE:</span>
 <span class="c">::   --parallel 2 — SETTLED 2026-08-25 by the matched drafter-ON pair: +22.0% aggregate</span>
 <span class="c">::     throughput but -35.4% per slot (82.98 -> 101.25 t/s aggregate, 85.79 -> 55.41</span>
@@ -493,9 +498,13 @@ llama-server.exe -m Qwen3.8-27B-UD-Q2_K_XL.gguf  --alias qwen/qwen3.8-27b
                                 <span class="c">:: n10/p0.5 is the CODE peak but costs ~900 MiB and is</span>
                                 <span class="c">:: not measured at this window - do not assume it fits</span>
   --jinja --host 127.0.0.1 --port 1234
-  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: xhigh fits the</span>
-                                <span class="c">:: window (appetite 61.5-75.8k of 196,608) but adds to an</span>
-                                <span class="c">:: already 278-second prefill</span></pre>
+  <span class="f">--chat-template-kwargs "{\"reasoning_effort\":\"medium\"}"</span>  <span class="c">:: the window is one POT</span>
+                                <span class="c">:: xhigh wants 61,500-75,800 tokens of THINKING, and this pick exists</span>
+                                <span class="c">:: to FILL the window. At the 163,124 tokens measured above only 33,484</span>
+                                <span class="c">:: are left - short by 28,000 to 42,000, so xhigh would truncate and</span>
+                                <span class="c">:: return nothing. It fits only if you leave ~76k of the window FREE.</span>
+                                <span class="c">:: This has nothing to do with the 278 s prefill: effort changes how</span>
+                                <span class="c">:: much the model WRITES, not how long it takes to READ your prompt.</span></pre>
 
   <p class="rt">NVIDIA 24–32 GB — <b>THE ONE YOU HAVE HEARD OF</b> · Q4_K_M (no <em>measurable</em> quality advantage, 2.1&nbsp;GiB larger, ~0.3&nbsp;GiB left for your desktop)</p>
   <div class="callout warn">
@@ -865,7 +874,10 @@ llama-server.exe -m Qwen3.8-27B-Q6_K.gguf  --alias qwen/qwen3.8-27b
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
   <span class="f">--spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75</span>  <span class="c">:: start at 4, sweep (section 06)</span>
   --jinja --host 127.0.0.1 --port 1234
-  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: all three levels fit this window</span>
+  --chat-template-kwargs "{\"reasoning_effort\":\"xhigh\"}"  <span class="c">:: all three levels fit this window ONLY IF you leave room:</span>
+                                <span class="c">:: xhigh wants 61,500-75,800 tokens of THINKING out of the same</span>
+                                <span class="c">:: 122,880, so your prompt and history must stay under ~47,000.</span>
+                                <span class="c">:: Deeper than that and xhigh truncates and returns nothing</span>
 <span class="c">:: FLAGS DELIBERATELY OMITTED: --parallel 2 (+22.0% aggregate, -35.4% per slot with</span>
 <span class="c">:: the drafter on, measured 2026-08-25 — see section 03's axis table).</span></pre>
 
