@@ -227,6 +227,29 @@
 
   <div class="callout"><span class="tag">The noise floor, stated once for the whole page</span>
   <p><strong>Speed.</strong> One configuration was probed four times, each probe fired immediately after its prefill, and read <span class="num">18.27</span>, <span class="num">18.82</span>, <span class="num">19.21</span> and <span class="num">26.60</span>&nbsp;t/s (2026-08-23). The highest is <strong>45.6%</strong> above the lowest; half of that spread is ±22.8%, which this page rounds to a <strong>±25%</strong> band for any single probe taken right after a long prefill. The "45% swing" in <a href="#s11">§11</a> and the "±25%" band are therefore the same measurement stated two ways, and there is only one speed noise floor on this page. Under the <strong>cooled protocol</strong> (<a href="#s02">§02</a>, documented in <a href="#s11-clock">§11</a>) — throw away the probe that comes back with the prefill, wait 30–45&nbsp;s, take the median of several short repeats — repeat probes on this machine agree to <strong>0.4%</strong>. The drafter-off decode floor holds inside <strong>3.6%</strong> across five contents and both token regimes, which is why 3.6% is the pass band on the reproduction check in <a href="#s15-repro">§15</a>.</p>
+  <p><strong>Speed, on the sampler you will actually use: a 25% spread from
+  one request to the next.</strong> Every speed number on this page was measured
+  <em>greedy</em> &mdash; temperature&nbsp;0, top_k&nbsp;1 &mdash; because that
+  holds the generated text still so the machine is the only thing changing.
+  Qwen's own model card recommends temperature&nbsp;1.0, top_p&nbsp;0.95,
+  top_k&nbsp;20, and with the drafter on that produces different text on every
+  request, which changes mean draft length, which is what decides speculative
+  throughput. Measured 2026-08-25, 25 alternating pairs of one prompt in one
+  server load on a host-load-gated quiet machine
+  (<code>-c 32768</code>, n-max&nbsp;4 / p-min&nbsp;0.75, 700 tokens):
+  greedy read <span class="num">73.69</span>&nbsp;t/s with a
+  <strong>3.4%</strong> spread, the recommended sampler
+  <span class="num">71.84</span>&nbsp;t/s with a <strong>24.7%</strong> spread
+  &mdash; <span class="num">59.0</span> to <span class="num">76.8</span>&nbsp;t/s.
+  The extra scatter attributable to sampling alone is <strong>5.6%</strong>, and
+  a repeat run agreed (5.76% against 5.61%). <strong>So do not judge your setup
+  on one request.</strong> A single generation can land anywhere in that band
+  with nothing wrong; the average over several is what is stable, and the
+  recommended sampler also runs about <strong>2.5%</strong> slower on average
+  than greedy (95% CI 0.2&ndash;3.5%). This does <em>not</em> affect the
+  reproduction check in <a href="#s15-repro">&sect;15</a>, which pins
+  temperature&nbsp;0 and top_k&nbsp;1 precisely so that the reader is measuring
+  the machine rather than the dice.</p>
   <p><strong>Energy.</strong> One configuration measured three times in the 2026-08-23 power matrix reproduces joules per decode token to <strong>2.9%</strong> on the slow arms and <strong>5.6%</strong> on energy-delay product, tightening to <strong>0.03%</strong> on the fast speculating arms. Separately, board power drifted <strong>±6%</strong> between arms measured hours apart at constant throughput, so a 6% energy gap between two arms run at different times is the instrument, not the setting.</p>
   <p><strong>What survives those bands: shapes, ratios and rankings. Individual levels do not.</strong> Do not believe a slow-arm energy gap under about 3%, and do not believe a speed difference between two single post-prefill probes under about 25%. Printed precision on this page follows the band, with one deliberate exception. Single probes are rounded; cooled and multi-probe speeds are given to one decimal. The energy tables print four significant figures (8.104, 3.743, 3.210 and the rest) because that is what the integrator reports and because the ratios between them are the finding — but the energy noise floor is 2.9%, so <strong>the third digit of any of those is not meaningful and only their ratios and ranking are</strong>. Two figures are printed to four and five places on purpose, and neither is a level claim: <span class="num">81.71</span>&nbsp;t/s and perplexity <span class="num">6.5956</span> are reproduction matches between two independent runs, quoted at that precision because matching to the decimal is the point.</p>
   </div>
