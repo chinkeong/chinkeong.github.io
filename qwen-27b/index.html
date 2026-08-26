@@ -1848,6 +1848,75 @@ llama-server -c 32768 -ngl 99 --parallel 1 -ctk q8_0 -ctv q8_0 --jinja --port 12
   </div>
   <p><strong>The one sentence that reconciles a falling perplexity curve with a flat accuracy curve.</strong> Look at the <b>c</b> column: it is zero in six of the nine rows. The smaller file almost never wins a question the larger one lost, and in every comparison against the 4-bit reference file the losses run in one direction only. So quality <em>is</em> falling at every step down the ladder; it is simply below what 25 questions per set can resolve until the cliff arrives. The flat accuracy column is not evidence that the files are equal. It is evidence that this instrument cannot see a gap this small, which is what <a href="#s10">§10</a> said before the ladder ran.</p>
   <p><strong>Where the boundary is, stated as an interval because that is all the data supports.</strong> UD-IQ2_S at <span class="num">2.481</span> bits per weight ties the reference file. UD-IQ2_XXS at <span class="num">2.153</span> does not. <strong>The boundary therefore lies between 2.48 and 2.15 bits per weight</strong>, and 25 questions per set cannot place it more finely than that. Anyone quoting a single number for where this model breaks — including a future edition of this page — is quoting something the measurement does not contain.</p>
+
+  <h3 id="s08-agree">A second opinion on the same ladder: how often it picks the
+  same next word</h3>
+
+  <p><b>A reader of this page objected that raw perplexity is the wrong
+  instrument, and he is right enough that it is worth showing why.</b>
+  Perplexity is one average over a whole corpus, so two files can share a
+  perplexity while behaving differently &mdash; and this page already carries
+  the proof, in that perplexity <em>cannot</em> separate UD-IQ2_XXS from
+  UD-IQ1_M (they sit 1.67&nbsp;% apart at 1.7&nbsp;sigma), which is the reason
+  the accuracy ladder was built at all.</p>
+
+  <p><b>First, a name collision worth clearing up, because the two things are
+  unrelated.</b> <code>--top-p 0.95</code> in the recipes on this page is
+  <em>nucleus sampling</em> &mdash; a knob that controls randomness while the
+  model writes. <b>&ldquo;Same top p&rdquo;</b> here is a <em>measurement</em>:
+  an output line of <code>llama-perplexity --kl-divergence</code>. It reports
+  how often a shrunken file picks the <b>same next word</b> as a reference
+  file, over the same text. Word by word, not averaged.</p>
+
+  <table>
+    <thead><tr><th scope="col">File</th><th scope="col" class="num">bits/weight</th>
+      <th scope="col" class="num">Same top p<br><span class="small">agreement with the anchor</span></th>
+      <th scope="col" class="num">Mean KLD<br><span class="small">lower is closer</span></th>
+      <th scope="col" class="num">PPL ratio</th></tr></thead>
+    <tbody>
+      <tr><td><b>UD-Q3_K_XL</b></td><td class="num">3.895</td><td class="num"><b>94.120</b>&nbsp;%</td><td class="num">0.0190</td><td class="num">1.011</td></tr>
+      <tr><td><b>UD-IQ3_XXS</b></td><td class="num">3.240</td><td class="num"><b>88.924</b>&nbsp;%</td><td class="num">0.0639</td><td class="num">1.032</td></tr>
+      <tr class="hl"><td><b>UD-Q2_K_XL</b></td><td class="num">2.912</td><td class="num"><b>86.594</b>&nbsp;%</td><td class="num">0.0942</td><td class="num">1.057</td></tr>
+      <tr><td><b>UD-IQ2_S</b></td><td class="num">2.481</td><td class="num"><b>83.988</b>&nbsp;%</td><td class="num">0.1411</td><td class="num">1.105</td></tr>
+      <tr><td><b>UD-IQ2_XXS</b></td><td class="num">2.153</td><td class="num"><b>79.451</b>&nbsp;%</td><td class="num">0.2255</td><td class="num">1.181</td></tr>
+      <tr><td><b>UD-IQ1_M</b></td><td class="num">1.994</td><td class="num"><b>76.620</b>&nbsp;%</td><td class="num">0.2946</td><td class="num">1.259</td></tr>
+      <tr><td><b>UD-IQ1_S</b></td><td class="num">1.835</td><td class="num"><b>73.071</b>&nbsp;%</td><td class="num">0.4118</td><td class="num">1.408</td></tr>
+    </tbody>
+  </table>
+
+  <p class="small"><b>Conditions</b> <span class="pv m">MEASURED</span>
+  2026-08-26: 200 chunks (<span class="num">102,400</span> scored tokens) of the same
+  wikitext-2 corpus, <code>-c 512 -ngl 99 -fa on</code>, base logits 23.6&nbsp;GiB.
+  <b>The base is UD-IQ4_XS, not the unquantised model.</b> Measuring against
+  FP16 properly would need ~54&nbsp;GB of weights that are not on this machine,
+  so every figure here is <b>agreement with this page&rsquo;s own anchor file</b>
+  and <b>cannot be compared against anybody else&rsquo;s KL-divergence table</b>.
+  It ranks these rungs against each other, which is what a ladder is for.</p>
+
+  <p><b>It resolves what perplexity cannot.</b> Take the pair this page says
+  perplexity cannot rank &mdash; UD-IQ2_XXS against UD-IQ1_M, 1.67&nbsp;% apart
+  at <b>1.7&nbsp;sigma</b>. On agreement they are <span class="num">2.83</span> points
+  apart against a <span class="num">0.183</span>-point standard error: <b>15&nbsp;sigma</b>
+  <span class="chip d">derived</span>. Every adjacent step on the ladder is 2.3
+  to 5.2 points against an error near 0.13, so <b>every rung separates
+  cleanly</b> &mdash; which neither perplexity nor the 75-item accuracy suite
+  manages.</p>
+
+  <p><b>It is also easier to picture.</b> &ldquo;UD-Q2_K_XL costs
+  +5.66&nbsp;% of perplexity&rdquo; is an abstraction. &ldquo;UD-Q2_K_XL picks a
+  different next word about one time in seven&rdquo; is a sentence you can act
+  on.</p>
+
+  <p><b>What it does NOT measure, and why the recommendation still rests on
+  perplexity.</b> Agreement is <em>fidelity to the reference</em>, not
+  usefulness: a file can match the anchor on 93&nbsp;% of tokens and still emit
+  code that will not run, which is exactly what
+  <a href="#s08-exec">the execution probe</a> catches and no agreement metric
+  can see. And this column is measured against a 4-bit file rather than the
+  real model, so it describes distance from <em>another quantisation</em>. Both
+  metrics separate 2.912 from 2.481 decisively &mdash; 7.9&nbsp;% on perplexity,
+  2.6 points at ~17&nbsp;sigma here &mdash; so the floor does not move either
+  way. <b>This is a second opinion, not a replacement.</b></p>
   <div class="callout"><span class="tag">Why the bits-per-weight column does not match the file names</span><p>A file called <code>Q2_K_XL</code> measures <strong>2.912</strong> bits per weight, not the 2.5625 that stock <code>Q2_K</code> spends, and <code>Q3_K_XL</code> measures <strong>3.895</strong> against stock <code>Q3_K</code>'s 3.4375. That is not an error in either place: k-quants (<a href="https://github.com/ggml-org/llama.cpp/pull/1684">llama.cpp PR #1684</a>, Kawrakow, June 2023) fix a bit width for each <em>kind</em> of the model's internal number tables, and a vendor's "UD"/"XL" mix then spends about 0.35–0.46 bits per weight more than the label by keeping the tables that matter most at higher precision. <span class="chip">cited</span> for the PR and the stock widths; <span class="chip m">measured</span> for the file sizes this column is computed from. <strong>The curve above is a function of the real bits, not of the name on the file</strong> — which is exactly why the column is printed.</p></div>
   <p style="font-size:14px">Two limits to carry out of this table. <strong>Every step is resolved on perplexity, and the smallest one is not close:</strong> the 4.223-to-3.895 step moves perplexity by <span class="num">0.1735</span>, about 2.8× the <span class="num">±0.063</span> combined error bar this section uses for any file-against-file difference <span class="chip d">derived</span>, and every step below it is larger. <strong>And a cross-model reference point, because "how small before I should just use a smaller model?" is the real question underneath.</strong> On the identical frozen suite, gemma-4-12B-it-QAT-Q4_0 — 6.497&nbsp;GiB at 4.65 bits per weight, within 4% of UD-IQ2_XXS's download size — scored <span class="num">73.30</span> with <strong>19 truncations</strong>, against the 2.153-bit 27B's 78.70 with one. At an equal weight budget the crushed big model won, which is worth knowing before assuming that a smaller model at higher precision is automatically the safer trade. Conditions differ between those two arms (the Qwen ran at <code>reasoning_effort=low</code> with a <code>q8_0</code> cache; gemma ran at its own defaults, having no effort knob), and that is a disclosed asymmetry, not a fair fight.</p>
 
