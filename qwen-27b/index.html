@@ -193,6 +193,83 @@
   .retraction p { margin: 0 0 8px; font-size: 14px; max-width: 74ch; }
   .retraction p:last-child { margin-bottom: 0; }
   .retraction s { color: var(--muted); text-decoration-thickness: 1px; }
+
+  /* ====================================================================
+     LINKEDIN-STYLE TYPOGRAPHY PASS, 2026-08-27.
+
+     The page set font-family: var(--mono) on 24 selectors - h1, h2, h3,
+     recipe titles, table headers, glossary terms, chips, the contents
+     list, the footer. Monospace gives every glyph the width of the widest
+     one, which fights the eye at small sizes, and those are precisely the
+     elements a reader SCANS rather than reads.
+
+     Mono is kept where alignment or code-ness is the point: code, pre,
+     tabular figures, numeric cells. Everything else takes the UI stack.
+
+     This is an override block on purpose. Deleting it restores the
+     previous look exactly, and it cannot half-apply the way editing 24
+     scattered rules could.
+     ==================================================================== */
+  :root {
+    --ui: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --accent: #0a66c2;
+    --accent-ink: #0a66c2;
+    --ink: #000000e6;
+    --muted: #00000099;
+    --line: #00000026;
+    --surface: #f4f2ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #70b5f9; --accent-ink: #70b5f9;
+      --ink: #ffffffe6; --muted: #ffffff99; --line: #ffffff26;
+      --surface: #1b1f23;
+    }
+  }
+
+  /* headings: sans, heavier, and a step larger at every level */
+  h1 { font-family: var(--ui); font-weight: 600; letter-spacing: -0.02em;
+       font-size: clamp(26px, 4.4vw, 34px); }
+  h2 { font-family: var(--ui); font-weight: 600; letter-spacing: -0.01em;
+       font-size: 24px; line-height: 1.3; }
+  h3 { font-family: var(--ui); font-weight: 600; font-size: 18px;
+       line-height: 1.4; }
+
+  /* recipe titles were 14.5px mono with 0.06em tracking - three things
+     working against legibility at once */
+  .rt { font-family: var(--ui); font-weight: 600; font-size: 16px;
+        letter-spacing: 0; border-left-color: var(--accent); }
+  .eyebrow { font-family: var(--ui); font-weight: 600; letter-spacing: 0.06em; }
+
+  /* scanned furniture: sans, and big enough to read */
+  .spec, .fno, .callout .tag, .glossary dt, figcaption,
+  .dlabel, .dlabel-m, .axis-t, footer, sup.cref,
+  .retraction .rtag, details.cmds summary, nav.toc {
+    font-family: var(--ui);
+  }
+  .chip { font-family: var(--ui); font-size: 11px; letter-spacing: 0.04em;
+          padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+  .hint { font-size: 12px; }
+  .small { font-size: 13px; }
+  .callout .tag { font-weight: 600; letter-spacing: 0.04em; }
+  .glossary dt { font-weight: 600; }
+
+  /* table headers are scanned, so sans; numeric CELLS keep mono because
+     the whole point of a figure column is that the digits line up */
+  th { font-family: var(--ui); font-weight: 600; letter-spacing: 0.02em; }
+  td.n, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* LinkedIn-ish surfaces: a warm ground with white cards, soft radius,
+     hairline borders instead of hard rules */
+  body { background: var(--surface); }
+  .layout { background: var(--ground); border-radius: 8px;
+            box-shadow: 0 0 0 1px var(--line); }
+  .callout { border-radius: 8px; }
+  pre { border-radius: 8px; }
+  table { border-radius: 6px; }
+
+  /* links pick up the accent rather than staying ink-coloured */
+  .content a { color: var(--accent); }
 </style>
 
 <div class="layout">
