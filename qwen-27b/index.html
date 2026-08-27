@@ -257,7 +257,34 @@
   /* table headers are scanned, so sans; numeric CELLS keep mono because
      the whole point of a figure column is that the digits line up */
   th { font-family: var(--ui); font-weight: 600; letter-spacing: 0.02em; }
-  td.n, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  /* .num MARKS A NUMBER FOR EMPHASIS and it is used inline in prose far more
+     than in tables - "spent about <span class=num>12.9</span> hours". Setting
+     it in mono made it RECEDE instead: monospace has a smaller x-height than
+     the sans around it at the same px, so the digit a sentence is built on
+     rendered smaller and lighter than the words either side of it. That was my
+     error in the previous pass - I kept mono on .num reasoning about column
+     alignment, in a class that is mostly not in a column.
+
+     So: inline numbers inherit the surrounding face and gain weight, which is
+     what emphasis means. Only td.n - an actual numeric table cell, where the
+     whole point is that digits line up down the column - stays monospaced. */
+  .num { font-family: inherit; font-weight: 600; font-variant-numeric: tabular-nums;
+         font-feature-settings: "tnum"; }
+  td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.n .num, th .num { font-family: var(--mono); font-weight: 600; }
+
+  /* The spec strip was 13px mono values under 11px grey uppercase labels with
+     0.1em tracking. Small, monospaced, letterspaced AND low-contrast, which is
+     four things at once. */
+  .spec { font-family: var(--ui); font-size: 15px; line-height: 1.5; }
+  .spec b { font-size: 12px; letter-spacing: 0.05em; font-weight: 600;
+            color: var(--label); }
+
+  /* 60% black on white is 5.7:1 - it passes, and it still reads as washed out
+     at 11-12px. Labels get a darker grey than running prose does. */
+  :root { --label: #000000a6; }
+  :root { --label: rgba(0,0,0,0.72); }
+  @media (prefers-color-scheme: dark) { :root { --label: rgba(255,255,255,0.72); } }
 
   /* LinkedIn-ish surfaces: a warm ground with white cards, soft radius,
      hairline borders instead of hard rules */
