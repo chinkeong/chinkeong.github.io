@@ -85,8 +85,9 @@
     }
     nav.toc .toctitle { display: none; }
     nav.toc .toclabel {
-      display: block; cursor: pointer; padding: 12px 2px;
-      font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+      display: block; cursor: pointer; padding: 14px 2px;
+      font-family: var(--body); font-size: 14px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--accent-ink); -webkit-user-select: none; user-select: none;
     }
     nav.toc .toclabel::after { content: "  \25BE"; }
@@ -95,6 +96,14 @@
     nav.toc .toctoggle:checked ~ .toclinks {
       display: block; max-height: 62vh; overflow-y: auto;
       padding: 2px 0 14px; -webkit-overflow-scrolling: touch;
+    }
+    /* The sidebar sets mono at 12px and the links inherit it. On a phone that
+       is SMALLER than the 15px body text and in a narrower face, so the list
+       was present and still unreadable. Body face, body size, and a tap target
+       that clears the 44px minimum. */
+    nav.toc .toclinks a {
+      font-family: var(--body); font-size: 15px; line-height: 1.45;
+      padding: 12px 0 12px 12px; color: var(--ink);
     }
     body { font-size: 15px; }
     pre { font-size: 12px; padding: 14px 14px; }
