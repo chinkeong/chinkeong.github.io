@@ -79,8 +79,8 @@
        starts closed, not something removed: an index that buries the article
        is worse than no index, and no index at all was worse than both. */
     nav.toc {
-      display: block; position: sticky; top: 0; z-index: 30;
-      padding: 0; margin: 0 0 20px; max-height: none; overflow: visible;
+      display: block; position: static; z-index: auto;
+      padding: 0; margin: 0 0 18px; max-height: none; overflow: visible;
       background: var(--ground); border-bottom: 1px solid var(--line);
     }
     nav.toc .toctitle { display: none; }
@@ -94,7 +94,7 @@
     nav.toc .toctoggle:checked ~ .toclabel::after { content: "  \25B4"; }
     nav.toc .toclinks { display: none; }
     nav.toc .toctoggle:checked ~ .toclinks {
-      display: block; max-height: 62vh; overflow-y: auto;
+      display: block; max-height: 55vh; overflow-y: auto;
       padding: 2px 0 14px; -webkit-overflow-scrolling: touch;
     }
     /* The sidebar sets mono at 12px and the links inherit it. On a phone that
@@ -102,8 +102,8 @@
        was present and still unreadable. Body face, body size, and a tap target
        that clears the 44px minimum. */
     nav.toc .toclinks a {
-      font-family: var(--body); font-size: 15px; line-height: 1.45;
-      padding: 12px 0 12px 12px; color: var(--ink);
+      font-family: var(--body); font-size: 15px; line-height: 1.3;
+      padding: 8px 0 8px 12px; color: var(--ink);
     }
     body { font-size: 15px; }
     pre { font-size: 12px; padding: 14px 14px; }
