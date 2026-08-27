@@ -295,6 +295,29 @@
   pre { border-radius: 8px; }
   table { border-radius: 6px; }
 
+  /* INLINE CODE WAS GREY ON GREY, and I caused it. `code` has always read
+     `background: var(--surface)`, and the restyle redefined --surface from
+     #f5f5f7 to the warm #f4f2ee AND handed it to the page background. One
+     token was then doing two jobs that need different values: the ground
+     behind the card, and a pill that has to stand off the card. `code` also
+     set no colour of its own, so the text inside inherited whatever ran
+     around it.
+
+     Code chips get their own two tokens now - a light tint of the accent and
+     a dark ink to sit on it - so a flag is legible on its own terms and the
+     page ground can change without dragging the chips with it. */
+  :root { --code-bg: rgba(10,102,194,0.09); --code-ink: #0b3c66;
+          --code-line: rgba(10,102,194,0.22); }
+  @media (prefers-color-scheme: dark) {
+    :root { --code-bg: rgba(112,181,249,0.15); --code-ink: #cfe6ff;
+            --code-line: rgba(112,181,249,0.30); }
+  }
+  code { background: var(--code-bg); color: var(--code-ink);
+         border-color: var(--code-line); font-size: 0.9em; }
+  /* a chip inside a heading or a bold run should not fight the weight it sits in */
+  h1 code, h2 code, h3 code, b code, strong code { color: inherit;
+         background: var(--code-bg); }
+
   /* links pick up the accent rather than staying ink-coloured */
   .content a { color: var(--accent); }
 </style>
