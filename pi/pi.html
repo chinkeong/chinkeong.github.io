@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>How to Install Pi — a beginner's guide</title>
 <meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
 <style>
@@ -20,14 +20,14 @@ accent. Code blocks stay dark terminal-style for contrast. */
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}}
 :root[data-theme="dark"]{--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 'Space Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:0}
+body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 "Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0}
 .wrap{margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
 header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-h1{font-size:calc(1.8rem, 1.7rem + 0.55vw, 2.3rem);margin:.2rem 0 .3rem;line-height:1.15}
-h2{font-size:calc(1.35rem, 1.2rem + 0.6vw, 1.7rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
-h3{font-size:calc(1.1rem, 1.05rem + 0.4vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--accent);font-weight:600}
+h1{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.8rem, 1.7rem + 0.55vw, 2.3rem);margin:.2rem 0 .3rem;line-height:1.15}
+h2{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.35rem, 1.2rem + 0.6vw, 1.7rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+h3{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.1rem, 1.05rem + 0.4vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--accent);font-weight:600}
 p,.lead{color:var(--fg)}
 .lead{color:var(--mut);margin-top:0}
 code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
@@ -324,7 +324,7 @@ Use a different resolution if the task names a specific device or viewport. Alwa
 
 **Typography — defaults**
 Pick fonts deliberately; don't default to Arial/Times or whatever the last template used.
-- General UI / app-like tools: system font stack — `-apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`. Fast, no external request, and disappears into the interface the way UI type should.
+- General UI / app-like tools: LinkedIn's brand stack — `"Source Sans 3", -apple-system, "Segoe UI", Roboto, Arial, sans-serif`. Source Sans is LinkedIn's actual primary typeface (free, open-source, on Google Fonts); the rest of the chain is just the fallback if it doesn't load. Note this pulls an external font request, unlike a pure system stack — for offline/air-gapped tools, drop the Source Sans entry and fall back to system-only.
 - Content-heavy pages (articles, reports, marketing): pick one of —
   - **One grotesk sans, alone, doing all the work** — e.g. "Public Sans" or "Space Grotesk" for both headings and body, weight and size carrying the hierarchy instead of a second typeface.
   - **Newsreader (serif, headings/body) + IBM Plex Sans (labels/chrome)** — literary without leaning on the cream-background-plus-terracotta look.
