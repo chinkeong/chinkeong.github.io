@@ -5,52 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>How to Install Pi — a beginner's guide</title>
 <meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
-<style>
-/* Type scale — a fluid clamp() min/ideal/max at every level, not a fixed
-   multiplier between two hardcoded breakpoints. The body anchors the scale and
+<style>/* Type scale — a fluid clamp() min/ideal/max at every level (not a fixed
+   multiplier between two hardcoded breakpoints). Body anchors the scale;
    each heading is a step above it; rem bounds keep the steps on any viewport.
-   (Replaces the old vw/1280 × N approach.)
 
-Palette — indigo on cool neutral: light slate background, slate text, indigo
-accent. Code blocks stay dark terminal-style for contrast. */
-:root{--bg:#f4f6fb;--fg:#0f172a;--mut:#475569;--line:#e2e8f0;--warn:#4f46e5;--warnbg:#eef2ff;--accent:#4f46e5}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}}
-:root[data-theme="dark"]{--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}
+Palette — disciplined neutrals from the design system: #ffffff canvas,
+#0a0a0a ink for body/headline text and every border (pure black 1px hairlines),
+#666666 muted secondary/metadata, #eae6df surface beige for the one permitted
+background variation (headers, card edge, hover), and a single brand blue
+#0a66c2 reserved for links/CTAs with #004182 on hover. #b24020 rust is the one
+chromatic surprise, used only on callouts. Headings and body share one grotesk
+sans (Space Grotesk) so a second typeface never carries the hierarchy. */
+:root{--bg:#ffffff;--fg:#0a0a0a;--mut:#666666;--line:#0a0a0a;--warn:#b24020;--warnbg:#f3ede3;--surface:#eae6df;--accent:#0a66c2;--accent-hover:#004182}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080808;--fg:#eae6df;--mut:#9a9a9a;--line:#262626;--warn:#b24020;--warnbg:#241a15;--surface:#1c1a17;--accent:#3d88c9;--accent-hover:#63a3d6}}
+:root[data-theme="dark"]{--bg:#080808;--fg:#eae6df;--mut:#9a9a9a;--line:#262626;--warn:#b24020;--warnbg:#241a15;--surface:#1c1a17;--accent:#3d88c9;--accent-hover:#63a3d6}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 "Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0}
+body{background:var(--bg);color:var(--fg);font:calc(0.94rem, 1.15rem + 0.28vw, 1.25rem) / 1.6 "Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0}
 .wrap{margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
 header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
 a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-h1{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.8rem, 1.7rem + 0.55vw, 2.3rem);margin:.2rem 0 .3rem;line-height:1.15}
-h2{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.35rem, 1.2rem + 0.6vw, 1.7rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
-h3{font-family:"Source Sans 3",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.1rem, 1.05rem + 0.4vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--accent);font-weight:600}
+a:hover{text-decoration:underline;color:var(--accent-hover)}
+h1{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.6rem, 1.5rem + 0.7vw, 3rem);margin:.2rem 0 .3rem;line-height:1.1}
+h2{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.2rem, 1.15rem + 0.6vw, 2.1rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+h3{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1rem, 0.95rem + 0.35vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--fg);font-weight:600}
 p,.lead{color:var(--fg)}
 .lead{color:var(--mut);margin-top:0}
-code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
+code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--surface);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
 pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem);line-height:1.5;margin:0 0 1.2rem}
 pre code{background:none;padding:0;color:inherit;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem)}
-.card{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
+.card{border:1px solid var(--line);border-left:4px solid var(--surface);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
 .card h3{margin-top:.2rem;color:var(--fg)}
 .steps{counter-reset:step;list-style:none;padding-left:0;margin:1rem 0}
 .steps li{position:relative;padding:1rem 1rem 1rem 3rem;margin:.6rem 0;border-bottom:1px solid var(--line)}
 .steps li:last-child{border-bottom:none}
-.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1rem;width:2.2rem;height:2.2rem;line-height:2.2rem;text-align:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:600}
+.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1rem;width:2.2rem;height:2.2rem;line-height:2.2rem;text-align:center;border-radius:50%;background:var(--surface);color:var(--fg);font-weight:600}
 .note{color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
 .warn{background:var(--warnbg);border:1px solid var(--warn);border-radius:8px;padding:.7rem 1rem;margin:1rem 0;color:var(--fg)}
 table{border-collapse:collapse;width:100%;margin:1rem 0}
 th,td{border:1px solid var(--line);padding:.55em .7em;text-align:left;vertical-align:top}
-th{background:var(--warnbg)}
+th{background:var(--surface)}
 footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
 /* Config-file accordion: expandable code blocks for models.json / settings.json */
 .accordion{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:1.2rem 0}
 .accordion-item{border-bottom:1px solid var(--line)}
 .accordion-item:last-child{border-bottom:none}
 .accordion-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:none;border:0;color:var(--fg);font:inherit;font-weight:600;text-align:left;padding:.8rem 1rem;cursor:pointer}
-.accordion-head:hover{background:var(--warnbg)}
+.accordion-head:hover{background:var(--surface)}
 .accordion-head .chev{transition:transform .2s ease;color:var(--mut);font-size:1.1em}
 .accordion-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
 .accordion-body{max-height:0;overflow:hidden}
@@ -59,10 +62,9 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
 .accordion-body code{display:block;background:none;padding:1rem 1rem;color:var(--fg);font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem)}
 /* Copy-to-clipboard control on config-file blocks */
 .accordion-head .copy{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;padding:.4rem .75rem;border:1px solid var(--line);border-radius:6px;background:none;color:var(--mut);font:inherit;font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem);cursor:pointer;line-height:1}
-.accordion-head .copy:hover{background:var(--warnbg);color:var(--fg)}
-.accordion-head .copy.copied{background:#1a7f37;color:#fff;border-color:#1a7f37}
-@media (prefers-reduced-motion:reduce){.accordion-head .chev{transition:none}}
-</style>
+.accordion-head .copy:hover{background:var(--surface);color:var(--fg)}
+.accordion-head .copy.copied{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+@media (prefers-reduced-motion:reduce){.accordion-head .chev{transition:none}}</style>
 </head>
 <body>
 <div class="wrap">
@@ -318,18 +320,39 @@ Use a different resolution if the task names a specific device or viewport. Alwa
 
 **Layout**
 - No fixed `max-width` — layouts must be fluid across viewport widths.
-- Font size scales with viewport via `clamp()`, not a fixed multiplier between two hardcoded breakpoints:
-  `font-size: clamp(1rem, 1.2vw + 0.5rem, 2rem);`
-- Check the result renders correctly at both ~1280px and 2560px widths.
+- Font size scales with viewport via `clamp()`, capped at the real values in the reference scale below rather than an arbitrary max — the earlier `2rem` (32px) cap was well under the actual hero heading size (48px), which is why text read small once the font changed:
+  `font-size: clamp(1.75rem, 1.5vw + 1.25rem, 3rem);` /* hero heading — caps at 48px, matches the scale below */
+- Check the result renders correctly at both ~1280px and 2560px widths against the reference scale below.
 
 **Typography — defaults**
 Pick fonts deliberately; don't default to Arial/Times or whatever the last template used.
-- General UI / app-like tools: LinkedIn's brand stack — `"Source Sans 3", -apple-system, "Segoe UI", Roboto, Arial, sans-serif`. Source Sans is LinkedIn's actual primary typeface (free, open-source, on Google Fonts); the rest of the chain is just the fallback if it doesn't load. Note this pulls an external font request, unlike a pure system stack — for offline/air-gapped tools, drop the Source Sans entry and fall back to system-only.
+- General UI / app-like tools: `"Source Sans 3", -apple-system, "Segoe UI", Roboto, Arial, sans-serif`. Source Sans is a free, open-source typeface (on Google Fonts); the rest of the chain is just the fallback if it doesn't load. Note this pulls an external font request, unlike a pure system stack — for offline/air-gapped tools, drop the Source Sans entry and fall back to system-only.
 - Content-heavy pages (articles, reports, marketing): pick one of —
   - **One grotesk sans, alone, doing all the work** — e.g. "Public Sans" or "Space Grotesk" for both headings and body, weight and size carrying the hierarchy instead of a second typeface.
   - **Newsreader (serif, headings/body) + IBM Plex Sans (labels/chrome)** — literary without leaning on the cream-background-plus-terracotta look.
-  - Avoid pairing a high-contrast display serif with a warm cream background (~#F4F1EA) and a terracotta/clay accent (~#D97757) — that combination has become the single most recognizable "AI-generated page" tell. If serif + color is the goal, build the palette from scratch instead.
-- Set a real type scale (e.g. a 1.25× modular scale), not three ad hoc sizes. Keep body line length under ~80 characters; give serif body text extra line-height relative to sans-serif.
+- Use a real type scale, not three ad hoc sizes:
+
+  | Use | Size | Weight | Line height |
+  |---|---|---|---|
+  | Hero / display heading | 48px | 400 | 60px |
+  | Section heading (h2) | 32px | 400 | 40px |
+  | Body copy (default) | 20px | 400 | 30px |
+  | Secondary body / h3 | 16px | 400 / 600 | 24px / 20px |
+  | Nav links, primary CTA, inline links | 16px | 600 | 24px |
+  | Tertiary links, buttons | 14px | 600 | 17.5px |
+  | Captions, footer microcopy | 12px | 400 | 18px |
+
+  Keep display headings at weight 400, not bold — reserve 600 for links, nav, and CTAs only, never headline emphasis (consistent with the "don't bold a word for emphasis" rule below). Keep body line length under ~80 characters; give serif body text extra line-height relative to sans-serif.
+
+**Color**
+One brand color plus a tightly disciplined neutral set, not a rainbow of accents:
+- `#0a66c2` (primary blue) — reserved for exactly three jobs: the brand mark, the primary CTA, and inline links. Don't dilute it into backgrounds or decorative accents elsewhere.
+- `#004182` (blue, dark) — hover/active state for the primary blue only.
+- `#000000` (ink) — body and headline text, and every border. Borders are pure black hairlines at 1px, not soft gray — that discipline is what gives chip/card grids a crisp, "tagged" look instead of a soft SaaS-default one.
+- `#666666` (ink, muted) — secondary text and metadata only.
+- `#ffffff` (canvas) — the page floor.
+- `#eae6df` (surface beige) — the one permitted background variation, used to mark a distinct zone (e.g. a sign-in or CTA band). Don't add a second background color on top of this.
+- `#b24020` (accent rust) — a single chromatic surprise, used once and sparingly for one promotional or callout element (text/border, never a fill). Extending it into general use dilutes a one-voltage palette into a two-color one.
 
 **Avoid these tells** — the fastest way a page reads as templated:
 - Bolding or italicizing a single word in a headline for "emphasis"
