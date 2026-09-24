@@ -189,7 +189,11 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@juicesharp/rpiv-todo",
     "npm:pi-background-tasks",
-    "npm:pi-lens"
+    "npm:pi-lens",
+    "npm:@ff-labs/pi-fff",
+    "npm:@sting8k/pi-vcc",
+    "npm:pi-context-view",
+    "npm:pi-schedule-prompt"
   ]
 }</code></pre>
     </div>
@@ -197,6 +201,16 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
 </div>
 
 <p class="note">What matters: <code>defaultModel</code> is the one field that selects which model Pi uses by default (I set it to <strong>ornith/ornith-1.5-9b</strong>). <code>defaultProvider</code> must match a provider key in <code>models.json</code> (<strong>llamacpp</strong>). <code>theme</code> names the active theme. <code>packages</code> is a list of the extensions you installed.</p>
+
+<h2>Running Ornith on your GPU</h2>
+<p class="lead">This is the example command that launches <strong>Ornith-1.5-9B</strong> as a local llama.cpp server — the running process behind the <code>ornith/ornith-1.5-9b</code> model you registered above. Start it in a terminal and leave it running, then open Pi: it binds to <strong>127.0.0.1:1234</strong>, which is exactly where <code>models.json</code> points.</p>
+
+<div class="card">
+<pre><code id="ornith-cmd">llama-server.exe -m "c:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\Ornith-1.5-9B-MTP-IQ4_XS.gguf"   --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8   --mmproj "C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\mmproj-Ornith-1.5-9B-BF16.gguf" --image-min-tokens 1024 --image-max-tokens 10580   --parallel 2   -ctk q8_0 -ctv q8_0   --alias ornith/ornith-1.5-9b   -ngl 99 --spec-draft-ngl 99 -c 524288   --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05   --jinja --host 127.0.0.1 --port 1234</code></pre>
+<button type="button" class="copy" data-target="ornith-cmd" title="Copy the Ornith launch command to clipboard">⧉</button>
+</div>
+
+<p class="note">Run this in a command prompt and leave the window open — Pi connects to the server it starts. Point <code>-m</code> at the <code>protoLabsAI/Ornith-1.5-9B-MTP-GGUF</code> folder that ships the separate multi-token-prediction head (it keeps the draft head in the weights); do not use a converted GGUF, which drops it and runs 32 layers instead of 33. <code>-ngl 99</code> loads every layer onto the GPU, and <code>--spec-draft-ngl 99</code> is the companion flag that keeps the draft head on the GPU too — without it the speculative-decoding speedup disappears. The <strong>Copy</strong> button grabs the full line so you can paste it at once.</p>
 
 <h2>Extensions I installed</h2>
 <p>After the core install, I added themes and subagents/extensions with the <code>pi install</code> command. Each links to its package page on <a href="https://pi.dev/packages/">pi.dev/packages</a>:</p>
@@ -223,7 +237,19 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
 <a href="https://pi.dev/packages/@juicesharp/rpiv-todo"><code>pi install npm:@juicesharp/rpiv-todo</code></a>
 
 # Background tasks — run long-running commands in the background
-<a href="https://pi.dev/packages/pi-background-tasks"><code>pi install npm:pi-background-tasks</code></a></code></pre>
+<a href="https://pi.dev/packages/pi-background-tasks"><code>pi install npm:pi-background-tasks</code></a>
+
+# FFF — the fuzzy path / grep finder
+<a href="https://pi.dev/packages/pi-fff"><code>pi install npm:@ff-labs/pi-fff</code></a>
+
+# VCC — algorithmic session compaction, no LLM calls
+<a href="https://pi.dev/packages/pi-vcc"><code>pi install npm:@sting8k/pi-vcc</code></a>
+
+# Context view — visualize context usage and inspect the hidden parts
+<a href="https://pi.dev/packages/pi-context-view"><code>pi install npm:pi-context-view</code></a>
+
+# Schedule prompt — a heartbeat for recurring and one-shot prompts
+<a href="https://pi.dev/packages/pi-schedule-prompt"><code>pi install npm:pi-schedule-prompt</code></a></code></pre>
 
 <h2>What each extension does</h2>
 <table>
@@ -236,6 +262,10 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
   <tr><td><code>@juicesharp/rpiv-ask-user-question</code></td><td>Pause and ask the user a question when needed</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question">package page</a></td></tr>
   <tr><td><code>@juicesharp/rpiv-todo</code></td><td>A todo/task-tracking helper</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-todo">package page</a></td></tr>
   <tr><td><code>pi-background-tasks</code></td><td>Run long-running commands in the background</td><td><a href="https://pi.dev/packages/pi-background-tasks">package page</a></td></tr>
+<tr><td><code>@ff-labs/pi-fff</code></td><td>Fuzzy path / grep finder — search files by name or glob</td><td><a href="https://pi.dev/packages/pi-fff">package page</a></td></tr>
+<tr><td><code>@sting8k/pi-vcc</code></td><td>Session compaction — transcript-preserving summaries, no LLM calls</td><td><a href="https://pi.dev/packages/pi-vcc">package page</a></td></tr>
+<tr><td><code>pi-context-view</code></td><td>Context usage map and hidden context inspection (system prompt, tool defs, injections)</td><td><a href="https://pi.dev/packages/pi-context-view">package page</a></td></tr>
+<tr><td><code>pi-schedule-prompt</code></td><td>Prompt scheduling — a heartbeat for recurring and one-shot prompts</td><td><a href="https://pi.dev/packages/pi-schedule-prompt">package page</a></td></tr>
 </table>
 
 <div class="warn">
