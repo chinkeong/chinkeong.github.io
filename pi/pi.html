@@ -268,6 +268,86 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
 <tr><td><code>pi-schedule-prompt</code></td><td>Prompt scheduling — a heartbeat for recurring and one-shot prompts</td><td><a href="https://pi.dev/packages/pi-schedule-prompt">package page</a></td></tr>
 </table>
 
+<div class="v2">
+<p class="lead">A working directory should carry an <strong>AGENTS.md</strong> so the agent that runs next knows the rules before it does anything. The block below is the file I use — copy it into a new project and edit the parts that are specific to your workflow.</p>
+<div class="card">
+<pre><code id="agents-md"># AGENTS.md
+
+## Environment Setup
+- Scratch/working folder: `%TEMP%\ai_scratch` (PowerShell: `$env:TEMP\ai_scratch`) — derived from the environment, never hardcoded. Create it if it doesn't exist before writing to it.
+- If the current date/time isn't already in context, run:
+  `powershell -NoProfile -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss K (dddd)'"`
+- Set UTF-8 before console work that may output non-ASCII text: `chcp 65001` before PowerShell; `-Encoding UTF8` on file reads/writes.
+
+## Non-Interactive Execution
+Any command that can prompt for input will hang silently. Always use non-interactive flags:
+- `npm install`, `pip install`, package managers → `-y` / `--yes` / `--non-interactive`
+- `git commit -m "..."` — never open an editor
+- `winget install --accept-package-agreements --accept-source-agreements`
+
+## File Safety
+- Read a file before editing it (not needed for new scratch files).
+- Use absolute paths always — working directory can shift between tool calls.
+- Destructive actions (deletes, force-overwrites, `git push --force`) require an explicit go-ahead in the task before running. Nothing else catches these.
+
+## Calculation Policy
+Don't do multi-step arithmetic, unit conversion, or logical derivation purely in reasoning. Write a short script (Python preferred), save it to `%TEMP%\ai_scratch`, run it, read the output back. Fix and re-run on error rather than falling back to mental math.
+
+## Unknowns
+If a fact, API, library version, or visual reference isn't reliably known, search the web (or pull a reference image/doc) before answering rather than recalling from memory.
+
+## Task Tracking
+Keep a `TODO.md` in the working directory for any multi-step task — check items off as you go. For real coding work: write a small test, implement the minimum to pass it, verify, then move to the next micro-step. Don't write the whole program up front.
+
+## Verification
+Before calling a task done, actually check the result — view the screenshot you took, run the test you wrote, open the file you built. One honest check beats several rounds of "does this look right?" self-talk stacked on top of each other. If a step keeps failing, try a genuinely different approach rather than repeating the same fix; after a few honest attempts, stop and report what was tried instead of continuing to loop.
+
+## Screenshots
+Default capture: 2560×1440.
+```
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --no-sandbox --disable-gpu --hide-scrollbars --window-size=2560,1440 --virtual-time-budget=5000 --screenshot="%TEMP%\ai_scratch\example.png" "index.html"
+```
+Use a different resolution if the task names a specific device or viewport. Always view the resulting image before considering the task done.
+
+## HTML/CSS Output Standards
+
+**Layout**
+- No fixed `max-width` — layouts must be fluid across viewport widths.
+- Font size scales with viewport via `clamp()`, not a fixed multiplier between two hardcoded breakpoints:
+  `font-size: clamp(1rem, 1.2vw + 0.5rem, 2rem);`
+- Check the result renders correctly at both ~1280px and 2560px widths.
+
+**Typography — defaults**
+Pick fonts deliberately; don't default to Arial/Times or whatever the last template used.
+- General UI / app-like tools: system font stack — `-apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`. Fast, no external request, and disappears into the interface the way UI type should.
+- Content-heavy pages (articles, reports, marketing): pick one of —
+  - **One grotesk sans, alone, doing all the work** — e.g. "Public Sans" or "Space Grotesk" for both headings and body, weight and size carrying the hierarchy instead of a second typeface.
+  - **Newsreader (serif, headings/body) + IBM Plex Sans (labels/chrome)** — literary without leaning on the cream-background-plus-terracotta look.
+  - Avoid pairing a high-contrast display serif with a warm cream background (~#F4F1EA) and a terracotta/clay accent (~#D97757) — that combination has become the single most recognizable "AI-generated page" tell. If serif + color is the goal, build the palette from scratch instead.
+- Set a real type scale (e.g. a 1.25× modular scale), not three ad hoc sizes. Keep body line length under ~80 characters; give serif body text extra line-height relative to sans-serif.
+
+**Avoid these tells** — the fastest way a page reads as templated:
+- Bolding or italicizing a single word in a headline for "emphasis"
+- Tracked-out ALL-CAPS eyebrow labels above every heading
+- Meta text strung together with middle dots (`A · B · C`)
+- Identical rounded cards, same soft grey shadow, on everything regardless of content
+- A `→` tacked onto every link or button
+- Numbered markers (01 / 02 / 03) on content that isn't actually a sequence
+
+**Motion**: sparing and deliberate — one orchestrated moment, not a fade-and-slide-up on every section and a hover transition on every card.
+
+## Diagrams
+Use Mermaid (in HTML output, or as a reasoning aid) when structure, flow, or relationships are clearer visually than in prose.
+
+## Documentation Style
+For reference docs, outlines, or specs: use a tree/drill-down structure — trunk (key point) → branches (sub-topics) → leaves (specifics), one idea per indented line. Conversational answers, tradeoff discussions, and narrative explanations stay in prose.
+</code></pre>
+<button type="button" class="copy" data-target="agents-md" title="Copy AGENTS.md to clipboard">⧉</button>
+</div>
+</div>
+
+<p class="note">Paste this into a new project's root as <code>AGENTS.md</code>. The <strong>Copy</strong> button grabs the whole file so you can drop it in place. Keep it short — agents only read what you write, so trim the rules that don't apply to your work.</p>
+
 <div class="warn">
 <strong>Prerequisite:</strong> run the one-line installer above <em>before</em> running any <code>pi install …</code> command — otherwise the <code>pi</code> CLI isn't on your PATH yet. You can also use PowerShell directly: <code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code> for every step if you prefer not to type <code>pi</code>.
 </div>
