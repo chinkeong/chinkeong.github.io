@@ -6,40 +6,39 @@
 <title>How to Install Pi — a beginner's guide</title>
 <meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
 <style>
-/* Responsive spec: fit to screen width dynamically (no fixed 940px cap).
-   Base = 16px at a 1280px-wide viewport; body font scales by vw/1280 so it
-   reaches exactly 200% (32px) at a 2560px-wide viewport. On a 1280x2800 tall
-   screen the width still resolves to 1280px, so layout and type stay the same.
-   Scale factor S = 100vw / 1280 (S=1 at 1280, S=2 at 2560). */
+/* Type scale — a fluid clamp() min/ideal/max at every level, not a fixed
+   multiplier between two hardcoded breakpoints. The body anchors the scale and
+   each heading is a step above it; rem bounds keep the steps on any viewport.
+   (Replaces the old vw/1280 × N approach.) */
 :root{--bg:#fff;--fg:#16181d;--mut:#5b6270;--line:#e3e6ec;--warn:#8a5a00;--warnbg:#fff8e6;--accent:#1f6feb}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}}
 :root[data-theme="dark"]{--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:calc(16px * (100vw / 1280)) / 1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0}
-.wrap{max-width:calc(94vw - 4rem);margin:0 auto;padding-left:2rem;padding-right:2rem}
+body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0}
+.wrap{margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
 header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
-h1{font-size:calc(16px * (100vw / 1280) * 1.4);margin:.2rem 0 .3rem;line-height:1.15}
-h2{font-size:calc(16px * (100vw / 1280) * 1.35);margin:2.2rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
-h3{font-size:calc(16px * (100vw / 1280) * 1.05);margin:1.4rem 0 .4rem;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+h1{font-size:calc(1.8rem, 1.7rem + 0.55vw, 2.3rem);margin:.2rem 0 .3rem;line-height:1.15}
+h2{font-size:calc(1.35rem, 1.2rem + 0.6vw, 1.7rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+h3{font-size:calc(1.1rem, 1.05rem + 0.4vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--accent);font-weight:600}
 p,.lead{color:var(--fg)}
 .lead{color:var(--mut);margin-top:0}
-code{font-family:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(16px * (100vw / 1280) * 0.92)}
-pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(16px * (100vw / 1280) * 0.9);line-height:1.5;margin:0 0 1.2rem}
-pre code{background:none;padding:0;color:inherit;font-size:calc(16px * (100vw / 1280) * 0.9)}
+code{font-family:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
+pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem);line-height:1.5;margin:0 0 1.2rem}
+pre code{background:none;padding:0;color:inherit;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem)}
 .card{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
 .card h3{margin-top:.2rem;color:var(--fg)}
 .steps{counter-reset:step;list-style:none;padding-left:0;margin:1rem 0}
 .steps li{position:relative;padding:1rem 1rem 1rem 3rem;margin:.6rem 0;border-bottom:1px solid var(--line)}
 .steps li:last-child{border-bottom:none}
 .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1rem;width:2.2rem;height:2.2rem;line-height:2.2rem;text-align:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:600}
-.note{color:var(--mut);font-size:calc(16px * (100vw / 1280) * 0.92)}
+.note{color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
 .warn{background:var(--warnbg);border:1px solid var(--warn);border-radius:8px;padding:.7rem 1rem;margin:1rem 0;color:var(--fg)}
 table{border-collapse:collapse;width:100%;margin:1rem 0}
 th,td{border:1px solid var(--line);padding:.55em .7em;text-align:left;vertical-align:top}
 th{background:var(--warnbg)}
-footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);color:var(--mut);font-size:calc(16px * (100vw / 1280) * 0.9)}
+footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
 /* Config-file accordion: expandable code blocks for models.json / settings.json */
 .accordion{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:1.2rem 0}
 .accordion-item{border-bottom:1px solid var(--line)}
@@ -51,9 +50,9 @@ footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line)
 .accordion-body{max-height:0;overflow:hidden}
 .accordion-body.open{max-height:60rem}
 .accordion-body pre{margin:0;border:0;background:none;padding:0;overflow:auto}
-.accordion-body code{display:block;background:none;padding:1rem 1rem;color:var(--fg);font-size:calc(16px * (100vw / 1280) * 0.85)}
+.accordion-body code{display:block;background:none;padding:1rem 1rem;color:var(--fg);font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem)}
 /* Copy-to-clipboard control on config-file blocks */
-.accordion-head .copy{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;padding:.4rem .75rem;border:1px solid var(--line);border-radius:6px;background:none;color:var(--mut);font:inherit;font-size:calc(16px * (100vw / 1280) * 0.85);cursor:pointer;line-height:1}
+.accordion-head .copy{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;padding:.4rem .75rem;border:1px solid var(--line);border-radius:6px;background:none;color:var(--mut);font:inherit;font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem);cursor:pointer;line-height:1}
 .accordion-head .copy:hover{background:var(--warnbg);color:var(--fg)}
 .accordion-head .copy.copied{background:#1a7f37;color:#fff;border-color:#1a7f37}
 @media (prefers-reduced-motion:reduce){.accordion-head .chev{transition:none}}
@@ -353,13 +352,12 @@ For reference docs, outlines, or specs: use a tree/drill-down structure — trun
 </div>
 
 <h2>Responsive layout</h2>
-<p>This page is built to fit the screen width dynamically on both a <strong>1280 × 2800</strong> tall display and a <strong>2560 × 1440</strong> display:</p>
+<p>This page is fluid — no fixed column cap, so the content column is set by padding alone and widens on any viewport. Every font uses a <code>clamp()</code> min/ideal/max, so text flows smoothly across screens instead of snapping between two hardcoded breakpoints.</p>
 <ul>
-  <li><strong>No fixed column cap</strong> — content fills the available width (no 940px / 820px limit), so it scales cleanly across both screens.</li>
-  <li><strong>Font scales with width</strong> — body text is <code>16px</code> at 1280px wide and grows to exactly <strong>200%</strong> (<code>32px</code>) at 2560px wide, via a <code>vw/1280</code> scale factor. Headings scale proportionally.</li>
-  <li><strong>Tall screens</strong> — on a narrow 1280px-wide display the width still resolves to 1280px, so layout and type stay identical regardless of height.</li>
+  <li><strong>No fixed column cap</strong> — width is driven by padding, not a hard limit, so it scales cleanly at any screen size.</li>
+  <li><strong>Fluid type scale</strong> — body text runs roughly from <code>16px</code> to <code>28px</code> across the viewport, and each heading is a step above it. No <code>vw × N</code> multiplier, no two-value jump.</li>
+  <li><strong>Tall screens</strong> — because sizing follows viewport width and the font scales down, a wide display keeps comfortable line length while a large one stays readable.</li>
 </ul>
-<div class="note">Type scale: <code>1280px → 16px (100%)</code>, <code>2560px → 32px (200%)</code>. Column width at 2560px ≈ <code>2342px</code>.</div>
 
 <h2>Verifying the setup</h2>
 <p>After installing, open Pi and confirm:</p>
@@ -370,7 +368,7 @@ For reference docs, outlines, or specs: use a tree/drill-down structure — trun
 </ul>
 
 <footer class="site">
-  <strong>How to Install Pi</strong> — a beginner's guide. Pi on Windows · local llama.cpp on port 1234.
+  <strong>How to Install Pi</strong> — a beginner's guide. Pi on Windows, local llama.cpp on port 1234.
 </footer>
 
 <script>
