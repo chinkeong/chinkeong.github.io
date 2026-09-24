@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Install Pi — a beginner's guide</title>
+<meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
+<style>
+/* Responsive spec: fit to screen width dynamically (no fixed 940px cap).
+   Base = 16px at a 1280px-wide viewport; body font scales by vw/1280 so it
+   reaches exactly 200% (32px) at a 2560px-wide viewport. On a 1280x2800 tall
+   screen the width still resolves to 1280px, so layout and type stay the same.
+   Scale factor S = 100vw / 1280 (S=1 at 1280, S=2 at 2560). */
+:root{--bg:#fff;--fg:#16181d;--mut:#5b6270;--line:#e3e6ec;--warn:#8a5a00;--warnbg:#fff8e6;--accent:#1f6feb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}}
+:root[data-theme="dark"]{--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:calc(16px * (100vw / 1280)) / 1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0}
+.wrap{max-width:calc(94vw - 4rem);margin:0 auto;padding-left:2rem;padding-right:2rem}
+header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+h1{font-size:calc(16px * (100vw / 1280) * 1.4);margin:.2rem 0 .3rem;line-height:1.15}
+h2{font-size:calc(16px * (100vw / 1280) * 1.35);margin:2.2rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+h3{font-size:calc(16px * (100vw / 1280) * 1.05);margin:1.4rem 0 .4rem;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+p,.lead{color:var(--fg)}
+.lead{color:var(--mut);margin-top:0}
+code{font-family:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(16px * (100vw / 1280) * 0.92)}
+pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(16px * (100vw / 1280) * 0.9);line-height:1.5;margin:0 0 1.2rem}
+pre code{background:none;padding:0;color:inherit;font-size:calc(16px * (100vw / 1280) * 0.9)}
+.card{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
+.card h3{margin-top:.2rem;color:var(--fg)}
+.steps{counter-reset:step;list-style:none;padding-left:0;margin:1rem 0}
+.steps li{position:relative;padding:1rem 1rem 1rem 3rem;margin:.6rem 0;border-bottom:1px solid var(--line)}
+.steps li:last-child{border-bottom:none}
+.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1rem;width:2.2rem;height:2.2rem;line-height:2.2rem;text-align:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:600}
+.note{color:var(--mut);font-size:calc(16px * (100vw / 1280) * 0.92)}
+.warn{background:var(--warnbg);border:1px solid var(--warn);border-radius:8px;padding:.7rem 1rem;margin:1rem 0;color:var(--fg)}
+table{border-collapse:collapse;width:100%;margin:1rem 0}
+th,td{border:1px solid var(--line);padding:.55em .7em;text-align:left;vertical-align:top}
+th{background:var(--warnbg)}
+footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);color:var(--mut);font-size:calc(16px * (100vw / 1280) * 0.9)}
+/* Config-file accordion: expandable code blocks for models.json / settings.json */
+.accordion{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:1.2rem 0}
+.accordion-item{border-bottom:1px solid var(--line)}
+.accordion-item:last-child{border-bottom:none}
+.accordion-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:none;border:0;color:var(--fg);font:inherit;font-weight:600;text-align:left;padding:.8rem 1rem;cursor:pointer}
+.accordion-head:hover{background:var(--warnbg)}
+.accordion-head .chev{transition:transform .2s ease;color:var(--mut);font-size:1.1em}
+.accordion-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.accordion-body{max-height:0;overflow:hidden}
+.accordion-body.open{max-height:60rem}
+.accordion-body pre{margin:0;border:0;background:none;padding:0;overflow:auto}
+.accordion-body code{display:block;background:none;padding:1rem 1rem;color:var(--fg);font-size:calc(16px * (100vw / 1280) * 0.85)}
+/* Copy-to-clipboard control on config-file blocks */
+.accordion-head .copy{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;padding:.4rem .75rem;border:1px solid var(--line);border-radius:6px;background:none;color:var(--mut);font:inherit;font-size:calc(16px * (100vw / 1280) * 0.85);cursor:pointer;line-height:1}
+.accordion-head .copy:hover{background:var(--warnbg);color:var(--fg)}
+.accordion-head .copy.copied{background:#1a7f37;color:#fff;border-color:#1a7f37}
+@media (prefers-reduced-motion:reduce){.accordion-head .chev{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+<h1>How to Install Pi</h1>
+<p class="lead">A beginner's guide that teaches you how to install <strong>Pi</strong> on Windows — the one-line installer, local model config, default model, and extensions. Copy the exact commands and files.</p>
+</header>
+
+<h2>The one-line installer</h2>
+<p>Pi ships a PowerShell installer. This is the exact command I ran to get the core agent:</p>
+<pre><code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code></pre>
+<div class="note">This fetches <code>install.ps1</code> from pi.dev and runs it. It installs the Pi SDK, wires up the <code>pi</code> CLI, and registers the extension directories so future <code>pi install …</code> commands work.</div>
+
+<h2>Configuring local models</h2>
+<p>Pi reads its model providers from <code>&lt;HOME&gt;/.pi\.pi\agent\models.json</code>. I created that file and added a single local provider — <strong>llama.cpp</strong> — pointing at a locally running server on port <code>1234</code>:</p>
+<table>
+  <tr><th>Setting</th><th>Value</th></tr>
+  <tr><td>File</td><td><code>&lt;HOME&gt;/.pi\.pi\agent\models.json</code></td></tr>
+  <tr><td>Provider</td><td><code>llamacpp</code> (baseUrl <code>http://localhost:1234/v1</code>, api <code>openai-completions</code>)</td></tr>
+  <tr><td>Models registered</td><td><code>qwen/qwen3.8-27b</code> and <code>ornith/ornith-1.5-9b</code></td></tr>
+</table>
+<div class="note">The local llama.cpp server must be running before Pi can use these models. Each model entry records context window, max tokens, input types, and a thinking/effort config.</div>
+
+<h2>Setting the default model</h2>
+<p>Pi stores its global settings in <code>&lt;HOME&gt;/.pi\.pi\agent\settings.json</code>. The field that picks the active model is <code>defaultModel</code>:</p>
+<pre><code>"defaultModel": "ornith/ornith-1.5-9b"</code></pre>
+<div class="note">I set the default to <code>ornith/ornith-1.5-9b</code>. The other registered model is <code>qwen/qwen3.8-27b</code>. To switch, change this one value.</div>
+
+<p>Pi reads everything from two small JSON files. Click <strong>Copy</strong> in each block to grab the full contents and paste them at the path shown inside.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-head"><button type="button" aria-expanded="false"><span>models.json — local model providers</span><span class="chev">▸</span></button><button type="button" class="copy" data-target="models-json" title="Copy models.json to clipboard">⧉</button></div>
+    <div class="accordion-body">
+      <pre><code id="models-json">{
+  "providers": {
+    "llamacpp": {
+      "baseUrl": "http://localhost:1234/v1",
+      "api": "openai-completions",
+      "apiKey": "dummy",
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false
+      },
+      "models": [
+        {
+          "id": "qwen/qwen3.8-27b",
+          "name": "Qwen3.8 27B (local)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 245760,
+          "maxTokens": 245760,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "thinking": {
+            "mode": "effort",
+            "efforts": [
+              "low",
+              "medium",
+              "xhigh"
+            ],
+            "defaultLevel": "xhigh",
+            "requiresEffort": false
+          }
+        },
+        {
+          "id": "ornith/ornith-1.5-9b",
+          "name": "Ornith 1.5 9B (local)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "thinking": {
+            "mode": "effort",
+            "efforts": [
+              "low",
+              "medium",
+              "xhigh"
+            ],
+            "defaultLevel": "xhigh",
+            "requiresEffort": false
+          }
+        }
+      ]
+    }
+  }
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<p class="note">What matters: <code>providers.llamacpp.baseUrl</code> must point at your running llama.cpp server (default port <strong>1234</strong>). Each model entry needs an <code>id</code>, a display <code>name</code>, and a <code>contextWindow</code>. The <code>apiKey</code> is a placeholder — local llama.cpp takes no real API key. Keep the server running before Pi can use these models.</p>
+
+<div class="accordion">
+  <div class="accordion-item">
+    <div class="accordion-head"><button type="button" aria-expanded="false"><span>settings.json — default model &amp; theme</span><span class="chev">▸</span></button><button type="button" class="copy" data-target="models-settings" title="Copy settings.json to clipboard">⧉</button></div>
+    <div class="accordion-body">
+      <pre><code id="models-settings">
+  "lastChangelogVersion": "0.87.1",
+  "theme": "titanium",
+  "defaultProvider": "llamacpp",
+  "defaultModel": "ornith/ornith-1.5-9b",
+  "modelThinkingLevels": {
+    "ornith/ornith-1.5-9b": {
+      "level": "xhigh"
+    }
+  },
+  "packages": [
+    "npm:@nguyenquangthai/pi-omp-theme",
+    "npm:pi-subagents",
+    "npm:pi-mcp-adapter",
+    "npm:pi-web-access",
+    "npm:@juicesharp/rpiv-ask-user-question",
+    "npm:@juicesharp/rpiv-todo",
+    "npm:pi-background-tasks",
+    "npm:pi-lens"
+  ]
+}</code></pre>
+    </div>
+  </div>
+</div>
+
+<p class="note">What matters: <code>defaultModel</code> is the one field that selects which model Pi uses by default (I set it to <strong>ornith/ornith-1.5-9b</strong>). <code>defaultProvider</code> must match a provider key in <code>models.json</code> (<strong>llamacpp</strong>). <code>theme</code> names the active theme. <code>packages</code> is a list of the extensions you installed.</p>
+
+<h2>Extensions I installed</h2>
+<p>After the core install, I added themes and subagents/extensions with the <code>pi install</code> command. Each links to its package page on <a href="https://pi.dev/packages/">pi.dev/packages</a>:</p>
+<pre><code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code></pre>
+<pre><code># Themes — a set of Pi themes (optional visual styling)
+<a href="https://pi.dev/packages/pi-omp-theme"><code>pi install npm:@nguyenquangthai/pi-omp-theme</code></a>
+
+# Subagents — the delegation/orchestration layer for child agents
+<a href="https://pi.dev/packages/pi-subagents"><code>pi install npm:pi-subagents</code></a>
+
+# Lens — live code diagnostics (LSP) and symbol navigation
+<a href="https://pi.dev/packages/pi-lens"><code>pi install npm:pi-lens</code></a>
+
+# MCP adapter — bridge to Model Context Protocol tools
+<a href="https://pi.dev/packages/pi-mcp-adapter"><code>pi install npm:pi-mcp-adapter</code></a>
+
+# Web access — browsing / web research from within Pi
+<a href="https://pi.dev/packages/pi-web-access"><code>pi install npm:pi-web-access</code></a>
+
+# User-question prompt — a "ask the user" control
+<a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question"><code>pi install npm:@juicesharp/rpiv-ask-user-question</code></a>
+
+# Todo — a todo/task-tracking helper
+<a href="https://pi.dev/packages/@juicesharp/rpiv-todo"><code>pi install npm:@juicesharp/rpiv-todo</code></a>
+
+# Background tasks — run long-running commands in the background
+<a href="https://pi.dev/packages/pi-background-tasks"><code>pi install npm:pi-background-tasks</code></a></code></pre>
+
+<h2>What each extension does</h2>
+<table>
+  <tr><th>Extension</th><th>Purpose</th><th>Package page</th></tr>
+  <tr><td><code>@nguyenquangthai/pi-omp-theme</code></td><td>Themes for Pi's look and feel</td><td><a href="https://pi.dev/packages/pi-omp-theme">package page</a></td></tr>
+  <tr><td><code>pi-subagents</code></td><td>Delegate work to focused child agents (reviewer, scout, worker, oracle, council)</td><td><a href="https://pi.dev/packages/pi-subagents">package page</a></td></tr>
+  <tr><td><code>pi-lens</code></td><td>Live code diagnostics (LSP) and symbol navigation</td><td><a href="https://pi.dev/packages/pi-lens">package page</a></td></tr>
+  <tr><td><code>pi-mcp-adapter</code></td><td>Connect Pi to external MCP tools/services</td><td><a href="https://pi.dev/packages/pi-mcp-adapter">package page</a></td></tr>
+  <tr><td><code>pi-web-access</code></td><td>Web browsing and research from inside Pi</td><td><a href="https://pi.dev/packages/pi-web-access">package page</a></td></tr>
+  <tr><td><code>@juicesharp/rpiv-ask-user-question</code></td><td>Pause and ask the user a question when needed</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question">package page</a></td></tr>
+  <tr><td><code>@juicesharp/rpiv-todo</code></td><td>A todo/task-tracking helper</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-todo">package page</a></td></tr>
+  <tr><td><code>pi-background-tasks</code></td><td>Run long-running commands in the background</td><td><a href="https://pi.dev/packages/pi-background-tasks">package page</a></td></tr>
+</table>
+
+<div class="warn">
+<strong>Prerequisite:</strong> run the one-line installer above <em>before</em> running any <code>pi install …</code> command — otherwise the <code>pi</code> CLI isn't on your PATH yet. You can also use PowerShell directly: <code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code> for every step if you prefer not to type <code>pi</code>.
+</div>
+
+<h2>Responsive layout</h2>
+<p>This page is built to fit the screen width dynamically on both a <strong>1280 × 2800</strong> tall display and a <strong>2560 × 1440</strong> display:</p>
+<ul>
+  <li><strong>No fixed column cap</strong> — content fills the available width (no 940px / 820px limit), so it scales cleanly across both screens.</li>
+  <li><strong>Font scales with width</strong> — body text is <code>16px</code> at 1280px wide and grows to exactly <strong>200%</strong> (<code>32px</code>) at 2560px wide, via a <code>vw/1280</code> scale factor. Headings scale proportionally.</li>
+  <li><strong>Tall screens</strong> — on a narrow 1280px-wide display the width still resolves to 1280px, so layout and type stay identical regardless of height.</li>
+</ul>
+<div class="note">Type scale: <code>1280px → 16px (100%)</code>, <code>2560px → 32px (200%)</code>. Column width at 2560px ≈ <code>2342px</code>.</div>
+
+<h2>Verifying the setup</h2>
+<p>After installing, open Pi and confirm:</p>
+<ul>
+  <li>Your local models (<code>qwen/qwen3.8-27b</code>, <code>ornith/ornith-1.5-9b</code>) appear in the model picker.</li>
+  <li><code>ornith/ornith-1.5-9b</code> is selected as the default (or whatever you set).</li>
+  <li>The <code>subagent</code> tool is available — try <code>pi subagents_enable</code> or ask Pi to "show me the available subagents."</li>
+</ul>
+
+<footer class="site">
+  <strong>How to Install Pi</strong> — a beginner's guide. Pi on Windows · local llama.cpp on port 1234.
+</footer>
+
+<script>
+  // Toggle config-file accordion (expand/collapse).
+  document.querySelectorAll('.accordion-head [aria-expanded]').forEach(function(head){
+    head.addEventListener('click', function(){
+      var open = head.getAttribute('aria-expanded') === 'true';
+      head.setAttribute('aria-expanded', String(!open));
+      if (head.nextElementSibling) { head.nextElementSibling.classList.toggle('open', !open); }
+    });
+  });
+
+  // Copy a config code block to the clipboard.
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-target');
+      var el = document.getElementById(id);
+      if (!el) { return; }
+      var text = el.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function(){ flash(btn); })
+          .catch(fallbackCopy);
+      } else { fallbackCopy(); }
+    });
+  });
+
+  function flash(btn){
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.classList.remove('copied'); }, 1600);
+  }
+  function fallbackCopy(){
+    var range = document.createRange();
+    range.selectNodeContents(document.getElementById(btn.getAttribute('data-target')));
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    try { document.execCommand('copy'); } catch (e) {}
+    sel.removeAllRanges();
+  }
+</script>
+
+</div>
+</body>
+</html>
