@@ -3,18 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>How to Install Pi — a beginner's guide</title>
 <meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
 <style>
 /* Type scale — a fluid clamp() min/ideal/max at every level, not a fixed
    multiplier between two hardcoded breakpoints. The body anchors the scale and
    each heading is a step above it; rem bounds keep the steps on any viewport.
-   (Replaces the old vw/1280 × N approach.) */
-:root{--bg:#fff;--fg:#16181d;--mut:#5b6270;--line:#e3e6ec;--warn:#8a5a00;--warnbg:#fff8e6;--accent:#1f6feb}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}}
-:root[data-theme="dark"]{--bg:#14161a;--fg:#e8eaee;--mut:#9aa3b2;--line:#2a2e37;--warn:#e5b25a;--warnbg:#2a2416;--accent:#3a7bd5}
+   (Replaces the old vw/1280 × N approach.)
+
+Palette — indigo on cool neutral: light slate background, slate text, indigo
+accent. Code blocks stay dark terminal-style for contrast. */
+:root{--bg:#f4f6fb;--fg:#0f172a;--mut:#475569;--line:#e2e8f0;--warn:#4f46e5;--warnbg:#eef2ff;--accent:#4f46e5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}}
+:root[data-theme="dark"]{--bg:#0b0f19;--fg:#e2e8f0;--mut:#94a3b8;--line:#1e293b;--warn:#818cf8;--warnbg:#1e1b4b;--accent:#6366f1}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0}
+body{background:var(--bg);color:var(--fg);font:calc(1rem, 0.94rem + 0.42vw, 1.1rem) / 1.6 'Space Grotesk',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:0}
 .wrap{margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
 header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
 a{color:var(--accent);text-decoration:none}
@@ -24,7 +30,7 @@ h2{font-size:calc(1.35rem, 1.2rem + 0.6vw, 1.7rem);margin:2.4rem 0 .6rem;padding
 h3{font-size:calc(1.1rem, 1.05rem + 0.4vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--accent);font-weight:600}
 p,.lead{color:var(--fg)}
 .lead{color:var(--mut);margin-top:0}
-code{font-family:"SF Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
+code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--warnbg);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
 pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem);line-height:1.5;margin:0 0 1.2rem}
 pre code{background:none;padding:0;color:inherit;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem)}
 .card{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
