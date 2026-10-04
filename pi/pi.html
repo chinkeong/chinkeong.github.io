@@ -5,285 +5,514 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<title>How to Install Pi — a beginner's guide</title>
-<meta name="description" content="A step-by-step guide that teaches anyone how to install Pi on Windows, configure local models, and add extensions. Copy the exact files and commands.">
-<style>/* Type scale — a fluid clamp() min/ideal/max at every level (not a fixed
-   multiplier between two hardcoded breakpoints). Body anchors the scale;
-   each heading is a step above it; rem bounds keep the steps on any viewport.
-
-Palette — disciplined neutrals from the design system: #ffffff canvas,
-#0a0a0a ink for body/headline text and every border (pure black 1px hairlines),
-#666666 muted secondary/metadata, #eae6df surface beige for the one permitted
-background variation (headers, card edge, hover), and a single brand blue
-#0a66c2 reserved for links/CTAs with #004182 on hover. #b24020 rust is the one
-chromatic surprise, used only on callouts. Headings and body share one grotesk
-sans (Space Grotesk) so a second typeface never carries the hierarchy. */
-:root{--bg:#ffffff;--fg:#0a0a0a;--mut:#666666;--line:#0a0a0a;--warn:#b24020;--warnbg:#f3ede3;--surface:#eae6df;--accent:#0a66c2;--accent-hover:#004182}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#080808;--fg:#eae6df;--mut:#9a9a9a;--line:#262626;--warn:#b24020;--warnbg:#241a15;--surface:#1c1a17;--accent:#3d88c9;--accent-hover:#63a3d6}}
-:root[data-theme="dark"]{--bg:#080808;--fg:#eae6df;--mut:#9a9a9a;--line:#262626;--warn:#b24020;--warnbg:#241a15;--surface:#1c1a17;--accent:#3d88c9;--accent-hover:#63a3d6}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Pi on a Local GPU</title>
+<meta name="description" content="Set up the Pi coding agent on Windows with a local llama.cpp model, a 27B for 24 GB cards and a 9B for 12 and 16 GB cards: install, llama.cpp step by step, server flags, model config, how big a context window your GPU can take, what extensions cost, and why one slot or two matters for subagents.">
+<style>
+:root{--bg:#ffffff;--fg:#0f172a;--mut:#5b6b80;--line:#cbd5e1;--soft:#e2e8f0;--surface:#f4f7fa;--accent:#0f766e;--accent-h:#115e59;--accent-soft:#e6f4f2;--warn:#b45309;--warn-bg:#fff8eb;--code-bg:#0b1220;--code-fg:#e2e8f0;--code-mut:#94a3b8;--code-head:#141d2e}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b1120;--fg:#e5e9f0;--mut:#94a3b8;--line:#334155;--soft:#1e293b;--surface:#111a2c;--accent:#2dd4bf;--accent-h:#5eead4;--accent-soft:#0f2a2c;--warn:#f59e0b;--warn-bg:#1f1a10;--code-bg:#060b16;--code-head:#0f1729}}
+:root[data-theme=dark]{--bg:#0b1120;--fg:#e5e9f0;--mut:#94a3b8;--line:#334155;--soft:#1e293b;--surface:#111a2c;--accent:#2dd4bf;--accent-h:#5eead4;--accent-soft:#0f2a2c;--warn:#f59e0b;--warn-bg:#1f1a10;--code-bg:#060b16;--code-head:#0f1729}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font:calc(0.94rem, 1.15rem + 0.28vw, 1.25rem) / 1.6 "Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0}
-.wrap{margin:0 auto;padding-left:1.5rem;padding-right:1.5rem}
-header.hero{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:2rem}
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline;color:var(--accent-hover)}
-h1{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.6rem, 1.5rem + 0.7vw, 3rem);margin:.2rem 0 .3rem;line-height:1.1}
-h2{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1.2rem, 1.15rem + 0.6vw, 2.1rem);margin:2.4rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
-h3{font-family:"Space Grotesk",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:calc(1rem, 0.95rem + 0.35vw, 1.28rem);margin:1.6rem 0 .4rem;color:var(--fg);font-weight:600}
-p,.lead{color:var(--fg)}
-.lead{color:var(--mut);margin-top:0}
-code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;background:var(--surface);padding:.15em .4em;border-radius:5px;font-size:calc(0.82rem, 0.78rem + 0.26vw, 0.92rem)}
-pre{background:#0b0d10;color:#e8eaee;border:1px solid #22262d;border-radius:8px;padding:1rem 1.1rem;overflow:auto;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem);line-height:1.5;margin:0 0 1.2rem}
-pre code{background:none;padding:0;color:inherit;font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.94rem)}
-.card{border:1px solid var(--line);border-left:4px solid var(--surface);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;background:var(--bg)}
-.card h3{margin-top:.2rem;color:var(--fg)}
-.steps{counter-reset:step;list-style:none;padding-left:0;margin:1rem 0}
-.steps li{position:relative;padding:1rem 1rem 1rem 3rem;margin:.6rem 0;border-bottom:1px solid var(--line)}
-.steps li:last-child{border-bottom:none}
-.steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:1rem;width:2.2rem;height:2.2rem;line-height:2.2rem;text-align:center;border-radius:50%;background:var(--surface);color:var(--fg);font-weight:600}
-.note{color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
-.warn{background:var(--warnbg);border:1px solid var(--warn);border-radius:8px;padding:.7rem 1rem;margin:1rem 0;color:var(--fg)}
-table{border-collapse:collapse;width:100%;margin:1rem 0}
-th,td{border:1px solid var(--line);padding:.55em .7em;text-align:left;vertical-align:top}
-th{background:var(--surface)}
-footer.site{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--line);color:var(--mut);font-size:calc(0.85rem, 0.82rem + 0.28vw, 0.96rem)}
-/* Config-file accordion: expandable code blocks for models.json / settings.json */
-.accordion{border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:1.2rem 0}
-.accordion-item{border-bottom:1px solid var(--line)}
-.accordion-item:last-child{border-bottom:none}
-.accordion-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:none;border:0;color:var(--fg);font:inherit;font-weight:600;text-align:left;padding:.8rem 1rem;cursor:pointer}
-.accordion-head:hover{background:var(--surface)}
-.accordion-head .chev{transition:transform .2s ease;color:var(--mut);font-size:1.1em}
-.accordion-head[aria-expanded="true"] .chev{transform:rotate(90deg)}
-.accordion-body{max-height:0;overflow:hidden}
-.accordion-body.open{max-height:60rem}
-.accordion-body pre{margin:0;border:0;background:none;padding:0;overflow:auto}
-.accordion-body code{display:block;background:none;padding:1rem 1rem;color:var(--fg);font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem)}
-/* Copy-to-clipboard control on config-file blocks */
-.accordion-head .copy{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;padding:.4rem .75rem;border:1px solid var(--line);border-radius:6px;background:none;color:var(--mut);font:inherit;font-size:calc(0.82rem, 0.79rem + 0.27vw, 0.94rem);cursor:pointer;line-height:1}
-.accordion-head .copy:hover{background:var(--surface);color:var(--fg)}
-.accordion-head .copy.copied{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
-@media (prefers-reduced-motion:reduce){.accordion-head .chev{transition:none}}</style>
+/* Everything is sized in rem, and rem itself grows with the viewport: 16px up to 1280px wide, ~18.4px at 1920, ~20.8px at 2560,
+   21px cap. A 2K screen gets the 1280px layout scaled up rather than a narrow strip of small text. */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;font-size:clamp(16px,.37vw + 11.3px,21px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 1.0625rem/1.62 "Space Grotesk",-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent);text-decoration:none;font-weight:500}
+a:hover{color:var(--accent-h);text-decoration:underline}
+.page{display:grid;grid-template-columns:minmax(0,1fr);column-gap:clamp(2rem,4vw,4.5rem);padding:0 clamp(1rem,4vw,3.5rem);max-width:92rem;margin:0 auto}
+@media (min-width:64rem){.page{grid-template-columns:14rem minmax(0,1fr)}}
+nav.toc{display:none}
+@media (min-width:64rem){nav.toc{display:block;position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;padding:3.4rem 0 2rem;font-size:.9rem}}
+nav.toc p{margin:0 0 .7rem;color:var(--mut)}
+nav.toc ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--soft)}
+nav.toc a{display:block;padding:.3rem 0 .3rem .9rem;color:var(--mut);font-weight:400;border-left:2px solid transparent;margin-left:-1px}
+nav.toc a:hover{color:var(--accent);text-decoration:none;border-left-color:var(--accent)}
+main{min-width:0}
+/* prose stays near 85 characters a line; tables of numbers, code and the facts strip use the extra width */
+main>*{max-width:48rem}
+main>.codewrap,main>details.acc{max-width:64rem}
+main>.wide{max-width:72rem}
+header.hero{padding:clamp(2.5rem,6vw,4.5rem) 0 1.6rem;max-width:52rem}
+.kicker{color:var(--accent);margin:0 0 .9rem;font-size:.95rem;font-weight:500}
+h1{font-size:clamp(2.2rem,1.6rem + 1.8vw,3rem);line-height:1.06;font-weight:500;letter-spacing:-.025em;margin:0 0 1rem}
+.lead{font-size:clamp(1.1rem,1rem + .45vw,1.35rem);line-height:1.5;color:var(--mut);margin:0}
+h2{font-size:clamp(1.5rem,1.25rem + 1vw,2.1rem);line-height:1.2;font-weight:500;letter-spacing:-.015em;margin:3.6rem 0 .9rem;padding-top:1.4rem;border-top:1px solid var(--soft);scroll-margin-top:1rem}
+h3{font-size:1.08em;font-weight:600;margin:2rem 0 .5rem}
+p{margin:.85rem 0}
+ul,ol{padding-left:1.25rem}
+li{margin:.35rem 0}
+strong{font-weight:600}
+code{font-family:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.84em;background:var(--surface);border:1px solid var(--soft);padding:.05em .34em;border-radius:4px;overflow-wrap:anywhere}
+.note{color:var(--mut);font-size:.92em}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.75rem;margin:1.8rem 0 .4rem}
+.facts div{padding:1rem 1.15rem;background:var(--surface);border:1px solid var(--soft);border-top:3px solid var(--accent);border-radius:6px}
+.facts b{display:block;font-size:clamp(1.5rem,1.2rem + 1vw,2rem);font-weight:500;letter-spacing:-.02em;line-height:1.15}
+.facts span{display:block;color:var(--mut);font-size:.88rem;margin-top:.3rem;line-height:1.35}
+.callout{border:1px solid var(--soft);border-left:4px solid var(--warn);background:var(--warn-bg);border-radius:0 6px 6px 0;padding:.9rem 1.15rem;margin:1.6rem 0}
+.callout p{margin:.35rem 0}
+.callout.plain{border-left-color:var(--accent);background:var(--accent-soft)}
+.codewrap{position:relative;margin:1rem 0}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:1rem 1.1rem;overflow:auto;font:400 .84rem/1.6 "JetBrains Mono",ui-monospace,Consolas,monospace}
+pre code{background:none;padding:0;color:inherit;font-size:inherit;overflow-wrap:normal}
+.copy{font:500 .78rem "Space Grotesk",sans-serif;color:var(--code-mut);background:transparent;border:1px solid #3a3f49;border-radius:4px;padding:.22rem .7rem;cursor:pointer}
+.copy:hover{color:#fff;background:#23262d}
+.copy.copied{color:#000;background:#fff;border-color:#fff}
+.copy.floating{position:absolute;top:.5rem;right:.5rem}
+.codewrap.labelled pre{border-top-left-radius:0;border-top-right-radius:0}
+.codehead{display:flex;justify-content:space-between;align-items:center;background:var(--code-head);color:var(--code-mut);font:500 .8rem "JetBrains Mono",ui-monospace,monospace;padding:.45rem .6rem .45rem 1.1rem;border-radius:6px 6px 0 0}
+.codewrap:not(.labelled) pre{padding-top:2.5rem}
+.tablewrap{overflow-x:auto;margin:1.2rem 0}
+table{border-collapse:collapse;width:100%;font-size:.93em}
+th,td{text-align:left;vertical-align:top;padding:.55rem .75rem;border-bottom:1px solid var(--soft)}
+thead th{font-weight:600;color:var(--mut);font-size:.88em;border-bottom:2px solid var(--line);white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:var(--accent-soft)}
+tr.grp td{background:var(--surface);color:var(--accent);font-weight:600;padding-top:.8rem}
+td.flag{white-space:nowrap}
+@media (max-width:40rem){td.flag{white-space:normal}}
+details.acc{border:1px solid var(--soft);border-radius:8px;margin:1rem 0;background:var(--surface)}
+details.acc summary{cursor:pointer;list-style:none;padding:.8rem 1rem;font-weight:500;display:flex;gap:.75rem;align-items:baseline}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::before{content:"+";color:var(--accent);width:.8rem;font-weight:600}
+details.acc[open] summary::before{content:"\2212"}
+.sumnote{color:var(--mut);font-weight:400;font-size:.9rem}
+details.acc .codewrap{margin:0;padding:0 .6rem .6rem}
+details.acc pre{max-height:34rem}
+figure{margin:1.6rem 0}
+figure svg{width:100%;height:auto;display:block}
+figcaption{color:var(--mut);font-size:.9rem;margin-top:.6rem}
+.svg-ink{stroke:var(--fg);fill:none}
+.svg-fill{fill:var(--surface);stroke:var(--fg)}
+.svg-txt{fill:var(--fg);font:500 15px "Space Grotesk",sans-serif}
+.svg-mut{fill:var(--mut);font:400 13px "Space Grotesk",sans-serif}
+.svg-acc{stroke:var(--accent);fill:var(--accent-soft)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:2.6rem;margin:1rem 0}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:.05rem;width:1.8rem;height:1.8rem;background:var(--accent);color:var(--bg);border-radius:50%;display:grid;place-items:center;font-size:.85rem;font-weight:600}
+footer{margin:4.5rem 0 3rem;padding-top:1.2rem;border-top:1px solid var(--soft);color:var(--mut);font-size:.88rem;max-width:48rem}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
 </head>
 <body>
-<div class="wrap">
+<div class="page">
+<nav class="toc" aria-label="On this page">
+<p>On this page</p>
+<ol>
+<li><a href="#start">How it fits together</a></li>
+<li><a href="#choose">Pick a model for your card</a></li>
+<li><a href="#before">Before you start</a></li>
+<li><a href="#install">Install Pi</a></li>
+<li><a href="#server">Run a local model</a></li>
+<li><a href="#configure">Tell Pi about it</a></li>
+<li><a href="#window">How big a window</a></li>
+<li><a href="#budget">Your context budget</a></li>
+<li><a href="#slots">One slot or two</a></li>
+<li><a href="#extensions">Extensions</a></li>
+<li><a href="#mcp">MCP</a></li>
+<li><a href="#agents">AGENTS.md</a></li>
+<li><a href="#trouble">When something is off</a></li>
+</ol>
+</nav>
+<main>
 
 <header class="hero">
-<h1>How to Install Pi</h1>
-<p class="lead">A beginner's guide that teaches you how to install <strong>Pi</strong> on Windows — the one-line installer, local model config, default model, and extensions. Copy the exact commands and files.</p>
+<p class="kicker">A field guide for your first local coding agent, Windows and one graphics card</p>
+<h1>Run Pi on a model that lives on your own GPU</h1>
+<p class="lead">Pi is a small, fast coding agent. Pointed at a model you serve yourself, it costs nothing per token and never leaves your machine. This page is the setup I run every day on a 24 GB card, a lighter one for 12 and 16 GB cards, and the handful of numbers that decide whether it feels quick or painfully slow.</p>
 </header>
 
-<h2>The one-line installer</h2>
-<p>Pi ships a PowerShell installer. This is the exact command I ran to get the core agent:</p>
-<pre><code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code></pre>
-<div class="note">This fetches <code>install.ps1</code> from pi.dev and runs it. It installs the Pi SDK, wires up the <code>pi</code> CLI, and registers the extension directories so future <code>pi install …</code> commands work.</div>
+<div class="facts wide" role="list">
+<div role="listitem"><b>1,688</b><span>tokens in Pi's first request with no extensions</span></div>
+<div role="listitem"><b>23,906</b><span>the same request with 14 extensions installed</span></div>
+<div role="listitem"><b>~45 KiB</b><span>of GPU memory per token of context for the 27B</span></div>
+<div role="listitem"><b>1-2.5 min</b><span>to re-read a 60-100k conversation the cache lost</span></div>
+</div>
+<p class="note">Measured 2026-10-03/04 on an RTX 3090 24 GB with Pi 1.0.0 and llama.cpp build 10502. Token counts come from Pi's real requests, rendered with the model's own chat template; they match what the server reported to the token.</p>
 
-<h2>Configuring local models</h2>
-<p>Pi reads its model providers from <code>&lt;HOME&gt;/.pi\.pi\agent\models.json</code>. I created that file and added a single local provider — <strong>llama.cpp</strong> — pointing at a locally running server on port <code>1234</code>:</p>
-<table>
-  <tr><th>Setting</th><th>Value</th></tr>
-  <tr><td>File</td><td><code>&lt;HOME&gt;/.pi\.pi\agent\models.json</code></td></tr>
-  <tr><td>Provider</td><td><code>llamacpp</code> (baseUrl <code>http://localhost:1234/v1</code>, api <code>openai-completions</code>)</td></tr>
-  <tr><td>Models registered</td><td><code>qwen/qwen3.8-27b</code> and <code>ornith/ornith-1.5-9b</code></td></tr>
-</table>
-<div class="note">The local llama.cpp server must be running before Pi can use these models. Each model entry records context window, max tokens, input types, and a thinking/effort config.</div>
+<h2 id="start">How it fits together</h2>
+<p>Two programs talk over your loopback network. <strong>Pi</strong> is the agent: it reads and edits your files, runs commands and keeps the conversation. <strong>llama-server</strong> (from llama.cpp) holds the model on the GPU and answers Pi's requests on <code>http://localhost:1234</code>, in the same format cloud models use.</p>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Pi sends requests to a llama-server on port 1234. The server holds the model and one context slot per --parallel in GPU memory; each slot holds one conversation's cache up to its -c window.">
+  <rect class="svg-fill" x="10" y="80" width="170" height="90" rx="4"/>
+  <text class="svg-txt" x="95" y="118" text-anchor="middle">Pi</text>
+  <text class="svg-mut" x="95" y="142" text-anchor="middle">the agent: tools, files,</text>
+  <text class="svg-mut" x="95" y="159" text-anchor="middle">your conversation</text>
+  <line class="svg-ink" x1="180" y1="125" x2="268" y2="125" stroke-width="1.5"/>
+  <polygon points="268,119 280,125 268,131" style="fill:var(--fg)"/>
+  <text class="svg-mut" x="230" y="113" text-anchor="middle">HTTP :1234</text>
+  <rect class="svg-ink" x="282" y="20" width="468" height="210" rx="4" stroke-width="1.5"/>
+  <text class="svg-txt" x="300" y="48">llama-server on your GPU</text>
+  <rect class="svg-fill" x="300" y="66" width="190" height="146" rx="3"/>
+  <text class="svg-txt" x="395" y="128" text-anchor="middle">model weights</text>
+  <text class="svg-mut" x="395" y="150" text-anchor="middle">fixed: ~5-15 GB</text>
+  <text class="svg-mut" x="395" y="168" text-anchor="middle">a 9B or 27B at 3-4 bit</text>
+  <rect class="svg-acc" x="510" y="66" width="222" height="66" rx="3" stroke-width="2"/>
+  <text class="svg-txt" x="621" y="94" text-anchor="middle">slot 1: one conversation</text>
+  <text class="svg-mut" x="621" y="116" text-anchor="middle">its cache, up to -c per slot</text>
+  <rect class="svg-acc" x="510" y="146" width="222" height="66" rx="3" stroke-width="2" stroke-dasharray="6 5"/>
+  <text class="svg-txt" x="621" y="174" text-anchor="middle">slot 2 (--parallel 2)</text>
+  <text class="svg-mut" x="621" y="196" text-anchor="middle">a second, separate cache</text>
+</svg>
+<figcaption>The whole system on one card. The window you choose with <code>-c</code> is reserved for every slot up front, which is why the window decides how much memory the server needs.</figcaption>
+</figure>
+<p>Three settings on the server decide almost everything you will notice:</p>
+<ul>
+<li><code>-c</code>, the <strong>context window</strong>: how much conversation the model can see. Llama-server divides it between slots.</li>
+<li><code>--parallel</code>, the number of <strong>slots</strong>. A slot is one conversation the server keeps in GPU memory, with its own cache. <code>--parallel 1</code> is one slot, <code>--parallel 2</code> is two, and each slot gets <code>-c</code> divided by <code>--parallel</code> tokens.</li>
+<li>the <strong>model file</strong> and its quantisation: smaller files leave more memory for the window.</li>
+</ul>
 
-<h2>Setting the default model</h2>
-<p>Pi stores its global settings in <code>&lt;HOME&gt;/.pi\.pi\agent\settings.json</code>. The field that picks the active model is <code>defaultModel</code>:</p>
-<pre><code>"defaultModel": "ornith/ornith-1.5-9b"</code></pre>
-<div class="note">I set the default to <code>ornith/ornith-1.5-9b</code>. The other registered model is <code>qwen/qwen3.8-27b</code>. To switch, change this one value.</div>
+<h2 id="choose">Pick a model for your card</h2>
+<p>Two models cover the common NVIDIA cards. Both carry a built-in draft head for faster generation and come with a vision projector, so Pi can read screenshots with either. Find your card's memory in Task Manager, under Performance, GPU, Dedicated GPU memory.</p>
+<div class="tablewrap wide"><table>
+<thead><tr><th>Your card</th><th>Model and file</th><th>Setup</th><th class="n">Context Win. per slot</th></tr></thead>
+<tbody>
+<tr><td>12 GB<br><span class="note">3060 12 GB, 4070, 4070 Super, 5070</span></td><td><a href="https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF">Ornith-1.5 9B</a> IQ4_XS, 5.5 GB</td><td>vision, one slot</td><td class="n">136,192 <span class="note">derived</span></td></tr>
+<tr><td>16 GB<br><span class="note">4060 Ti 16 GB, 4070 Ti Super, 4080, 5060 Ti 16 GB, 5070 Ti, 5080</span></td><td>Ornith-1.5 9B IQ4_XS, 5.5 GB</td><td>vision, two slots</td><td class="n">145,408 <span class="note">derived</span></td></tr>
+<tr><td>16 GB, Qwen3.8-27B</td><td><a href="https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF">Swift-1.5 27B GSQ-RCO</a> IQ3_XXS, 10.4 GB</td><td>text, one slot</td><td class="n">75,776 <span class="note">derived</span></td></tr>
+<tr class="hl"><td>24 GB<br><span class="note">3090, 4090</span></td><td><a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5 27B</a> IQ4_XS, 15.5 GB</td><td>vision, one slot</td><td class="n">139,264 <span class="note">run daily here</span></td></tr>
+<tr><td>24 GB, with subagents</td><td>Swift-1.5 27B IQ3_XXS, 12.3 GB</td><td>vision, two slots</td><td class="n">123,904 <span class="note">measured</span></td></tr>
+<tr><td>32 GB<br><span class="note">5090</span></td><td>Swift-1.5 27B IQ4_XS, 15.5 GB</td><td>vision, two slots</td><td class="n">about 157,000 <span class="note">derived</span></td></tr>
+</tbody></table></div>
+<p class="note">Intel Arc cards of the same size (B580 12 GB, A770 16 GB, Arc Pro B60 24 GB) can start from the same row, but these numbers were worked out for NVIDIA and not tested on Intel. "One slot" and "two slots" are the server's <code>--parallel 1</code> and <code>--parallel 2</code>: how many conversations it holds at once. Two slots let a subagent keep its own cache next to your main session (see <a href="#slots">One slot or two</a>). "Measured" means the window was filled on the 3090 and the speed watched up to the cliff; "derived" means worked out from the file sizes and the 3090's measured costs, with a 0.7 GiB buffer for the desktop. How the windows are worked out is under <a href="#window">How big a window</a>.</p>
+<div class="callout plain"><p><strong>9B or 27B on a 16 GB card?</strong> A standard 3-bit 27B file is 12.3 GB and leaves only about 43,000 tokens, too few once Pi has taken its share. The GSQ-RCO build of Swift-1.5 squeezes the 27B into 10.4 GB at 3.0 bits per weight, which leaves a 75,776-token window for text and about 52,000 tokens of working room in Pi. Take the 27B for harder problems in one conversation at a time; take the 9B for screenshots, two slots and long sessions. Which answers your tasks better was not measured for this page.</p></div>
+<p>A 24 GB card can run the 9B too, with two slots at its full 262,144 tokens each, if you would rather have speed and room than the 27B's strength.</p>
 
-<p>Pi reads everything from two small JSON files. Click <strong>Copy</strong> in each block to grab the full contents and paste them at the path shown inside.</p>
+<h2 id="before">Before you start</h2>
+<p>Pi is only the agent. The model runs in a separate program, llama-server from <strong>llama.cpp</strong>, which you install first. You need:</p>
+<ul>
+<li><strong>Windows 10 or 11 and a graphics card with 12 GB or more.</strong> Everything on this page was measured on an NVIDIA card with llama.cpp's CUDA build. Intel Arc and AMD Radeon cards run llama.cpp too, with their own builds (below), but nothing here was tested on them: treat the windows and speeds as a starting point and check them on your card.</li>
+<li><strong>A recent graphics driver.</strong> On NVIDIA, run <code>nvidia-smi</code> in a terminal: the top line shows the driver version, and the CUDA 13 build below needs the 580 series or newer.</li>
+<li><strong>Disk space for the model:</strong> about 6.5 GB for the 9B and 10 to 17 GB for the 27B, vision file included.</li>
+</ul>
+<h3>Install llama.cpp</h3>
+<p>llama.cpp has no installer. It is a folder of programs you unzip and run.</p>
+<ol class="steps">
+<li><strong>Download it.</strong> On the <a href="https://github.com/ggml-org/llama.cpp/releases">releases page</a>, open the newest build, the top entry named like <code>b11382</code> and marked Pre-release; not every release carries the Windows zips. Which zip depends on your card:
+<ul>
+<li><strong>NVIDIA:</strong> two zips, <code>llama-b&hellip;-bin-win-cuda-13.4-x64.zip</code> and the matching <code>cudart-llama-bin-win-cuda-13.4-x64.zip</code>, which holds the CUDA runtime. On a driver older than the 580 series, take the <code>cuda-12.4</code> pair instead.</li>
+<li><strong>Intel Arc:</strong> <code>llama-b&hellip;-bin-win-vulkan-x64.zip</code>.</li>
+<li><strong>AMD Radeon:</strong> <code>llama-b&hellip;-bin-win-rocm-&hellip;-x64.zip</code>, or the Vulkan zip.</li>
+<li>The Vulkan zip runs on any card through the normal graphics driver, with no extra runtime to install. On NVIDIA, take the CUDA build: it is what this page was measured with.</li>
+</ul></li>
+<li><strong>Unzip into one folder</strong>, for example <code>C:\llama.cpp</code>. On NVIDIA, unzip both zips there: the cudart files must sit next to <code>llama-server.exe</code>.</li>
+<li><strong>Check that it sees your card.</strong> Open Command Prompt, go to the folder with <code>cd /d C:\llama.cpp</code> and run <code>llama-server.exe --list-devices</code>. Your GPU should be listed with its memory. If only the CPU shows, the build does not match your card, the cudart files are missing (NVIDIA) or the driver is too old for the build.</li>
+<li><strong>Updating</strong> means downloading a newer release into a fresh folder. Keep the old folder until the new one works.</li>
+</ol>
+<h3>Coming from Ollama or LM Studio</h3>
+<p>Both run llama.cpp inside them and choose most settings for you. Here you start llama-server yourself, which is what lets you set the window, the number of slots, the draft head and the cache size the way this page does. Three things to know:</p>
+<ul>
+<li><strong>Quit them first.</strong> A model they keep loaded still holds GPU memory, which comes straight out of your window. LM Studio's server also uses port 1234, the same port as here.</li>
+<li><strong>LM Studio's downloads are ordinary GGUF files</strong>, by default under <code>%USERPROFILE%\.lmstudio\models\&lt;publisher&gt;\&lt;model&gt;</code>. Point <code>-m</code> straight at them instead of downloading again.</li>
+<li><strong>Ollama stores models under hashed file names</strong>, so it is simpler to download the GGUF again from Hugging Face.</li>
+</ul>
 
-<div class="accordion">
-  <div class="accordion-item">
-    <div class="accordion-head"><button type="button" aria-expanded="false"><span>models.json — local model providers</span><span class="chev">▸</span></button><button type="button" class="copy" data-target="models-json" title="Copy models.json to clipboard">⧉</button></div>
-    <div class="accordion-body">
-      <pre><code id="models-json">{
+<h2 id="install">Install Pi</h2>
+<ol class="steps">
+<li>Run the installer in PowerShell. It puts the <code>pi</code> command on your PATH.<div class="codewrap"><button type="button" class="copy floating" data-target="install-cmd">Copy</button><pre><code id="install-cmd">powershell -c "irm https://pi.dev/install.ps1 | iex"</code></pre></div></li>
+<li>Open a new terminal and check it: <code>pi --version</code> should print 1.0 or later.</li>
+<li>Keep it current with <code>pi update</code>. Extensions update separately with <code>pi update --extensions</code>.</li>
+</ol>
+
+<h2 id="server">Run a local model</h2>
+<p>With llama.cpp installed (see <a href="#before">Before you start</a>), two steps get a model answering on your card:</p>
+<ol class="steps">
+<li><strong>Download the model.</strong> You need two files: the GGUF for your card and the <code>mmproj</code> file, which is the vision projector. Either open the model's Hugging Face page, go to Files and click the download arrow next to each, or let <code>curl</code> fetch them. It comes with Windows 10 and 11, so there is nothing to install. Run it in Command Prompt (in PowerShell, type <code>curl.exe</code>); <code>-C -</code> picks up a download that was cut off where it stopped.<div class="codewrap labelled"><div class="codehead"><span>24 GB: Swift-1.5 27B IQ4_XS and its vision file, 16.4 GB</span><button type="button" class="copy" data-target="dl-27b">Copy</button></div><pre><code id="dl-27b">mkdir C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF
+cd /d C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF
+curl -L -C - -O https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF/resolve/main/ukisai_Swift-1.5-Qwen3.8-27b-IQ4_XS.gguf
+curl -L -C - -O https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF/resolve/main/mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf</code></pre></div><div class="codewrap labelled"><div class="codehead"><span>12 and 16 GB: Ornith-1.5 9B IQ4_XS and its vision file, 6.4 GB</span><button type="button" class="copy" data-target="dl-9b">Copy</button></div><pre><code id="dl-9b">mkdir C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF
+cd /d C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF
+curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolve/main/Ornith-1.5-9B-MTP-IQ4_XS.gguf
+curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolve/main/mmproj-Ornith-1.5-9B-BF16.gguf</code></pre></div><p class="note">For the two-slot 24 GB setup below, fetch <code>ukisai_Swift-1.5-Qwen3.8-27b-IQ3_XXS.gguf</code> into the same folder the same way. If you already use Python, <code>pip install -U huggingface_hub</code> adds an <code>hf download</code> command that does the same job.</p></li>
+<li><strong>Start the server</strong> in Command Prompt, from the llama.cpp folder, with the command for your card below, and leave the window open. The commands are written for Command Prompt: in PowerShell the line breaks (<code>^</code>) and the quoting work differently. Loading can take a minute. When the log prints <code>server is listening on http://127.0.0.1:1234</code>, run <code>curl http://127.0.0.1:1234/health</code> in another window: <code>{"status":"ok"}</code> means Pi can connect.</li>
+</ol>
+<p>For a 24 GB card, the example is <a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5</a>, a 27B Qwen3.8 fine-tune, at IQ4_XS (15.5 GB) with its vision projector, one slot and a 139,264-token window:</p>
+<div class="codewrap labelled"><div class="codehead"><span>24 GB: Swift-1.5 27B, one slot, 139,264 tokens, vision</span><button type="button" class="copy" data-target="server-1">Copy</button></div><pre><code id="server-1">llama-server.exe ^
+  -m &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\ukisai_Swift-1.5-Qwen3.8-27b-IQ4_XS.gguf&quot; ^
+  --mmproj &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf&quot; ^
+  --image-min-tokens 1024 --image-max-tokens 10580 ^
+  --alias qwen/qwen3.8-27b ^
+  -c 139264 --parallel 1 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
+  --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;xhigh\&quot;}&quot; ^
+  --jinja --load-mode none --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div>
+<p>Every setting in these commands is explained under <a href="#settings">What each setting means</a>, below.</p>
+<details class="acc"><summary>24 GB, two slots: when you use subagents<span class="sumnote">IQ3_XXS, 2 &times; 123,904</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="server-2">Copy</button><pre><code id="server-2">llama-server.exe ^
+  -m &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\ukisai_Swift-1.5-Qwen3.8-27b-IQ3_XXS.gguf&quot; ^
+  --mmproj &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf&quot; ^
+  --image-min-tokens 1024 --image-max-tokens 10580 ^
+  --alias qwen/qwen3.8-27b ^
+  -c 247808 --parallel 2 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
+  --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;xhigh\&quot;}&quot; ^
+  --jinja --load-mode none --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div></details>
+<h3>12 and 16 GB cards: Ornith-1.5 9B</h3>
+<p><a href="https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF">Ornith-1.5 9B</a> at IQ4_XS is 5.5 GB, and its draft head is built into the same file. On a 12 GB card, run one slot with vision:</p>
+<div class="codewrap labelled"><div class="codehead"><span>12 GB: Ornith-1.5 9B, one slot, 136,192 tokens, vision</span><button type="button" class="copy" data-target="server-9b-12">Copy</button></div><pre><code id="server-9b-12">llama-server.exe ^
+  -m &quot;C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\Ornith-1.5-9B-MTP-IQ4_XS.gguf&quot; ^
+  --mmproj &quot;C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\mmproj-Ornith-1.5-9B-BF16.gguf&quot; ^
+  --image-min-tokens 1024 --image-max-tokens 10580 ^
+  --alias ornith/ornith-1.5-9b ^
+  -c 136192 --parallel 1 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.8 --spec-draft-ngl 99 ^
+  --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05 ^
+  --jinja --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div>
+<details class="acc"><summary>16 GB: two slots<span class="sumnote">IQ4_XS, 2 &times; 145,408</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="server-9b-16">Copy</button><pre><code id="server-9b-16">llama-server.exe ^
+  -m &quot;C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\Ornith-1.5-9B-MTP-IQ4_XS.gguf&quot; ^
+  --mmproj &quot;C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\mmproj-Ornith-1.5-9B-BF16.gguf&quot; ^
+  --image-min-tokens 1024 --image-max-tokens 10580 ^
+  --alias ornith/ornith-1.5-9b ^
+  -c 290816 --parallel 2 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.8 --spec-draft-ngl 99 ^
+  --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05 ^
+  --jinja --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div></details>
+<ul>
+<li><strong>These windows are derived, not measured.</strong> They come from the 9B's file and the 27B's measured memory costs, keeping the same 0.7 GiB buffer for the desktop. If the speed collapses late in a long session, lower <code>-c</code> by about 8,000 per slot and try again.</li>
+<li><strong>Draft length.</strong> The model's own recipe drafts up to 16 tokens at a time (<code>--spec-draft-n-max 16</code>). Each extra draft token holds about 50 MiB more per slot, so these commands use 4 and give the memory to the window. Which of the two is faster on this model was not measured here. With room to spare, as on a 24 GB card, try 16.</li>
+<li><strong>Text only:</strong> drop the <code>--mmproj</code> and <code>--image-</code> lines. That frees 0.9 GB, and a 12 GB card then takes a window of about 166,000 tokens (derived).</li>
+<li><strong>Q8_0 instead of IQ4_XS:</strong> the 9.8 GB file is closer to the original model. It suits a 16 GB card with one slot (about 152,000 tokens with vision, derived), but leaves a 12 GB card almost no window.</li>
+</ul>
+<h3>16 GB cards: Swift-1.5 27B, GSQ-RCO build</h3>
+<p><a href="https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF">GSQ-RCO</a> is a newer way of building the same GGUF file types: it chooses the precision of each tensor and then tunes the rounding to lose less. The result runs in ordinary llama.cpp. Take the file whose name ends in <code>-mtp</code>: it carries the draft head, and the plain file does not.</p>
+<div class="codewrap labelled"><div class="codehead"><span>16 GB: download and run Swift-1.5 27B GSQ-RCO IQ3_XXS, one slot, 75,776 tokens, text</span><button type="button" class="copy" data-target="server-gsq-16">Copy</button></div><pre><code id="server-gsq-16">mkdir C:\models\ukisai\Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF
+cd /d C:\models\ukisai\Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF
+curl -L -C - -O https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF/resolve/main/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf
+cd /d C:\llama.cpp
+
+llama-server.exe ^
+  -m &quot;C:\models\ukisai\Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF\Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf&quot; ^
+  --alias qwen/qwen3.8-27b ^
+  -c 75776 --parallel 1 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
+  --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;medium\&quot;}&quot; ^
+  --jinja --load-mode none --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div>
+<ul>
+<li><strong>Quality, as its maker measured it.</strong> Mean KL divergence from the full-precision Swift-1.5 (lower is closer), on 100 windows of 512 tokens: 0.098 for this 10.4 GB file, against 0.074 for the standard 12.3 GB IQ3_XXS, 0.152 for the standard IQ2_M of about the same size, and 0.018 for the 15.5 GB IQ4_XS. The GSQ figure is on the text its maker tuned with, so it may flatter the file a little. These numbers are cited from ukisai's model cards, not reproduced here.</li>
+<li><strong>Effort.</strong> This command asks for medium reasoning effort. With about 52,000 tokens of working room, one long reply at the highest effort can fill the window by itself; switch to <code>xhigh</code> for a hard problem in a fresh session.</li>
+<li><strong>Vision is untested.</strong> GSQ-RCO ships no vision projector. Swift-1.5's projector from the bartowski repo is built for the same model, and adding it would leave about 56,000 tokens (derived), but this pairing was not run here.</li>
+<li><strong>The window is derived</strong> from the file size and the 3090's measured costs, with the same 0.7 GiB desktop buffer. In Pi, give this setup its own entry with <code>contextWindow</code> and <code>maxTokens</code> set to 75,776.</li>
+</ul>
+<p class="note">The speeds the 27B setups measured: about 61-66 tokens a second while generating a long answer at the start of a session, 36 with a 257k-token window 98% full (IQ3_XXS, one slot), and about 25 per conversation when both slots of the two-slot setup work at once on 110k-token histories. The speeds of the 9B and the GSQ-RCO file were not measured for this page.</p>
+
+<h3 id="settings">What each setting means</h3>
+<p>The commands above share most settings; only the values change. In order of appearance:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="2">Reading the command</td></tr>
+<tr><td class="flag"><code>^</code></td><td>Not a setting. In Command Prompt it continues the command on the next line, so a long command stays readable.</td></tr>
+<tr class="grp"><td colspan="2">The files</td></tr>
+<tr><td class="flag"><code>-m</code></td><td>The model file to load: the GGUF you downloaded.</td></tr>
+<tr><td class="flag"><code>--mmproj</code></td><td>The vision projector, the extra file that lets the model read images. Leave it out for text only and you get back about 0.9 GB.</td></tr>
+<tr><td class="flag"><code>--image-min-tokens</code><br><code>--image-max-tokens</code></td><td>The fewest and most tokens one image may turn into. More tokens show the model more detail and take more of the window.</td></tr>
+<tr><td class="flag"><code>--alias</code></td><td>The model name the server reports. With one model loaded, Pi's model entry does not have to match it.</td></tr>
+<tr class="grp"><td colspan="2">Memory and the context window</td></tr>
+<tr><td class="flag"><code>-c</code></td><td>The context window in tokens: how much conversation the model can see. It is the total for all slots, so each slot gets <code>-c</code> divided by <code>--parallel</code>. One slot at 139,264 gives one conversation 139,264 tokens; two slots at 247,808 give each 123,904.</td></tr>
+<tr><td class="flag"><code>--parallel</code></td><td>The number of slots: how many conversations the server keeps in GPU memory at once, each with its own cache. <strong>Always set it.</strong> Left on auto, current llama-server opens four slots, and with the draft head on that costs about 2.2 GB more than one slot (derived from llama.cpp's per-slot state).</td></tr>
+<tr><td class="flag"><code>-ngl 99</code></td><td>How many of the model's layers go on the GPU. 99 is more than these models have, so all of them. A number one short leaves the output layer on the CPU and quietly costs about a third of your speed.</td></tr>
+<tr><td class="flag"><code>-ctk q8_0</code><br><code>-ctv q8_0</code></td><td>Store the context cache (its keys and values) at 8 bits, half the memory of the default 16, for a small, measured quality cost.</td></tr>
+<tr><td class="flag"><code>--load-mode none</code></td><td>Load the model without memory-mapping the file. The default maps it, which makes restarts faster but keeps up to the file's size in Windows' file cache in system RAM. How much RAM each mode really holds was not measured here.</td></tr>
+<tr class="grp"><td colspan="2">Speed: the draft head</td></tr>
+<tr><td class="flag"><code>--spec-type draft-mtp</code></td><td>Speculative decoding with the draft head built into the model file. The head guesses a few tokens ahead and the model checks them all in one step; correct guesses come almost free, and the model still decides every token. About 80-89% of guesses were accepted in these tests.</td></tr>
+<tr><td class="flag"><code>--spec-draft-n-max</code></td><td>The most tokens the head may guess per step. Each one holds more memory in every slot: about 150 MiB on the 27B and 50 MiB on the 9B.</td></tr>
+<tr><td class="flag"><code>--spec-draft-p-min</code></td><td>The head stops guessing once it is less sure than this (0.75 is 75%) of its next token, so fewer checks are wasted on long shots.</td></tr>
+<tr><td class="flag"><code>--spec-draft-ngl 99</code></td><td>How many layers of the draft model go on the GPU; 99 means all. Used in the 9B commands.</td></tr>
+<tr class="grp"><td colspan="2">Sampling: how the next token is chosen</td></tr>
+<tr><td class="flag"><code>--temp</code></td><td>Randomness. 1.0 uses the model's own probabilities as they are; lower values make it more predictable. Keep the value each command uses with its model.</td></tr>
+<tr><td class="flag"><code>--top-p 0.95</code></td><td>Choose only among the likeliest tokens that together make up 95% of the probability.</td></tr>
+<tr><td class="flag"><code>--top-k 20</code></td><td>And never from beyond the 20 likeliest.</td></tr>
+<tr><td class="flag"><code>--min-p 0.0</code></td><td>A further cut-off by probability; 0 switches it off.</td></tr>
+<tr><td class="flag"><code>--presence-penalty</code><br><code>--repeat-penalty</code></td><td>Discourage repeating words already written. 0 and 1.0 mean off; the 9B commands use a mild 1.05 repeat penalty.</td></tr>
+<tr class="grp"><td colspan="2">Thinking and the chat format</td></tr>
+<tr><td class="flag"><code>--reasoning-preserve</code></td><td>Keep the model's thinking from earlier turns in the history it sees, instead of dropping it. Dropping it would change text the server already holds in its cache, so part of the conversation would be read again; keeping it costs window space.</td></tr>
+<tr><td class="flag"><code>--chat-template-kwargs</code></td><td>Passes a setting into the model's chat template. Here it is <code>reasoning_effort</code>, how long the model thinks before answering: <code>low</code>, <code>medium</code> or <code>xhigh</code>. Higher effort does better on hard problems and uses far more tokens. The backslashes keep the inner quotes intact on the command line.</td></tr>
+<tr><td class="flag"><code>--jinja</code></td><td>Use the chat template stored in the model file, which lays out Pi's messages and tool calls the way the model was trained to read them.</td></tr>
+<tr class="grp"><td colspan="2">The connection</td></tr>
+<tr><td class="flag"><code>--api-key dummy</code></td><td>The key a program must send to use the server. Pi's <code>models.json</code> sends <code>dummy</code>, so they match.</td></tr>
+<tr><td class="flag"><code>--host 127.0.0.1</code></td><td>Accept connections from this PC only. Other machines on your network cannot reach the server.</td></tr>
+<tr><td class="flag"><code>--port 1234</code></td><td>The port Pi connects to. It must match the <code>baseUrl</code> in <code>models.json</code>.</td></tr>
+</tbody></table></div>
+
+<h2 id="configure">Tell Pi about it</h2>
+<p>Pi reads its local models from <code>%USERPROFILE%\.pi\agent\models.json</code> and its defaults from <code>settings.json</code> in the same folder. Make one model entry per server setup you run, and set its <code>contextWindow</code> to the server's window <strong>per slot</strong>.</p>
+<details class="acc"><summary>models.json<span class="sumnote">three entries, one per server setup</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="models-json">Copy</button><pre><code id="models-json">{
   "providers": {
     "llamacpp": {
       "baseUrl": "http://localhost:1234/v1",
       "api": "openai-completions",
       "apiKey": "dummy",
-      "compat": {
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false
-      },
+      "compat": { "supportsDeveloperRole": false, "supportsReasoningEffort": false },
       "models": [
         {
-          "id": "qwen/qwen3.8-27b",
-          "name": "Qwen3.8 27B (local)",
+          "id": "qwen/qwen3.8-27b-c139264",
+          "name": "Swift-1.5 IQ4_XS, 1 slot, 139k (vision)",
           "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 245760,
-          "maxTokens": 245760,
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          },
-          "thinking": {
-            "mode": "effort",
-            "efforts": [
-              "low",
-              "medium",
-              "xhigh"
-            ],
-            "defaultLevel": "xhigh",
-            "requiresEffort": false
-          }
+          "input": ["text", "image"],
+          "contextWindow": 139264,
+          "maxTokens": 139264,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
+                        "defaultLevel": "xhigh", "requiresEffort": false }
+        },
+        {
+          "id": "qwen/qwen3.8-27b",
+          "name": "Swift-1.5 IQ3_XXS, 2 slots, 124k per slot (vision)",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 123904,
+          "maxTokens": 123904,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
+                        "defaultLevel": "xhigh", "requiresEffort": false }
         },
         {
           "id": "ornith/ornith-1.5-9b",
-          "name": "Ornith 1.5 9B (local)",
+          "name": "Ornith-1.5 9B IQ4_XS, 1 slot, 136k (vision)",
           "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144,
-          "cost": {
-            "input": 0,
-            "output": 0,
-            "cacheRead": 0,
-            "cacheWrite": 0
-          },
-          "thinking": {
-            "mode": "effort",
-            "efforts": [
-              "low",
-              "medium",
-              "xhigh"
-            ],
-            "defaultLevel": "xhigh",
-            "requiresEffort": false
-          }
+          "input": ["text", "image"],
+          "contextWindow": 136192,
+          "maxTokens": 136192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
+                        "defaultLevel": "xhigh", "requiresEffort": false }
         }
       ]
     }
   }
-}</code></pre>
-    </div>
-  </div>
-</div>
-
-<p class="note">What matters: <code>providers.llamacpp.baseUrl</code> must point at your running llama.cpp server (default port <strong>1234</strong>). Each model entry needs an <code>id</code>, a display <code>name</code>, and a <code>contextWindow</code>. The <code>apiKey</code> is a placeholder — local llama.cpp takes no real API key. Keep the server running before Pi can use these models.</p>
-
-<div class="accordion">
-  <div class="accordion-item">
-    <div class="accordion-head"><button type="button" aria-expanded="false"><span>settings.json — default model &amp; theme</span><span class="chev">▸</span></button><button type="button" class="copy" data-target="models-settings" title="Copy settings.json to clipboard">⧉</button></div>
-    <div class="accordion-body">
-      <pre><code id="models-settings">
-  "lastChangelogVersion": "0.87.1",
+}</code></pre></div></details>
+<p class="note">Keep only the entries for the servers you run. On a 16 GB card with two 9B slots, set the 9B entry's <code>contextWindow</code> and <code>maxTokens</code> to 145,408; on a 12 GB or 16 GB card, set <code>defaultModel</code> below to <code>ornith/ornith-1.5-9b</code>.</p>
+<details class="acc"><summary>settings.json<span class="sumnote">default model and the extensions this page recommends</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="settings-json">Copy</button><pre><code id="settings-json">{
   "theme": "titanium",
   "defaultProvider": "llamacpp",
-  "defaultModel": "ornith/ornith-1.5-9b",
+  "defaultModel": "qwen/qwen3.8-27b-c139264",
   "modelThinkingLevels": {
-    "ornith/ornith-1.5-9b": {
-      "level": "xhigh"
-    }
+    "qwen/qwen3.8-27b-c139264": { "level": "xhigh" }
   },
   "packages": [
     "npm:@nguyenquangthai/pi-omp-theme",
-    "npm:pi-subagents",
-    "npm:pi-mcp-adapter",
-    "npm:pi-web-access",
     "npm:@juicesharp/rpiv-ask-user-question",
     "npm:@juicesharp/rpiv-todo",
-    "npm:pi-background-tasks",
     "npm:pi-lens",
     "npm:@ff-labs/pi-fff",
     "npm:@sting8k/pi-vcc",
-    "npm:pi-context-view",
-    "npm:pi-schedule-prompt",
-    "git:github.com/catlain/pi-session-analyzer"
+    "npm:pi-context-view"
   ]
-}</code></pre>
-    </div>
-  </div>
-</div>
+}</code></pre></div></details>
+<div class="callout"><p><strong>The one mistake that breaks long sessions.</strong> Pi decides when to compact from the <code>contextWindow</code> of the model entry you have selected, not from the server. If you run the two-slot server (123,904 per slot) with a 139,264 entry selected, Pi keeps going past the server's real limit and you get overflow errors and retries instead of a clean compaction. Switch entries with <kbd>Ctrl</kbd>+<kbd>P</kbd> whenever you switch servers.</p></div>
 
-<p class="note">What matters: <code>defaultModel</code> is the one field that selects which model Pi uses by default (I set it to <strong>ornith/ornith-1.5-9b</strong>). <code>defaultProvider</code> must match a provider key in <code>models.json</code> (<strong>llamacpp</strong>). <code>theme</code> names the active theme. <code>packages</code> is a list of the extensions you installed.</p>
+<h2 id="window">How big a window</h2>
+<p>Every token of context costs memory on the card, reserved up front for every slot. For Qwen3.8-27B and its fine-tunes the arithmetic is short:</p>
+<ul>
+<li>Only 16 of the model's 64 layers keep a cache that grows with context. The other 48 use a fixed-size state.</li>
+<li>Each of those 16 layers stores 4 heads &times; 256 values for keys and the same for values. At 8 bits that is 34 KiB a token, plus 4 KiB for the draft head: <strong>38 KiB a token</strong> on paper.</li>
+<li>Measured with the server's working buffers included, it is <strong>44 KiB a token with two slots and 45.9 with one</strong>. Plan with the measured figure: about 22,000 tokens per GB of free memory.</li>
+</ul>
+<h3>When the window is too big, nothing breaks. It just gets slow.</h3>
+<p>On Windows with an NVIDIA card, memory the card cannot hold spills into system RAM and the server keeps running. A little spill is harmless; past a point the speed falls off a cliff. On the 3090, two slots of the IQ3_XXS file ran at 23 tokens a second each up to 133,120 tokens per slot and dropped to 12 at 135,168 and 5.5 at 139,264. The card's memory reading looked the same on both sides of that cliff; only the speed showed it. So find your largest window by filling it and watching the speed, not by watching memory.</p>
+<div class="tablewrap wide"><table>
+<thead><tr><th>Swift-1.5 file</th><th class="n">Size</th><th class="n">32 GB</th><th class="n">24 GB</th><th class="n">16 GB</th><th class="n">12 GB</th></tr></thead>
+<tbody>
+<tr><td>IQ2_XXS</td><td class="n">8.9 GB</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">112,640</td><td class="n">21,504</td></tr>
+<tr><td>GSQ-RCO IQ3_XXS (-mtp file)</td><td class="n">10.4 GB</td><td class="n">262,144</td><td class="n">261,120</td><td class="n">75,776</td><td class="n">no fit</td></tr>
+<tr class="hl"><td>IQ3_XXS</td><td class="n">12.3 GB</td><td class="n">262,144</td><td class="n">227,328</td><td class="n">43,008</td><td class="n">no fit</td></tr>
+<tr class="hl"><td>IQ4_XS</td><td class="n">15.5 GB</td><td class="n">262,144</td><td class="n">159,744</td><td class="n">no fit</td><td class="n">no fit</td></tr>
+<tr><td>Q4_K_M</td><td class="n">17.4 GB</td><td class="n">262,144</td><td class="n">117,760</td><td class="n">no fit</td><td class="n">no fit</td></tr>
+<tr><td>Q6_K</td><td class="n">23.9 GB</td><td class="n">167,936</td><td class="n">no fit</td><td class="n">no fit</td><td class="n">no fit</td></tr>
+</tbody></table></div>
+<p class="note">Largest window for text, one slot, drafter on, with everything held in GPU memory and a 0.7 GiB buffer for the desktop. Derived from measurements on the 3090, not measured on each card; 262,144 is the model's own limit. Windows past these numbers can still run fast until the cliff, but only a test on your card finds where it is. The full table, with vision and two-slot columns, is in the <a href="../qwen-27b/">Qwen3.8-27B field guide</a>.</p>
+<h3>The 9B</h3>
+<p>Ornith-1.5 9B has the same layout at a smaller size: 8 of its 32 layers keep a cache that grows with context. On paper that is 17 KiB a token at 8 bits plus 4 KiB for the draft head, <strong>21 KiB a token</strong>. Adding the 27B's measured buffer overhead on top gives about 27 KiB a token with two slots and 29 with one, or roughly 34,000 tokens per GB of free memory. That errs on the large side, because the 9B's working buffers are smaller than the 27B's.</p>
+<div class="tablewrap wide"><table>
+<thead><tr><th>Ornith-1.5 9B setup</th><th class="n">Size</th><th class="n">32 GB</th><th class="n">24 GB</th><th class="n">16 GB</th><th class="n">12 GB</th></tr></thead>
+<tbody>
+<tr><td>IQ4_XS, text, one slot</td><td class="n">5.5 GB</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">166,912</td></tr>
+<tr class="hl"><td>IQ4_XS, vision, one slot</td><td class="n">5.5 GB</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">136,192</td></tr>
+<tr class="hl"><td>IQ4_XS, vision, two slots (each)</td><td class="n">5.5 GB</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">145,408</td><td class="n">67,584</td></tr>
+<tr><td>Q8_0, vision, one slot</td><td class="n">9.8 GB</td><td class="n">262,144</td><td class="n">262,144</td><td class="n">152,576</td><td class="n">8,192</td></tr>
+</tbody></table></div>
+<p class="note">Derived, not measured: the 9B's file header plus the 27B's measured overheads, drafter at 4, a 0.7 GiB buffer for the desktop, and the cards' full memory as nvidia-smi reports it. 262,144 is the model's own limit.</p>
 
-<h2>Running Ornith on your GPU</h2>
-<p class="lead">This is the example command that launches <strong>Ornith-1.5-9B</strong> as a local llama.cpp server — the running process behind the <code>ornith/ornith-1.5-9b</code> model you registered above. Start it in a terminal and leave it running, then open Pi: it binds to <strong>127.0.0.1:1234</strong>, which is exactly where <code>models.json</code> points.</p>
+<h2 id="budget">Your context budget</h2>
+<p>Before you type a word, Pi sends its system prompt and the definition of every tool it can call. Each extension adds tools, and every tool costs tokens in <em>every</em> request:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Pi setup</th><th class="n">First request, one-line question</th></tr></thead>
+<tbody>
+<tr><td>Pi alone (<code>pi -ne</code>): read, bash, edit, write</td><td class="n">1,688</td></tr>
+<tr class="hl"><td>The seven extensions recommended below</td><td class="n">7,348</td></tr>
+<tr><td>Fourteen extensions, including subagents and web access</td><td class="n">23,906</td></tr>
+</tbody></table></div>
+<p>Then two rules decide how much room is really left:</p>
+<ul>
+<li><strong>Pi compacts at the window minus 16,384 tokens.</strong> With a 139,264 window that is 122,880; with 123,904 it is 107,520.</li>
+<li><strong>One reply can run to about the window minus 4,096</strong>, because Pi only checks between requests. Thinking at the highest effort is hungry: on one demanding coding task, base Qwen3.8-27B wrote 22,700 and 80,200 tokens in two tries, and Swift-1.5 between 52,900 and 67,500.</li>
+</ul>
+<div class="callout plain"><p><strong>Rule of thumb.</strong> Window, minus 16,384, minus what Pi needs before you type, is your working room. With the recommended extensions and a 139,264 window that is about 115,000 tokens; at 63,488 it would be under 40,000, too small for one long high-effort reply.</p></div>
+<p>To see your own numbers, install <code>pi-context-view</code> and open it in a session: it splits the window into system prompt, tools and free space.</p>
 
-<div class="card">
-<pre><code id="ornith-cmd">llama-server.exe -m "c:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\Ornith-1.5-9B-MTP-IQ4_XS.gguf"   --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8   --mmproj "C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF\mmproj-Ornith-1.5-9B-BF16.gguf" --image-min-tokens 1024 --image-max-tokens 10580   --parallel 2   -ctk q8_0 -ctv q8_0   --alias ornith/ornith-1.5-9b   -ngl 99 --spec-draft-ngl 99 -c 524288   --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05   --jinja --host 127.0.0.1 --port 1234</code></pre>
-<button type="button" class="copy" data-target="ornith-cmd" title="Copy the Ornith launch command to clipboard">⧉</button>
-</div>
+<h2 id="slots">One slot or two</h2>
+<p>Each slot keeps one conversation's cache. Re-reading a conversation the cache has lost is the slowest thing the server does: on the 3090 about 1 to 2.5 minutes for a 60,000 to 100,000-token history.</p>
+<h3>Why subagents and one slot do not mix</h3>
+<p>A subagent is a second conversation. With one slot, its first request throws the main session's cache away, and when it hands back, the main session has to be read again from the start. Llama-server can park an idle slot in system RAM and restore it in a second or so, but its RAM cache is 8 GB by default and on a 32 GB PC it switched itself off at long contexts in these tests, so do not count on it.</p>
+<p>With two slots the main session and one subagent each keep their own cache. Coming back is a cache hit: the server read 4 new tokens instead of the whole history in these tests. The main agent waits while the subagent works, so each still runs at full single-conversation speed.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>You mostly</th><th>Run</th><th>Because</th></tr></thead>
+<tbody>
+<tr><td>work in one long session</td><td>one slot, the bigger window</td><td>more room per conversation, no subagents to evict it</td></tr>
+<tr><td>hand work to subagents</td><td>two slots</td><td>each agent keeps its cache; about 124k per slot instead of 139k+</td></tr>
+<tr><td>fan out three or more agents at once</td><td>a cloud model, or accept the re-reads</td><td>every agent past the slot count evicts another one's cache</td></tr>
+</tbody></table></div>
 
-<p class="note">Run this in a command prompt and leave the window open — Pi connects to the server it starts. Point <code>-m</code> at the <code>protoLabsAI/Ornith-1.5-9B-MTP-GGUF</code> folder that ships the separate multi-token-prediction head (it keeps the draft head in the weights); do not use a converted GGUF, which drops it and runs 32 layers instead of 33. <code>-ngl 99</code> loads every layer onto the GPU, and <code>--spec-draft-ngl 99</code> is the companion flag that keeps the draft head on the GPU too — without it the speculative-decoding speedup disappears. The <strong>Copy</strong> button grabs the full line so you can paste it at once.</p>
+<h2 id="extensions">Extensions</h2>
+<p>The set I keep for a one-slot daily driver, with what each costs in every request:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Extension</th><th class="n">Tokens</th><th>Why keep it</th></tr></thead>
+<tbody>
+<tr><td><a href="https://pi.dev/packages/pi-lens">pi-lens</a></td><td class="n">~2,530</td><td>LSP diagnostics and symbol navigation. Pays for itself the first time it catches a type error before you run anything.</td></tr>
+<tr><td><a href="https://pi.dev/packages/pi-vcc">pi-vcc</a></td><td class="n">~420</td><td>Compacts long sessions with an algorithm instead of an extra model call. On a local model that summary call would cost minutes.</td></tr>
+<tr><td><a href="https://pi.dev/packages/pi-fff">pi-fff</a></td><td class="n">~820</td><td>Fast fuzzy file and content search, so the agent finds code without long shell commands.</td></tr>
+<tr><td><a href="https://pi.dev/packages/@juicesharp/rpiv-todo">rpiv-todo</a></td><td class="n">~520</td><td>A task list the agent keeps for multi-step work.</td></tr>
+<tr><td><a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question">rpiv-ask-user-question</a></td><td class="n">small</td><td>Lets the agent stop and ask you instead of guessing. It did not appear in non-interactive (-p) requests, so its cost was not measured.</td></tr>
+<tr><td><a href="https://pi.dev/packages/pi-context-view">pi-context-view</a></td><td class="n">0</td><td>Shows what fills your context window, category by category. No tool cost.</td></tr>
+<tr><td><a href="https://pi.dev/packages/pi-omp-theme">pi-omp-theme</a></td><td class="n">0</td><td>Themes. No tool cost.</td></tr>
+</tbody></table></div>
+<div class="codewrap labelled"><div class="codehead"><span>install all seven</span><button type="button" class="copy" data-target="ext-cmds">Copy</button></div><pre><code id="ext-cmds">pi install npm:pi-lens
+pi install npm:@sting8k/pi-vcc
+pi install npm:@ff-labs/pi-fff
+pi install npm:@juicesharp/rpiv-todo
+pi install npm:@juicesharp/rpiv-ask-user-question
+pi install npm:pi-context-view
+pi install npm:@nguyenquangthai/pi-omp-theme</code></pre></div>
+<p>And the ones worth knowing about, but only when you need them:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Extension</th><th class="n">Tokens</th><th>When</th></tr></thead>
+<tbody>
+<tr><td>pi-subagents</td><td class="n">~5,040</td><td>Only with two slots. With one slot every subagent call throws the main session's cache away (see One slot or two).</td></tr>
+<tr><td>pi-web-access</td><td class="n">~4,950</td><td>The only way a local model reaches the web, but the second-largest cost. Install it when you research online.</td></tr>
+<tr><td>pi-background-tasks</td><td class="n">~2,680</td><td>Handy for long builds and test runs. Its delegate tool starts another agent, which competes for the same slot.</td></tr>
+<tr><td>pi-session-analyzer</td><td class="n">~1,020</td><td>Search and audit past sessions. Niche.</td></tr>
+<tr><td>pi-schedule-prompt</td><td class="n">~650</td><td>Recurring prompts on a timer. Niche.</td></tr>
+</tbody></table></div>
+<p class="note">Token costs are each extension's tool definitions, counted from Pi's own requests. Remove one with <code>pi remove npm:&lt;name&gt;</code>; switch them on and off without uninstalling with <code>pi config</code>.</p>
 
-<h2>Extensions I installed</h2>
-<p>After the core install, I added themes and subagents/extensions with the <code>pi install</code> command. Each links to its package page on <a href="https://pi.dev/packages/">pi.dev/packages</a>:</p>
-<pre><code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code></pre>
-<pre><code># Themes — a set of Pi themes (optional visual styling)
-<a href="https://pi.dev/packages/pi-omp-theme"><code>pi install npm:@nguyenquangthai/pi-omp-theme</code></a>
+<h2 id="mcp">MCP</h2>
+<p>Pi 1.0 speaks the Model Context Protocol natively, so no extension is needed. Manage servers with <code>/mcp</code> inside Pi or <code>pi mcp add</code>, <code>list</code>, <code>login</code> and <code>logout</code> from a terminal. Servers are defined in <code>mcp.json</code>, globally or per project. Each server's tools can be exposed directly or loaded on demand (the deferred and codemode settings) instead of sitting in every request, which matters on a local model where every token of tool definitions comes out of your window. Details are in the <a href="https://pi.dev/changelog/releases/1.0.0">Pi 1.0 release notes</a>.</p>
 
-# Subagents — the delegation/orchestration layer for child agents
-<a href="https://pi.dev/packages/pi-subagents"><code>pi install npm:pi-subagents</code></a>
-
-# Lens — live code diagnostics (LSP) and symbol navigation
-<a href="https://pi.dev/packages/pi-lens"><code>pi install npm:pi-lens</code></a>
-
-# MCP adapter — bridge to Model Context Protocol tools
-<a href="https://pi.dev/packages/pi-mcp-adapter"><code>pi install npm:pi-mcp-adapter</code></a>
-
-# Web access — browsing / web research from within Pi
-<a href="https://pi.dev/packages/pi-web-access"><code>pi install npm:pi-web-access</code></a>
-
-# User-question prompt — a "ask the user" control
-<a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question"><code>pi install npm:@juicesharp/rpiv-ask-user-question</code></a>
-
-# Todo — a todo/task-tracking helper
-<a href="https://pi.dev/packages/@juicesharp/rpiv-todo"><code>pi install npm:@juicesharp/rpiv-todo</code></a>
-
-# Background tasks — run long-running commands in the background
-<a href="https://pi.dev/packages/pi-background-tasks"><code>pi install npm:pi-background-tasks</code></a>
-
-# FFF — the fuzzy path / grep finder
-<a href="https://pi.dev/packages/pi-fff"><code>pi install npm:@ff-labs/pi-fff</code></a>
-
-# VCC — algorithmic session compaction, no LLM calls
-<a href="https://pi.dev/packages/pi-vcc"><code>pi install npm:@sting8k/pi-vcc</code></a>
-
-# Context view — visualize context usage and inspect the hidden parts
-<a href="https://pi.dev/packages/pi-context-view"><code>pi install npm:pi-context-view</code></a>
-
-# Schedule prompt — a heartbeat for recurring and one-shot prompts
-<a href="https://pi.dev/packages/pi-schedule-prompt"><code>pi install npm:pi-schedule-prompt</code></a>
-
-# Session analyzer — search past sessions, rebuild timelines, audit behavior
-<a href="https://github.com/catlain/pi-session-analyzer"><code>pi install git:github.com/catlain/pi-session-analyzer</code></a></code></pre>
-
-<h2>What each extension does</h2>
-<table>
-  <tr><th>Extension</th><th>Purpose</th><th>Package page</th></tr>
-  <tr><td><code>@nguyenquangthai/pi-omp-theme</code></td><td>Themes for Pi's look and feel</td><td><a href="https://pi.dev/packages/pi-omp-theme">package page</a></td></tr>
-  <tr><td><code>pi-subagents</code></td><td>Delegate work to focused child agents (reviewer, scout, worker, oracle, council)</td><td><a href="https://pi.dev/packages/pi-subagents">package page</a></td></tr>
-  <tr><td><code>pi-lens</code></td><td>Live code diagnostics (LSP) and symbol navigation</td><td><a href="https://pi.dev/packages/pi-lens">package page</a></td></tr>
-  <tr><td><code>pi-mcp-adapter</code></td><td>Connect Pi to external MCP tools/services</td><td><a href="https://pi.dev/packages/pi-mcp-adapter">package page</a></td></tr>
-  <tr><td><code>pi-web-access</code></td><td>Web browsing and research from inside Pi</td><td><a href="https://pi.dev/packages/pi-web-access">package page</a></td></tr>
-  <tr><td><code>@juicesharp/rpiv-ask-user-question</code></td><td>Pause and ask the user a question when needed</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-ask-user-question">package page</a></td></tr>
-  <tr><td><code>@juicesharp/rpiv-todo</code></td><td>A todo/task-tracking helper</td><td><a href="https://pi.dev/packages/@juicesharp/rpiv-todo">package page</a></td></tr>
-  <tr><td><code>pi-background-tasks</code></td><td>Run long-running commands in the background</td><td><a href="https://pi.dev/packages/pi-background-tasks">package page</a></td></tr>
-<tr><td><code>@ff-labs/pi-fff</code></td><td>Fuzzy path / grep finder — search files by name or glob</td><td><a href="https://pi.dev/packages/pi-fff">package page</a></td></tr>
-<tr><td><code>@sting8k/pi-vcc</code></td><td>Session compaction — transcript-preserving summaries, no LLM calls</td><td><a href="https://pi.dev/packages/pi-vcc">package page</a></td></tr>
-<tr><td><code>pi-context-view</code></td><td>Context usage map and hidden context inspection (system prompt, tool defs, injections)</td><td><a href="https://pi.dev/packages/pi-context-view">package page</a></td></tr>
-<tr><td><code>pi-schedule-prompt</code></td><td>Prompt scheduling — a heartbeat for recurring and one-shot prompts</td><td><a href="https://pi.dev/packages/pi-schedule-prompt">package page</a></td></tr>
-<tr><td><code>pi-session-analyzer</code></td><td>Session search and analysis — find past sessions, reconstruct timelines, audit behavior, write takeover reports</td><td><a href="https://github.com/catlain/pi-session-analyzer">GitHub repo</a></td></tr>
-</table>
-
-<div class="v2">
-<p class="lead">A working directory should carry an <strong>AGENTS.md</strong> so the agent that runs next knows the rules before it does anything. The block below is the file I use — copy it into a new project and edit the parts that are specific to your workflow.</p>
-<div class="card">
-<pre><code id="agents-md"># AGENTS.md
+<h2 id="agents">AGENTS.md</h2>
+<p>An <code>AGENTS.md</code> in your project folder tells the agent your rules before it does anything. This is mine. Copy it, then cut whatever does not apply: the agent reads every line on every request.</p>
+<details class="acc"><summary>AGENTS.md<span class="sumnote">the full file</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="agents-md">Copy</button><pre><code id="agents-md"># AGENTS.md
 
 ## Environment Setup
 - Scratch/working folder: `%TEMP%\ai_scratch` (PowerShell: `$env:TEMP\ai_scratch`) — derived from the environment, never hardcoded. Create it if it doesn't exist before writing to it.
@@ -374,76 +603,34 @@ Use Mermaid (in HTML output, or as a reasoning aid) when structure, flow, or rel
 
 ## Documentation Style
 For reference docs, outlines, or specs: use a tree/drill-down structure — trunk (key point) → branches (sub-topics) → leaves (specifics), one idea per indented line. Conversational answers, tradeoff discussions, and narrative explanations stay in prose.
-</code></pre>
-<button type="button" class="copy" data-target="agents-md" title="Copy AGENTS.md to clipboard">⧉</button>
+</code></pre></div></details>
+
+<h2 id="trouble">When something is off</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>You see</th><th>Usually</th><th>Do</th></tr></thead>
+<tbody>
+<tr><td><code>--list-devices</code> shows no GPU</td><td>The cudart zip is not in the llama.cpp folder, or the driver is older than the build</td><td>Unzip the cudart files next to <code>llama-server.exe</code>, update the driver, or take the CUDA 12 build</td></tr>
+<tr><td>Pi cannot connect</td><td>The server is not running or still loading the model</td><td>Wait for <code>server is listening</code> in its window; <code>curl http://127.0.0.1:1234/health</code> should answer <code>{"status":"ok"}</code></td></tr>
+<tr><td>Fast at first, crawling once the conversation is long</td><td>The window is past your card's cliff and the cache spilled into system RAM</td><td>Lower <code>-c</code> one step, or use a smaller file</td></tr>
+<tr><td>Overflow or "context size" errors in Pi</td><td>Pi's selected model entry has a bigger window than the server</td><td>Select the entry that matches the server (<kbd>Ctrl</kbd>+<kbd>P</kbd>)</td></tr>
+<tr><td>Long pauses when a subagent hands back</td><td>One slot: the main session's cache was evicted</td><td>Two slots, or no subagents</td></tr>
+<tr><td><code>failed to fit params</code> in the server log</td><td>The setup does not fit in free GPU memory and will spill</td><td>Fine for short work; expect the slowdown above on long ones</td></tr>
+<tr><td>Replies cut off and Pi retries</td><td>One high-effort reply ran into the window</td><td>A bigger window, fewer extensions, or medium effort for routine turns</td></tr>
+</tbody></table></div>
+<p>To check the setup: start the server, run <code>pi</code>, confirm your model entry is selected, ask it to list the files in the current folder, and run <code>/mcp</code> to see the built-in MCP manager.</p>
+
+<footer>Run Pi on a model that lives on your own GPU. Measured on one RTX 3090 24 GB, Windows 11, Pi 1.0.0, llama.cpp build 10502, 2026-10-03 and 2026-10-04. Token counts are exact for the Qwen3.8 tokenizer; speeds and windows are for this card and move with yours. The 9B windows are derived, not measured. Updated 2026-10-04.</footer>
+</main>
 </div>
-</div>
-
-<p class="note">Paste this into a new project's root as <code>AGENTS.md</code>. The <strong>Copy</strong> button grabs the whole file so you can drop it in place. Keep it short — agents only read what you write, so trim the rules that don't apply to your work.</p>
-
-<div class="warn">
-<strong>Prerequisite:</strong> run the one-line installer above <em>before</em> running any <code>pi install …</code> command — otherwise the <code>pi</code> CLI isn't on your PATH yet. You can also use PowerShell directly: <code>powershell -c "irm https://pi.dev/install.ps1 | iex"</code> for every step if you prefer not to type <code>pi</code>.
-</div>
-
-<h2>Responsive layout</h2>
-<p>This page is fluid — no fixed column cap, so the content column is set by padding alone and widens on any viewport. Every font uses a <code>clamp()</code> min/ideal/max, so text flows smoothly across screens instead of snapping between two hardcoded breakpoints.</p>
-<ul>
-  <li><strong>No fixed column cap</strong> — width is driven by padding, not a hard limit, so it scales cleanly at any screen size.</li>
-  <li><strong>Fluid type scale</strong> — body text runs roughly from <code>16px</code> to <code>28px</code> across the viewport, and each heading is a step above it. No <code>vw × N</code> multiplier, no two-value jump.</li>
-  <li><strong>Tall screens</strong> — because sizing follows viewport width and the font scales down, a wide display keeps comfortable line length while a large one stays readable.</li>
-</ul>
-
-<h2>Verifying the setup</h2>
-<p>After installing, open Pi and confirm:</p>
-<ul>
-  <li>Your local models (<code>qwen/qwen3.8-27b</code>, <code>ornith/ornith-1.5-9b</code>) appear in the model picker.</li>
-  <li><code>ornith/ornith-1.5-9b</code> is selected as the default (or whatever you set).</li>
-  <li>The <code>subagent</code> tool is available — try <code>pi subagents_enable</code> or ask Pi to "show me the available subagents."</li>
-</ul>
-
-<footer class="site">
-  <strong>How to Install Pi</strong> — a beginner's guide. Pi on Windows, local llama.cpp on port 1234.
-</footer>
-
 <script>
-  // Toggle config-file accordion (expand/collapse).
-  document.querySelectorAll('.accordion-head [aria-expanded]').forEach(function(head){
-    head.addEventListener('click', function(){
-      var open = head.getAttribute('aria-expanded') === 'true';
-      head.setAttribute('aria-expanded', String(!open));
-      if (head.nextElementSibling) { head.nextElementSibling.classList.toggle('open', !open); }
-    });
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var el=document.getElementById(btn.getAttribute('data-target')); if(!el) return;
+    function done(){btn.textContent='Copied';btn.classList.add('copied');setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied');},1500);}
+    function fallback(){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');done();}catch(e){}s.removeAllRanges();}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(el.textContent).then(done,fallback);}else{fallback();}
   });
-
-  // Copy a config code block to the clipboard.
-  document.querySelectorAll('.copy').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var id = btn.getAttribute('data-target');
-      var el = document.getElementById(id);
-      if (!el) { return; }
-      var text = el.textContent;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function(){ flash(btn); })
-          .catch(fallbackCopy);
-      } else { fallbackCopy(); }
-    });
-  });
-
-  function flash(btn){
-    btn.classList.add('copied');
-    setTimeout(function(){ btn.classList.remove('copied'); }, 1600);
-  }
-  function fallbackCopy(){
-    var range = document.createRange();
-    range.selectNodeContents(document.getElementById(btn.getAttribute('data-target')));
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    try { document.execCommand('copy'); } catch (e) {}
-    sel.removeAllRanges();
-  }
+});
 </script>
-
-</div>
 </body>
 </html>
