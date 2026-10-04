@@ -614,7 +614,7 @@ For reference docs, outlines, or specs: use a tree/drill-down structure — trun
 <tr><td>Fast at first, crawling once the conversation is long</td><td>The window is past your card's cliff and the cache spilled into system RAM</td><td>Lower <code>-c</code> one step, or use a smaller file</td></tr>
 <tr><td>Overflow or "context size" errors in Pi</td><td>Pi's selected model entry has a bigger window than the server</td><td>Select the entry that matches the server (<kbd>Ctrl</kbd>+<kbd>P</kbd>)</td></tr>
 <tr><td>Long pauses when a subagent hands back</td><td>One slot: the main session's cache was evicted</td><td>Two slots, or no subagents</td></tr>
-<tr><td><code>failed to fit params</code> in the server log</td><td>The setup does not fit in free GPU memory and will spill</td><td>Fine for short work; expect the slowdown above on long ones</td></tr>
+<tr><td><code>failed to fit params</code> in the server log</td><td>llama.cpp projects that this load leaves less than 1,024&nbsp;MiB of GPU memory free (its <code>--fit-target</code> margin); with <code>-ngl 99</code> set, it loads as asked anyway. It is a warning, not a failure: the load may still fit.</td><td>Nothing, if long sessions stay fast. If the speed collapses late in a long session, lower <code>-c</code> one step</td></tr>
 <tr><td>Replies cut off and Pi retries</td><td>One high-effort reply ran into the window</td><td>A bigger window, fewer extensions, or medium effort for routine turns</td></tr>
 </tbody></table></div>
 <p>To check the setup: start the server, run <code>pi</code>, confirm your model entry is selected, ask it to list the files in the current folder, and run <code>/mcp</code> to see the built-in MCP manager.</p>
