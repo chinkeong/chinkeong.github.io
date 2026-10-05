@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultracode at max effort: one 30-hour run, audited</title>
+<meta name="description" content="An audit of one Claude Code session: Opus 5.5 at max effort with ultracode on built a single-file aquarium in 30 hours 32 minutes, with 7 workflows, 122 subagent runs and 5.06 billion tokens. What ran, in what order, why, and what it cost.">
+<style>
+:root{
+  --bg:#fbfaf8; --fg:#1a1a1a; --muted:#5a5a5a; --rule:#e2ded8; --card:#fff;
+  --accent:#7a3b12; --good:#1c5f2e; --warn:#8a5a00; --bad:#8a2020;
+  --code-bg:#f4f1ec; --est:#4a3f8f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161a; --fg:#e8e6e3; --muted:#a2a6ad; --rule:#2c3038; --card:#1b1e24;
+    --accent:#e0975a; --good:#7ec98f; --warn:#e0b45a; --bad:#e88a8a;
+    --code-bg:#1f232a; --est:#a99cf0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161a; --fg:#e8e6e3; --muted:#a2a6ad; --rule:#2c3038; --card:#1b1e24;
+  --accent:#e0975a; --good:#7ec98f; --warn:#e0b45a; --bad:#e88a8a;
+  --code-bg:#1f232a; --est:#a99cf0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);margin:0;
+  font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:52rem;margin:0 auto;padding:2.5rem 1.15rem 6rem}
+h1{font-size:1.95rem;line-height:1.22;margin:0 0 .5rem;letter-spacing:-.015em}
+h2{font-size:1.32rem;margin:3.2rem 0 .1rem;letter-spacing:-.01em;
+   padding-top:1.4rem;border-top:1px solid var(--rule)}
+h3{font-size:1.02rem;margin:2rem 0 .4rem;color:var(--accent)}
+.sub{color:var(--muted);font-size:1.02rem;margin:.2rem 0 1.6rem}
+.lede{font-size:1.06rem}
+p{margin:.85rem 0}
+a{color:var(--accent)}
+code,kbd{background:var(--code-bg);padding:.1em .34em;border-radius:3px;
+  font:.885em/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--code-bg);padding:.85rem 1rem;border-radius:6px;
+  overflow-x:auto;border:1px solid var(--rule);font-size:.86rem}
+pre code{background:none;padding:0}
+p code,li code,td code,dd code{overflow-wrap:anywhere}
+pre.prompt{max-height:32rem;overflow:auto;white-space:pre-wrap;word-break:break-word}
+table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.925rem}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+th,td{text-align:left;padding:.44rem .6rem;border-bottom:1px solid var(--rule);
+  vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.83rem;text-transform:uppercase;
+  letter-spacing:.045em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+tr.hi td{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+tr.tot td{font-weight:600;border-top:2px solid var(--rule)}
+.box{background:var(--card);border:1px solid var(--rule);border-radius:8px;
+  padding:1rem 1.15rem;margin:1.5rem 0}
+.box h3{margin-top:0}
+.box dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.3rem .9rem}
+.box dt{font-weight:600;white-space:nowrap}
+.box dd{margin:0;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(11.5rem,1fr));gap:.7rem;margin:1.4rem 0}
+.kpi{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:.75rem .9rem}
+.kpi b{display:block;font-size:1.35rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:.86rem}
+.tag{display:inline-block;font-size:.74rem;letter-spacing:.05em;
+  text-transform:uppercase;padding:.1em .5em;border-radius:3px;
+  border:1px solid currentColor;vertical-align:.12em}
+.t-meas{color:var(--good)}.t-deriv{color:var(--warn)}.t-cited{color:var(--muted)}.t-est{color:var(--est)}
+.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.v2{border-left:3px solid var(--rule);padding-left:1rem;margin:1.4rem 0}
+.v2 > :first-child{margin-top:0}
+.est{border-left:3px solid var(--est);padding-left:1rem;margin:1.4rem 0}
+.est > :first-child{margin-top:0}
+nav.toc{background:var(--card);border:1px solid var(--rule);border-radius:8px;
+  padding:.9rem 1.15rem;margin:2rem 0}
+nav.toc ol{margin:.3rem 0 0;padding-left:1.3rem}
+nav.toc li{margin:.18rem 0}
+figure{margin:1.6rem 0}
+figure.dia{background:var(--card);border:1px solid var(--rule);border-radius:8px;
+  padding:.8rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+figure.dia .mermaid{min-width:36rem;text-align:center}
+figure.dia.wide .mermaid{min-width:52rem}
+figure.dia.narrow .mermaid{min-width:0}
+figure.dia.bleed{width:min(calc(100vw - 2rem),80rem);position:relative;left:50%;transform:translateX(-50%)}
+figure.dia.bleed .mermaid{min-width:60rem}
+.mermaid{visibility:hidden}
+.mermaid[data-processed="true"]{visibility:visible}
+figcaption{color:var(--muted);font-size:.86rem;margin-top:.5rem}
+details{margin:1rem 0}
+details summary{cursor:pointer;color:var(--accent);font-weight:600}
+.foot{color:var(--muted);font-size:.88rem;margin-top:3.5rem;
+  border-top:1px solid var(--rule);padding-top:1.2rem}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+@media (max-width:34rem){
+  .wrap{padding:1.6rem .85rem 4rem} h1{font-size:1.55rem}
+  .box dl{grid-template-columns:1fr;gap:.1rem}
+  .box dt{margin-top:.5rem}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .kpi{padding:.6rem .7rem} .kpi b{font-size:1.12rem}
+}
+</style>
+<body>
+<div class="wrap">
+
+<h1>Ultracode at max effort: one 30-hour run, audited</h1>
+<p class="sub">Claude Code with Opus&nbsp;5.5 at effort <code>max</code> and ultracode on
+built one single-file aquarium from one prompt. It worked for 30&nbsp;hours
+30&nbsp;minutes with no human message. Then the user asked it to wrap up, and the
+turn ended 92 seconds later, after 30&nbsp;hours 32&nbsp;minutes. It ran 7
+workflows and 122 subagent runs, and it processed 5.06 billion tokens. This page explains what
+ultracode is, what happened in each phase, how the work was checked, and what it
+cost. Every number comes from the session's own log files.<br>
+<a href="Opus_5.5_max_ultracode_1835min.html">Open the delivered aquarium</a>
+&nbsp;·&nbsp; <a href="prompt.md">The prompt as a file</a></p>
+
+<div class="kpis" role="list" aria-label="Key numbers">
+  <div class="kpi" role="listitem"><b>30 h 32 min</b><span>one user turn, 4 Oct 15:18 to 5 Oct 21:50 (UTC+8)</span></div>
+  <div class="kpi" role="listitem"><b>7 workflows</b><span>112 planned subagent runs, 122 with re-runs</span></div>
+  <div class="kpi" role="listitem"><b>136.6 agent-hours</b><span>about 4.5 agents at work at any moment</span></div>
+  <div class="kpi" role="listitem"><b>15,337 requests</b><span>to Opus 5.5, all at effort max</span></div>
+  <div class="kpi" role="listitem"><b>23.5 M output tokens</b><span>13.8 M of them hidden thinking</span></div>
+  <div class="kpi" role="listitem"><b>5.06 B tokens</b><span>in total; 97.4% are cache reads</span></div>
+  <div class="kpi" role="listitem"><b>$2,010</b><span>at API list price; the run used a subscription plan</span></div>
+  <div class="kpi" role="listitem"><b>1.37 MB</b><span>one HTML file, 22,262 lines, 25 modules</span></div>
+</div>
+
+<nav class="toc" aria-label="Contents">
+  <strong>On this page</strong>
+  <ol>
+    <li><a href="#what">What ultracode is</a></li>
+    <li><a href="#prompt">The prompt and the settings</a></li>
+    <li><a href="#effort">Effort: xhigh against max</a></li>
+    <li><a href="#timeline">The whole run on one timeline</a></li>
+    <li><a href="#phases">The construction phases, step by step</a></li>
+    <li><a href="#quality">How the work was checked</a></li>
+    <li><a href="#cost">Tokens and cost</a></li>
+    <li><a href="#stop">When the user stopped it</a></li>
+    <li><a href="#longer">If it had kept running: a prediction</a></li>
+    <li><a href="#case">What the cost bought</a></li>
+    <li><a href="#method">Method and provenance</a></li>
+  </ol>
+</nav>
+
+<p>Tags used on this page: <span class="tag t-meas">measured</span> means read
+or counted from the logs. <span class="tag t-deriv">derived</span> means
+calculated from measured numbers. <span class="tag t-cited">cited</span> means
+taken from Anthropic documentation or from Claude Code's own messages.
+<span class="tag t-est">estimate</span> means a forecast with stated
+assumptions. All times are local time (UTC+8).</p>
+
+<!-- ============================================================ 1 -->
+<h2 id="what">1. What ultracode is</h2>
+<p class="lede">Ultracode is a working mode of Claude Code. With it on, the main
+model does not do the work alone. It becomes an orchestrator. It writes small
+programs, called workflows, that start many helper agents, check their output
+with other agents, and collect the results.</p>
+<p>In this session the user turned it on through the <code>/effort</code>
+command. Claude Code answered: <em>"Set effort level to max (this session only)
+… · Ultracode on"</em>. From then on, Claude Code added this instruction to the
+model's context <span class="tag t-cited">cited</span>:</p>
+<pre><code>Ultracode is on: optimize for the most exhaustive, correct answer — not the
+fastest or cheapest. Use the Workflow tool on every substantive task; token
+cost is not a constraint. See the Ultracode section and quality patterns in
+the workflow authoring reference. Solo only on conversational/trivial turns.</code></pre>
+<p>Ultracode and effort are two separate settings in the same command. Ultracode
+decides the shape of the work: how many agents, how many workflows, how much
+checking. Effort decides how deeply each single model request thinks. A user can
+also turn ultracode on for one message only, by writing the word "ultracode" in
+the prompt. This audit page was made that way.</p>
+
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart LR
+  subgraph N["Normal mode"]
+    direction TB
+    U1(["User prompt"]):::user --> A1["One model loop<br/>reads, edits, tests,<br/>one step at a time"]:::orch
+    A1 --> R1(["Answer"]):::user
+  end
+  subgraph X["Ultracode mode"]
+    direction TB
+    U2(["User prompt"]):::user --> O["Orchestrator<br/>the main model loop"]:::orch
+    O --> W["Workflow script<br/>phases, fan-out, pipelines"]:::wf
+    W --> S1["Subagent"]:::wf
+    W --> S2["Subagent"]:::wf
+    W --> S3["Subagent ..."]:::wf
+    S1 --> V["Independent verifiers<br/>try to refute the work"]:::rev
+    S2 --> V
+    S3 --> V
+    V -->|"structured results"| O
+    O -->|"next workflow, or done"| R2(["Answer"]):::user
+  end
+  N ~~~ X
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure 1. In normal mode one model loop does everything. In ultracode
+mode the main loop plans and checks, and the work is spread over many subagents
+that run at the same time.</figcaption>
+</figure>
+
+<div class="box">
+<h3>Plain words</h3>
+<dl>
+  <dt>Orchestrator</dt><dd>The main model loop that talks to the user. In ultracode it plans, writes workflow scripts, fixes shared code and decides what runs next.</dd>
+  <dt>Workflow</dt><dd>A short JavaScript program written by the orchestrator. It starts subagents, runs them in parallel or as a pipeline, and returns their results as structured data.</dd>
+  <dt>Subagent</dt><dd>A separate model session with its own context and tools. It gets one job, for example "build the jellyfish module" or "try to prove this finding wrong".</dd>
+  <dt>Round</dt><dd>One step of building or fixing in which many agents work at the same time. This session had a build round, a polish round and 2 fix rounds.</dd>
+  <dt>Lens</dt><dd>One point of view in a review: requirements, performance, robustness, visual, motion or code.</dd>
+  <dt>Verifier</dt><dd>A subagent whose job is to refute another agent's claim by reproducing it. Only findings the verifier reproduces count as confirmed.</dd>
+  <dt>Frozen build</dt><dd>A copy of the product that nobody may edit while a review runs, so that every line number in a finding stays valid.</dd>
+  <dt>Token</dt><dd>A piece of a word. Models read and write in tokens.</dd>
+  <dt>Thinking tokens</dt><dd>Tokens the model writes to reason before it acts. They are billed as output but are not shown.</dd>
+  <dt>Cache read</dt><dd>Input that the model has already seen in this conversation. It is read from a cache at 5% of the normal input price.</dd>
+</dl>
+</div>
+
+<!-- ============================================================ 2 -->
+<h2 id="prompt">2. The prompt and the settings</h2>
+<p class="lede">The user typed two commands and one message. Nothing else was
+typed for the next 30.5 hours.</p>
+<pre><code>15:17:04  /model    →  Set model to Opus 5.5 and saved as your default for
+                       new sessions
+15:17:30  /effort   →  Set effort level to max (this session only): Maximum
+                       capability with deepest reasoning. May use excessive
+                       tokens resulting in long response times or
+                       overthinking. Use sparingly for the hardest tasks.
+                       · Ultracode on
+15:18:47  message   →  the target path, then the prompt below</code></pre>
+<p>The message was the path of a new target file,
+<code>Opus_5.5_with_max_effort_ultracode.html</code>, in an empty folder, followed by
+this prompt, pasted in full <span class="tag t-meas">measured</span>. It is 167
+lines and 6,784 characters. The parent folder holds 47 outputs from other models
+for the same task.</p>
+<details open>
+<summary>The full prompt</summary>
+<pre class="prompt"><code># Animated Aquarium -- LLM Prompt
+
+Create a single self-contained HTML file that renders an animated
+deep-ocean aquarium. Requirements:
+
+## File constraints
+
+1. One file only. All CSS and JavaScript inline. No external
+   resources of any kind: no CDN links, no images, no fonts, no
+   network requests. The page must work offline when opened from a
+   local file.
+2. Draw the scene on a canvas element that always fills the browser
+   window and re-adapts when the window is resized, with no
+   stretching artifacts and no scrollbars.
+
+## CONFIG object
+
+All tunable parameters must be named constants in one CONFIG object
+at the top of the script so a reader can adjust them. Include at
+minimum:
+
+- Fish count per species
+- Speed multiplier (global, affects all creatures)
+- Bubble spawn interval in milliseconds
+- Jellyfish count
+- Crab count
+- Maximum simultaneous bubbles
+- Day/night cycle duration in seconds (0 to disable)
+
+## Sea creatures (required)
+
+Implement at least the following. Each must be visually distinct
+(different shape, color, and drawing logic) and have its own
+movement behavior. Be creative with the exact appearance -- the
+descriptions below are guidelines, not pixel specs.
+
+### Fish -- at least 3 species, at least 2 of each
+
+1. **Tropical fish** -- oval body, warm palette (oranges, yellows,
+   whites), horizontal stripes or bands. Movement: steady horizontal
+   glide, reverses direction at canvas edges, slight vertical drift.
+
+2. **Angelfish** -- tall diamond or kite-shaped body, elongated
+   dorsal and ventral fins, cool palette (blues, purples, silvers).
+   Movement: slower horizontal travel with a pronounced sinusoidal
+   vertical bob. The difference from species 1 must be obvious
+   within seconds.
+
+3. **Small schooling fish** -- tiny, simple silhouettes that move as
+   a loose school. They should loosely follow a shared heading that
+   slowly rotates, with each individual adding small random offsets
+   so the group shimmers rather than moving rigidly. At least 8 in
+   the school.
+
+### Jellyfish -- at least 2
+
+Translucent, bell-shaped bodies with trailing tentacles. The bell
+should visibly pulse (expand/contract) to propel the jellyfish
+upward; between pulses it drifts slowly downward and sideways.
+Tentacles should sway and trail behind the movement. Use
+semi-transparent fills so the jellyfish look ghostly and
+luminescent. They move independently of fish.
+
+### Bottom dwellers
+
+4. **Crab** -- at least 1. Sits on the sandy floor. Occasionally
+   scuttles sideways in short bursts, pauses, then scuttles again.
+   Draw with a round body, eyestalks, and visible claws/pincers.
+
+5. **Lobster** -- at least 1. Larger than the crab, reddish-brown,
+   with a segmented tail, large front claws, and antennae. Moves
+   slowly along the bottom, occasionally stops and raises its claws.
+
+6. **Starfish** -- at least 1. Five-armed, textured, resting on the
+   floor or on a rock. Moves extremely slowly (almost imperceptibly)
+   or stays still. Subtle color -- ochre, rust, or muted purple.
+
+### Seahorse -- at least 1
+
+Upright posture, curled tail, snout. Bobs vertically in place or
+drifts very slowly. Tail may curl and uncurl gently.
+
+### Sea turtle -- at least 1
+
+Distinct shell pattern (hexagonal or scute pattern drawn on the
+shell). Flippers animate in a slow rowing stroke. Moves gracefully
+across the scene at a leisurely pace, occasionally changing
+direction in gentle arcs, not sharp turns.
+
+## Shells and static sea floor objects
+
+- **Seashells** -- at least 3 different shells scattered on the
+  floor: a spiral conch, a scallop/fan shape, and a small cowrie or
+  similar. Give each a slightly different size and tint.
+- **Coral formations** -- at least 2 clusters of branching or
+  brain coral near the bottom, with warm pinks, oranges, or reds.
+- **Sea anemone** -- at least 1, with a cluster of waving tentacles
+  rooted to a rock or the floor. Tentacles sway gently with
+  a current-like motion.
+- **Seaweed / kelp** -- at least 3 stalks of different heights that
+  sway gently, rooted at the bottom. Vary the green hue per stalk.
+- **Rocks** -- a few rounded stones of varying sizes on the floor.
+
+## Bubbles
+
+Bubbles appear near the bottom, rise to the top with gentle
+side-to-side wobble, and keep respawning indefinitely. They should
+look translucent with a subtle specular highlight. Slight size
+variation.
+
+## Environment and atmosphere
+
+- **Water background** -- a vertical gradient from dark deep blue at
+  the top to a lighter teal-blue near the bottom, suggesting depth.
+- **Caustic light rays** -- subtle, slow-moving shafts of pale light
+  from the surface, barely visible. They add atmosphere without
+  overwhelming the scene.
+- **Sandy floor** -- a textured strip at the bottom with slight
+  undulation, small pebbles, and a warm sandy color.
+- **Particle motes** -- optional: tiny floating specks drifting
+  slowly in the water to suggest organic matter. Very subtle.
+- **Day/night cycle** (optional but encouraged) -- if enabled in
+  CONFIG, the overall scene brightness slowly oscillates between
+  a brighter daytime palette and a darker nighttime palette. During
+  "night" jellyfish and certain fish could glow faintly.
+
+## Movement rules
+
+- All creatures must remain visible: turn, wrap, or bounce at canvas
+  edges.
+- Each species must have a clearly distinct movement pattern. A
+  viewer should be able to tell species apart by movement alone
+  within 15 seconds.
+- Creatures should not cluster in one area. Distribute them across
+  the tank.
+- Bottom dwellers stay on the floor. Jellyfish occupy the upper
+  half. Fish and turtle roam the middle. Seahorse stays near decor.
+
+## Creative freedom
+
+The descriptions above set a minimum. You are encouraged to add:
+
+- Additional species or variants (pufferfish, manta ray, eel,
+  clownfish in an anemone, etc.)
+- Decorative details (sunken treasure chest, ship wheel, anchor,
+  ceramic diver figurine, etc.)
+- Interaction touches (fish avoiding each other, schooling fish
+  reacting to edges, crab retreating when a fish swims near)
+- Ambient effects (ripple overlay on the surface, shadow on the
+  floor, depth-of-field blur for distant fish)
+- Sound-reactive elements if the Web Audio API is available
+
+Surprise me. The goal is a beautiful, living aquarium that someone
+would leave open as a desktop decoration.
+
+## Quality
+
+- The page must produce no console errors.
+- Animation should be smooth at 60 fps on a mid-range machine. Use
+  requestAnimationFrame, delta-time, and avoid unnecessary
+  allocations in the render loop.
+- All drawing must use the Canvas 2D API (no WebGL required, but
+  allowed as a bonus layer).
+
+Output only the complete HTML file content, starting with
+`&lt;!DOCTYPE html&gt;`. No explanations, no markdown fences, no extra
+text.</code></pre>
+</details>
+<p>The session delivered the file under the requested name. It was renamed
+afterwards to <code>Opus_5.5_max_ultracode_1835min.html</code>. Both names hold
+the same bytes (SHA-256 begins <code>ef3062e63fc49891</code>).</p>
+<p>About 3 minutes after WF1 started its 10 build agents, the orchestrator
+split the prompt into 40 checkable requirement ids. It wrote them in a file called
+<code>REQUIREMENTS.md</code>. The ids cover file rules F1–F3, CONFIG rules C1–C3,
+each creature, decor, bubbles, environment, movement rules M1–M4, quality rules
+Q1–Q3, output rule O1 and the creative extras X1–X6. Every later review checked
+against this list.</p>
+
+<!-- ============================================================ 3 -->
+<h2 id="effort">3. Effort: xhigh against max</h2>
+<p class="lede">Effort mainly sets how deeply each model request thinks. It can
+also change how many tool calls an agent makes. It does not set how many agents
+or workflows run. That is ultracode's job.</p>
+
+<h3>What the documentation says</h3>
+<ul>
+  <li>On Opus&nbsp;5.5, thinking is always on. A fixed thinking budget
+  (<code>budget_tokens</code>) is rejected with an error. Effort is the main
+  control. A line in the system prompt can reduce thinking further.
+  <span class="tag t-cited">cited</span></li>
+  <li>There are five levels: <code>low</code>, <code>medium</code>,
+  <code>high</code>, <code>xhigh</code>, <code>max</code>. For Opus&nbsp;5.5 the
+  API default is <code>medium</code>. The guide says to start at
+  <code>medium</code> and to "reserve <code>xhigh</code> and <code>max</code> for
+  work where you have measured a quality gain".
+  <span class="tag t-cited">cited</span></li>
+  <li>The Opus&nbsp;5.5 guide says "<code>max</code> is uncapped", and that Opus
+  5.5 "tends to think more per turn than Claude Opus 5, especially at
+  <code>xhigh</code> and <code>max</code>". <span class="tag t-cited">cited</span></li>
+  <li>The older Opus&nbsp;4.7 guide calls <code>xhigh</code> "the best setting"
+  for "most coding and agentic use cases" and says Claude Code used it as its
+  default. It says <code>max</code> "may show diminishing returns from increased
+  token usage" and "can be prone to overthinking". The Opus&nbsp;5.5 guide does
+  not repeat these lines. <span class="tag t-cited">cited</span></li>
+  <li>Every response has a hard output limit, <code>max_tokens</code>. On Opus
+  5.5 the largest value for a normal request is 128,000 tokens, and thinking
+  counts toward it. <span class="tag t-cited">cited</span></li>
+</ul>
+
+<div class="box">
+<h3>Is there a kilobyte limit on thinking at xhigh?</h3>
+<p>No fixed limit is documented for <code>xhigh</code>. Effort is a setting for
+how much the model chooses to think, not a quota. So <code>xhigh</code> does not
+stop at a set number of kilobytes. On average it simply thinks less than
+<code>max</code>. The guide calls <code>max</code> "uncapped". The one hard limit,
+the same for every effort level, is the 128,000-token output limit of a single
+response. That is roughly 450 to 510 KB of English text
+<span class="tag t-est">estimate</span>, at 3.5 to 4 characters per token. In
+this run, requests reached that limit and were cut off 6 times.</p>
+</div>
+
+<h3>What max effort did in this run</h3>
+<p>The logs record the thinking tokens of almost every request
+<span class="tag t-meas">measured</span>. Across 15,337 requests the model wrote
+at least 13,766,555 thinking tokens. That is 58.6% of all output tokens. (147
+requests, about 1%, were logged without a final count. One of them is a
+128,000-token cut-off. So the totals are slightly low.) Most requests thought
+briefly: the median was 232 thinking tokens, and 90% of requests stayed at or
+under 1,862. A few thought for a very long time. The 16 requests above 64,000
+thinking tokens are 0.1% of requests, but they hold 11.3% of all thinking.</p>
+<div class="scroll">
+<table aria-label="Requests by thinking tokens per request">
+<tr><th>Thinking tokens in one request</th><th class="n">Requests</th><th class="n">Thinking tokens</th><th class="n">Share of thinking</th></tr>
+<tr><td>under 1,000 (incl. the 147 without a final count)</td><td class="n">12,392</td><td class="n">2,903,909</td><td class="n">21.1%</td></tr>
+<tr><td>1,000 to 4,000</td><td class="n">2,345</td><td class="n">4,369,562</td><td class="n">31.7%</td></tr>
+<tr><td>4,000 to 16,000</td><td class="n">533</td><td class="n">3,650,184</td><td class="n">26.5%</td></tr>
+<tr><td>16,000 to 32,000</td><td class="n">42</td><td class="n">891,490</td><td class="n">6.5%</td></tr>
+<tr><td>32,000 to 64,000</td><td class="n">9</td><td class="n">390,931</td><td class="n">2.8%</td></tr>
+<tr class="hi"><td>64,000 and more (5 of them stopped at 128,000)</td><td class="n">16</td><td class="n">1,560,479</td><td class="n">11.3%</td></tr>
+<tr class="tot"><td>All requests</td><td class="n">15,337</td><td class="n">13,766,555</td><td class="n">100%</td></tr>
+</table>
+</div>
+
+<figure class="dia narrow">
+<script type="text/x-mermaid">
+xychart-beta
+  title "Thinking tokens (millions) by size of the think"
+  x-axis ["under 1k", "1k-4k", "4k-16k", "16k-32k", "32k-64k", "64k+"]
+  y-axis "Million thinking tokens" 0 --> 5
+  bar [2.90, 4.37, 3.65, 0.89, 0.39, 1.56]
+</script>
+<figcaption>Figure 2. Where the thinking went <span class="tag t-meas">measured</span>.
+The right-most bar is only 16 requests.</figcaption>
+</figure>
+
+<p>There were 6 cut-offs. Five are logged with the <code>max_tokens</code> stop
+reason, and one more appears only as a Claude Code notice ("Output token limit
+hit"). All of them happened in Phase&nbsp;1, between 16:19 and 17:03. In each case
+a builder agent had just read the engine and tried to plan its whole module in one
+think. After 21 to 22 minutes of thinking it reached 128,000 tokens and was cut
+off with no text and no tool call. The planning was lost, and the agent had to
+plan again in smaller pieces. The turtle builder was cut off three times and wrote
+its first code 80 minutes after it started. Together the 6 cut-offs cost about
+768,000 output tokens (6 × 128,000) and about 131 agent-minutes
+<span class="tag t-meas">measured</span>.</p>
+
+<h3>How effort affects the duration</h3>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart LR
+  U["Ultracode sets the shape<br/>7 workflows in sequence<br/>6 to 30 planned agents each"]:::wf --> W["Wall time<br/>= sum over workflows of the slowest agent chain<br/>+ the orchestrator's own work"]:::user
+  E["Effort sets the depth<br/>of every single request"]:::orch --> A["Agent time<br/>= thinking + writing + waiting for tools"]:::orch
+  T["Tools<br/>headless Chrome runs, builds,<br/>long simulations, timeouts"]:::rev --> A
+  A --> W
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure 3. Effort acts on agent time. Ultracode acts on the number of
+workflows and agents.</figcaption>
+</figure>
+<p>Thinking took 39.3 hours of the 136.6 agent-hours, or 28.8%
+<span class="tag t-meas">measured</span>. The rest was writing code and waiting
+for tools: builds, headless Chrome runs and long motion simulations. Several of
+the longest agents were slow because of their tests, not their thinking. For
+example, one polish agent ran for 224 minutes, and three of its commands hit the
+600-second timeout. Effort can also change the number of tool calls, and the
+documentation gives no number for that, so the forecast below changes only the
+thinking.</p>
+<p>No <code>xhigh</code> run of this prompt exists, so the table below is a
+forecast, not a measurement.</p>
+<div class="est">
+<div class="scroll">
+<table aria-label="Forecast: the same run at xhigh">
+<tr><th>At xhigh instead of max</th><th>Forecast</th><th>Basis</th></tr>
+<tr><td>Thinking per request</td><td>30–50% less (assumption)</td><td>The docs say max thinks more; no number is published.</td></tr>
+<tr><td>Agent time</td><td>about 9–14% less</td><td>28.8% of agent time was thinking.</td></tr>
+<tr><td>Wall time</td><td>at most 3–4 hours shorter, likely less</td><td>The slowest chains were slow because of tests, not thinking.</td></tr>
+<tr><td>Cut-offs at 128,000 tokens</td><td>fewer or none</td><td>All 6 were whole-module plans at max.</td></tr>
+<tr><td>Number of workflows</td><td>probably the same</td><td>Workflows come from the orchestrator's plan, which ultracode drives.</td></tr>
+<tr><td>Cost</td><td>about $80–140 less (4–7%)</td><td>Thinking is 13.8 M output tokens at $20 per million. Cache reads, the largest cost, depend on the number of requests.</td></tr>
+</table>
+</div>
+<p>Tag: <span class="tag t-est">estimate</span>. The fair test is to run the same
+prompt at <code>xhigh</code> with ultracode on, and count the same numbers with
+the method in section 11.</p>
+</div>
+
+<!-- ============================================================ 4 -->
+<h2 id="timeline">4. The whole run on one timeline</h2>
+<p class="lede">The orchestrator worked for about 3 hours 14 minutes itself. For
+the other 27 hours it waited while one workflow at a time ran its agents.</p>
+<figure class="dia bleed">
+<script type="text/x-mermaid">
+gantt
+  dateFormat YYYY-MM-DD HH:mm
+  axisFormat %H:%M
+  tickInterval 2hour
+  todayMarker off
+  section Orchestrator
+  Tools and engine core and brief      :done, o0, 2026-10-04 15:18, 2026-10-04 15:57
+  Integrate and fix start stall        :done, o1, 2026-10-04 21:37, 2026-10-04 21:57
+  Freeze build for review              :done, o2, 2026-10-05 00:24, 2026-10-05 00:27
+  Engine fixes and routing             :done, o3, 2026-10-05 02:19, 2026-10-05 02:44
+  GPU check and freeze                 :done, o4, 2026-10-05 08:50, 2026-10-05 08:55
+  Frame pacing rewrite                 :done, o5, 2026-10-05 11:46, 2026-10-05 12:04
+  Release candidate checks             :done, o6, 2026-10-05 17:52, 2026-10-05 17:59
+  Fix 12 gate findings and deliver     :done, o7, 2026-10-05 20:38, 2026-10-05 21:51
+  Late test report                     :done, o8, 2026-10-05 21:56, 2026-10-05 21:57
+  section Workflows
+  WF1 build critique polish 30 agents  :w1, 2026-10-04 15:57, 2026-10-04 21:37
+  WF2 polish round - 10 agents        :w2, 2026-10-04 21:57, 2026-10-05 00:24
+  WF3 global review - 12 agents        :w3, 2026-10-05 00:27, 2026-10-05 02:19
+  WF4 fix round 1 - 33 agent runs     :w4, 2026-10-05 02:34, 2026-10-05 08:50
+  Usage limit pause                    :crit, p1, 2026-10-05 03:13, 2026-10-05 03:31
+  WF5 final acceptance - 12 agents     :w5, 2026-10-05 08:55, 2026-10-05 11:46
+  WF6 fix round 2 - 19 agents          :w6, 2026-10-05 12:04, 2026-10-05 17:52
+  WF7 release gate - 6 agents          :w7, 2026-10-05 17:59, 2026-10-05 20:38
+  section User
+  Wrap up request                      :milestone, u1, 2026-10-05 21:49, 1m
+  Version 1.0                          :milestone, u2, 2026-10-05 21:50, 1m
+</script>
+<figcaption>Figure 4. Session timeline, 4 Oct 15:18 to 5 Oct 21:57
+<span class="tag t-meas">measured</span>. Workflows ran one after another;
+inside each workflow, agents ran in parallel.</figcaption>
+</figure>
+<p>The workflows took 1,653 minutes in total, or 90% of the run. The main loop
+posted a status message before each wait, 7 in all, and a summary after each
+workflow ended. Claude Code also inserted 29 reminders that asked the model for
+a short status line.</p>
+
+<!-- ============================================================ 5 -->
+<h2 id="phases">5. The construction phases, step by step</h2>
+<p class="lede">The run had 9 phases. The orchestrator built the base alone, then
+alternated between workflows of agents and its own engine work.</p>
+
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  U(["User prompt<br/>4 Oct 15:18"]):::user --> P0["Phase 0 - 15:18 to 15:57<br/>Orchestrator alone: capture tool,<br/>engine core, agent brief"]:::orch
+  P0 --> P1["Phase 1 - 15:57 to 21:37 - WF1<br/>10 module groups:<br/>build, critique, polish - 30 agents"]:::wf
+  P1 --> P2["Phase 2 - 21:37 to 00:24 - WF2<br/>integration, then 10 owners fix<br/>the 71 critic issues it counted<br/>as not delivered in full - 10 agents"]:::wf
+  P2 --> P3["Phase 3 - 00:24 to 02:19 - WF3<br/>global review: 6 lenses + 6 refuters<br/>46 of 49 findings confirmed"]:::rev
+  P3 --> P4["Phase 4 - 02:19 to 08:50 - WF4<br/>engine fixes, then fix, verify, re-fix<br/>23 agents + 10 re-runs"]:::wf
+  P4 --> P5["Phase 5 - 08:50 to 11:46 - WF5<br/>final acceptance review<br/>30 of 31 findings confirmed"]:::rev
+  P5 --> P6["Phase 6 - 11:46 to 17:52 - WF6<br/>pacing rewrite, then fix, verify, re-fix<br/>19 agents"]:::wf
+  P6 --> P7["Phase 7 - 17:52 to 20:38 - WF7<br/>release gate: 3 lenses + 3 refuters<br/>12 of 12 findings confirmed"]:::rev
+  P7 --> P8["Phase 8 - 20:38 to 21:57<br/>Orchestrator fixes all 12 itself,<br/>final checks, delivery"]:::orch
+  P8 --> S(["User 21:49: wrap up<br/>User 21:50: call it version 1.0"]):::user
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure 5. The nine phases. Brown: the orchestrator's own work. Blue:
+build and fix workflows. Green: review workflows. Purple: the user.</figcaption>
+</figure>
+
+<div class="scroll">
+<table aria-label="Phase summary">
+<tr><th>Phase</th><th>Time</th><th>Who</th><th class="n">Agents</th><th>Main result</th><th class="n">List price</th></tr>
+<tr><td>0 Base</td><td>15:18–15:57</td><td>orchestrator</td><td class="n">0</td><td>engine, tools, agent brief</td><td class="n" rowspan="1">in main loop</td></tr>
+<tr><td>1 Build</td><td>15:57–21:37</td><td>WF1</td><td class="n">30</td><td>10 modules built; 109 critic issues</td><td class="n">$516.73</td></tr>
+<tr><td>2 Polish</td><td>21:37–00:24</td><td>both, WF2</td><td class="n">10</td><td>start stall 1.8 s → 0.8 s; 62 issues fixed</td><td class="n">$202.09</td></tr>
+<tr><td>3 Review</td><td>00:24–02:19</td><td>WF3</td><td class="n">12</td><td>46 confirmed findings, 1 blocker</td><td class="n">$124.81</td></tr>
+<tr><td>4 Fix round 1</td><td>02:19–08:50</td><td>both, WF4</td><td class="n">23 (+10)</td><td>75 finding checks; GPU blocker removed</td><td class="n">$546.15</td></tr>
+<tr><td>5 Acceptance</td><td>08:50–11:46</td><td>WF5</td><td class="n">12</td><td>37 old findings resolved; 30 new confirmed</td><td class="n">$160.32</td></tr>
+<tr><td>6 Fix round 2</td><td>11:46–17:52</td><td>both, WF6</td><td class="n">19</td><td>23 assignments fixed; 8 of 9 pass first check</td><td class="n">$285.87</td></tr>
+<tr><td>7 Release gate</td><td>17:52–20:38</td><td>WF7</td><td class="n">6</td><td>12 findings confirmed: 1 major, 11 minor</td><td class="n">$79.30</td></tr>
+<tr><td>8 Finish</td><td>20:38–21:57</td><td>orchestrator</td><td class="n">0</td><td>12 fixes, delivery, memory note</td><td class="n">in main loop</td></tr>
+<tr class="tot"><td colspan="3">Orchestrator main loop, all phases</td><td class="n"></td><td>393 requests</td><td class="n">$95.15</td></tr>
+</table>
+</div>
+<p>Prices are what the same tokens cost at Anthropic's API list price
+<span class="tag t-deriv">derived</span>. Section 7 explains the calculation.</p>
+
+<!-- Phase 0 -->
+<h3>Phase 0 · 15:18–15:57 · The orchestrator builds the base alone</h3>
+<p>Before any agent started, the orchestrator built what every agent would share.
+It checked the machine: Node 24, Chrome 154 and an RTX&nbsp;3090. Then it thought
+for 7 minutes in one request, about 40,000 tokens, which was the longest think of
+the main loop. It wrote <code>shoot.mjs</code>, a tool that drives a hidden
+(headless) Chrome browser. With it, every agent could take screenshots of its own
+work and read the browser console. Next it wrote the engine: the CONFIG object,
+the core (random numbers, sprites, depth, layout), the environment (water, sand,
+light, bubbles, night) and a build script that joins all parts into one HTML
+file. It wrote a reference module and <code>AGENT_BRIEF.md</code>, a 13&nbsp;KB
+contract for all module authors with 7 hard performance rules. Last, it tuned a
+shared rock painter over 4 screenshot rounds, so that every agent would draw rocks
+the same way.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  subgraph R1["1. Look at the machine and build a way to see"]
+    direction LR
+    A["Check tools<br/>Node 24, Chrome 154,<br/>RTX 3090"]:::orch --> B["Think 7 min<br/>about 40,000 tokens"]:::orch
+    B --> C["shoot.mjs<br/>headless Chrome:<br/>screenshots, console"]:::orch
+  end
+  subgraph R2["2. Write the engine every agent will share"]
+    direction LR
+    D["Engine core<br/>CONFIG, core, environment,<br/>audio and UI, build script"]:::orch --> E["Screenshot loop<br/>tune light, sand,<br/>wreck, kelp"]:::orch
+    E --> F["Shared rock painter<br/>4 screenshot rounds"]:::orch
+  end
+  subgraph R3["3. Write the contract and launch the agents"]
+    direction LR
+    G["Reference module<br/>and AGENT_BRIEF.md"]:::orch --> H["WF1 script<br/>34,827 characters"]:::orch
+    H --> L["Launch WF1<br/>15:57"]:::wf
+    L -.-> J["While agents start:<br/>18-case smoke test,<br/>REQUIREMENTS.md, 40 ids"]:::orch
+  end
+  R1 --> R2
+  R2 --> R3
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+</script>
+<figcaption>Figure 6. Phase 0 <span class="tag t-meas">measured</span>. The
+orchestrator kept working until 16:00, 3 minutes after it launched WF1. It spent
+261,373 output tokens (245,520 of them before WF1 started), about one third of all
+its own output.</figcaption>
+</figure>
+
+<!-- Phase 1 -->
+<h3>Phase 1 · 15:57–21:37 · WF1: ten groups build, critique and polish</h3>
+<p>The orchestrator split the tank into 10 module groups. Each group passed
+through three different agents: a builder, a critic who was told not to edit
+code, and a new polish agent who applied the critique. Groups did not wait for
+each other. Up to 10 agents ran at the same time. Each agent was told to edit only
+its own module file. None of them edited another group's file.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  L["WF1 starts 15:57<br/>the same 3-step lane for each of 10 groups"]:::wf --> B
+  B["Build agent<br/>reads the brief and engine,<br/>writes one module file,<br/>screenshots, self-tests"]:::wf
+  B -->|"report, cut to 6,000 characters"| C["Critic agent, told not to edit<br/>art director and QA engineer<br/>5-point checklist"]:::rev
+  C -->|"review, cut to 9,000 characters"| P["Polish agent, new session<br/>fix blockers and majors,<br/>re-verify, final report"]:::wf
+  B -->|"report, cut to 5,000 characters"| P
+  P --> R(["10 of 10 groups done<br/>21:37"]):::wf
+  B -.-> X1["6 cut-offs at the<br/>128,000-token limit<br/>16:19 to 17:03"]:::prob
+  C -.-> X2["Reviews were 15,000 to 22,000 characters:<br/>only 37 of 109 issues arrived in full"]:::prob
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure 7. One lane of WF1. Ten lanes like this ran in parallel. Red
+nodes are problems found later in the logs <span class="tag t-meas">measured</span>.</figcaption>
+</figure>
+<div class="scroll">
+<table aria-label="The ten module groups">
+<tr><th>Group</th><th>What it owns</th><th class="n">Build</th><th class="n">Critic issues</th></tr>
+<tr><td>decor_rocks</td><td>stones, rock cave, moray eel, star rock, anchor, diving helmet</td><td class="n">80 min</td><td class="n">12</td></tr>
+<tr><td>decor_reef</td><td>brain, staghorn and fan coral, shells, treasure chest</td><td class="n">139 min</td><td class="n">12</td></tr>
+<tr><td>flora</td><td>kelp, sea grass, seahorses</td><td class="n">90 min</td><td class="n">12</td></tr>
+<tr><td>anemone</td><td>anemone, clownfish</td><td class="n">54 min</td><td class="n">9</td></tr>
+<tr><td>bottom</td><td>crabs, lobster, starfish</td><td class="n">77 min</td><td class="n">11</td></tr>
+<tr><td>tropical</td><td>tropical fish, pufferfish</td><td class="n">52 min</td><td class="n">9</td></tr>
+<tr><td>cool</td><td>angelfish, manta ray</td><td class="n">49 min</td><td class="n">9</td></tr>
+<tr><td>school</td><td>schooling fish, distant school</td><td class="n">57 min</td><td class="n">9</td></tr>
+<tr><td>jelly</td><td>moon jelly, sea nettle, violet jelly, deep jelly</td><td class="n">49 min</td><td class="n">12</td></tr>
+<tr><td>gliders</td><td>sea turtle</td><td class="n">121 min</td><td class="n">14</td></tr>
+<tr class="tot"><td colspan="3">All 10 critics answered "needs-work". None answered "ship".</td><td class="n">109</td></tr>
+</table>
+</div>
+<p>The critics found 109 issues: 30 major and 79 minor. Examples: with the lid's
+opening angle set to 0, one startle turned the chest lid's values into NaN (not a
+number) and the lid vanished; with 6 seahorses, two of them overlapped on one kelp
+stalk 35% of the time (the default is 2); the tropical fish turned at the same
+pixel on every pass. Agents opened 1,288 screenshots: builders and polish agents
+opened 956 to check their own work, and critics opened 332 to judge it.
+The workflow script had a fault: it cut each critic review to 9,000 characters
+before passing it on. Only 37 of the 109 issues reached a polish agent in full.
+Six polish agents noticed the cut and said so in their reports.</p>
+
+<!-- Phase 2 -->
+<h3>Phase 2 · 21:37–00:24 · Integration, then WF2 fixes the lost issues</h3>
+<p>The orchestrator joined all 10 groups into one tank for the first time. The
+console was silent and modules used about 1.9&nbsp;ms per frame, but the first
+frames froze for 1.8 seconds. It recorded a CPU profile, tested the groups one by
+one, and found that rock sprites painted on the GPU caused most of the freeze. It
+changed the engine to paint sprites on the CPU and copy them to the GPU once. The
+freeze fell from 1,795&nbsp;ms to 775&nbsp;ms. It then read the workflow journal and
+found its own truncation fault. By its count, 71 critic issues had not reached a
+polish agent in full. (An exact re-count for this page gives 72: 62 never arrived
+and 10 arrived cut off.) It wrote one input file per group and started the
+polish round (WF2).</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  A["WF1 done 21:37"]:::wf --> B["Kill 8 stray Chrome processes,<br/>add timeouts and a watchdog<br/>to shoot.mjs"]:::orch
+  B --> C["First full tank:<br/>silent console, 1.9 ms per frame,<br/>1.8 s freeze at start"]:::orch
+  C --> D["CPU profile and group-by-group test<br/>CPU paint, GPU copy once<br/>1,795 ms to 775 ms"]:::orch
+  D --> E["Read the WF1 journal:<br/>by its count, 71 of 109 critic<br/>issues did not reach a fixer in full"]:::prob
+  E --> F["One input file per group<br/>125 KB in total"]:::orch
+  F --> G["WF2 21:57 - 10 owners in parallel<br/>check each issue, fix, test alone<br/>and in the full tank"]:::wf
+  G --> H(["62 fixed, 9 already resolved,<br/>0 declined - 00:24"]):::wf
+  F -.-> K["Meanwhile: gate.mjs static release check,<br/>and the next review script"]:::orch
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure 8. Phase 2 <span class="tag t-meas">measured</span>. Every one
+of the 71 issues it sent got a recorded outcome.</figcaption>
+</figure>
+
+<!-- Phase 3 -->
+<h3>Phase 3 · 00:24–02:19 · WF3: global adversarial review</h3>
+<p>The orchestrator froze the build and made no source edits until the review
+ended, so that every line number in a finding stayed valid. Six finder agents
+each examined the whole tank through one lens. Each finder passed its list to its
+own verifier, who was told to try hard to refute every finding by reproducing it.
+Verifiers wrote their own test scripts instead of reusing the finder's.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart LR
+  F0["Frozen build<br/>00:26"]:::orch --> F1["Requirements<br/>4 found"]:::wf
+  F0 --> F2["Performance<br/>6 found"]:::wf
+  F0 --> F3["Robustness<br/>10 found"]:::wf
+  F0 --> F4["Visual<br/>10 found"]:::wf
+  F0 --> F5["Motion<br/>3 found"]:::wf
+  F0 --> F6["Code and CONFIG<br/>16 found"]:::wf
+  F1 --> V1["Refuter: 4 real"]:::rev
+  F2 --> V2["Refuter: 6 real"]:::rev
+  F3 --> V3["Refuter: 10 real"]:::rev
+  F4 --> V4["Refuter: 7 real,<br/>3 refuted"]:::rev
+  F5 --> V5["Refuter: 3 real"]:::rev
+  F6 --> V6["Refuter: 16 real"]:::rev
+  V1 --> M(["46 of 49 confirmed<br/>1 blocker, 11 major, 34 minor<br/>02:19"]):::rev
+  V2 --> M
+  V3 --> M
+  V4 --> M
+  V5 --> M
+  V6 --> M
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+</script>
+<figcaption>Figure 9. Phase 3 <span class="tag t-meas">measured</span>. Each
+verifier started as soon as its own finder ended. Verifiers also lowered the
+severity of 10 findings.</figcaption>
+</figure>
+<p>The only blocker was performance. The JavaScript needed only 2.2&nbsp;ms per
+frame, but Chrome's GPU process replayed about 670 path fills and strokes every
+frame. The tank ran at 50 fps at 1920×1080 with 2× pixel density. On slower CPU
+cores it ran at 49.5 fps at 1600×900 and 41.8 fps at 1920×1080 with 1× pixel density. Other confirmed
+findings: pressing M twice left the microphone recording; after a GPU reset the
+tank stayed black; one tuning value turned every schooling fish into NaN; crabs got trapped against the glass in 6 of
+72 tanks; setting the schooling count to 0 still showed 24 fish.</p>
+
+<!-- Phase 4 -->
+<h3>Phase 4 · 02:19–08:50 · Engine fixes, then WF4: fix, verify, re-fix</h3>
+<p>The orchestrator fixed the engine-level findings itself in 15 minutes: a new
+CONFIG layout, core patches, a rewritten environment, the microphone leak and the
+N key. It adopted the review's GPU-measuring script as <code>tools/gpucost</code>,
+sent each module finding to the group that owned it, and started fix round 1. Each
+group ran as a small loop: the owner fixes, an independent verifier (told not to
+edit) checks, and only a failed check starts a re-fix.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  O["Orchestrator 02:19 to 02:34<br/>engine fixes, findings routed<br/>to 10 groups"]:::orch --> F1["Fix, first attempt x10<br/>02:34 to 03:14"]:::wf
+  F1 --> LIM["Plan usage limit reached<br/>03:12 to 03:14 - all 10 agents stop"]:::prob
+  LIM --> PA["Workflow pauses<br/>until 03:31"]:::prob
+  PA --> F2["Fix, re-run x10<br/>continues from edits on disk<br/>03:31 to 06:12"]:::wf
+  F2 --> V["Verifier x10, told not to edit<br/>rebuild, re-measure GPU,<br/>reproduce each finding"]:::rev
+  V -->|"7 pass"| OK(["7 groups done"]):::rev
+  V -->|"3 fail"| BAD["bottom: crab still trapped<br/>cool: new angelfish pairing<br/>jelly: far jelly lost detail"]:::prob
+  BAD --> RF["Re-fix x3<br/>06:06 to 08:50"]:::wf
+  RF --> D(["10 of 10 groups done<br/>08:50"]):::wf
+  OK --> D
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure 10. Phase 4 <span class="tag t-meas">measured</span>. The
+usage-limit stop cost 387 agent-minutes of conversation and about $106 at list
+price, but no file edits were lost.</figcaption>
+</figure>
+<p>The verifiers also found real problems. In one group the owner had reported
+the trapped-crab bug as fixed; the verifier measured 25 of 144 crab tracks still
+stuck for over a minute. In two groups a fix had created a new problem. Verifiers
+also corrected at least 8 owner claims of gains that they could not reproduce, in
+6 of the 10 groups. For example, the tropical-fish owner reported 63% less extra
+GPU-thread cost at 4K, and the verifier measured 29% to 41%. After this round the
+orchestrator measured the whole tank. At 1920×1080 with 2× pixel density on
+slower cores the frame rate rose from 26.4 to 55.3 fps, but the new build drew
+that size at a capped 3.6 megapixels. The release candidate, measured at 17:54
+before the release gate, drew it at full resolution and ran at 54.2 fps <span class="tag t-meas">measured</span>.</p>
+
+<!-- Phase 5 -->
+<h3>Phase 5 · 08:50–11:46 · WF5: final acceptance review</h3>
+<p>The same six lenses ran again on a new frozen build. This time each finder
+also re-checked the earlier findings in its own lens (46 in total across the six
+lenses) and looked for problems caused by the fixes.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  P["46 earlier findings"]:::rev --> F["6 finders on the frozen build<br/>08:55"]:::wf
+  B["New frozen build<br/>after fix round 1"]:::orch --> F
+  F --> R1["Earlier findings:<br/>37 resolved, 8 partly,<br/>1 not resolved"]:::rev
+  F --> N["31 new findings"]:::wf
+  N --> V["6 refuters"]:::rev
+  V --> C(["30 confirmed<br/>4 major, 26 minor"]):::rev
+  C --> G["8 regressions:<br/>7 from the orchestrator's own<br/>unchecked engine patch,<br/>made just before fix round 1;<br/>1 from fix round 1<br/>example: quality governor<br/>stuck low on 30 Hz screens"]:::prob
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure 11. Phase 5 <span class="tag t-meas">measured</span>. The
+earlier blocker and all 11 earlier majors were resolved. The one unresolved item
+was file size: the file had grown 18.7%.</figcaption>
+</figure>
+<p>The GPU blocker was confirmed fixed. At 1920×1080 with 2× pixel density the
+GPU main thread went from 95% busy to 36%, but the new build drew that window at
+a capped 3.6 megapixels. At full 4K resolution it went from about 98% to 47–48%,
+so the code changes alone about halved the GPU work. Seven of the 8 regressions
+came from the engine patch that the orchestrator wrote itself between 02:24 and
+02:29, which no verifier checked. Only one, a sudden speed jump of the angelfish,
+came from a module owner. The pattern repeats in this run: fixes create a smaller
+number of new problems, and only a new independent review finds them.</p>
+
+<!-- Phase 6 -->
+<h3>Phase 6 · 11:46–17:52 · Pacing rewrite, then WF6: fix round 2</h3>
+<p>The orchestrator rewrote the frame pacing and the adaptive-quality governor
+itself, so that a quality step is kept only if it measurably helps. It tested the
+result on simulated 30, 48, 100, 144 and 165&nbsp;Hz screens. It also added three
+read-only engine functions (swimSnap, bubbleRoom, devicePx) that modules could use
+instead of reading the engine's internal data. Then 9 module owners fixed 23 assignments of 8 findings.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  O["Orchestrator 11:46 to 12:04<br/>pacing and governor rewrite,<br/>3 new engine functions"]:::orch --> F["Fix x9, one owner per module<br/>12:04 to 15:07"]:::wf
+  F --> V["Verifier x9<br/>A/B builds that differ<br/>in one file only"]:::rev
+  V -->|"8 pass"| OK(["8 groups done"]):::rev
+  V -->|"1 fail"| C["cool: the coupling fix made the<br/>night kelp cover wrong, and the<br/>startle fix failed at 3x speed"]:::prob
+  C --> R["Re-fix cool<br/>16:14 to 17:52"]:::wf
+  R --> D(["9 of 9 groups done<br/>17:52"]):::wf
+  OK --> D
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure 12. Phase 6 <span class="tag t-meas">measured</span>. The
+angelfish group alone took 348 minutes and set the length of the workflow.</figcaption>
+</figure>
+<p>Results with numbers: the angelfish's largest speed jump fell from 221–250 to
+9.5–13.2&nbsp;px/s. Tropical fish that snapped back and forth after a cursor swipe
+fell from 29 of 288 fish reactions (72 swipes) to 0. Jellyfish had crowded the middle third of the screen
+(16% / 57% / 26% of time in the left, middle and right thirds); after the fix the
+split was 28% / 33% / 39%.</p>
+
+<!-- Phase 7 -->
+<h3>Phase 7 · 17:52–20:38 · WF7: release gate</h3>
+<p>The orchestrator ran the static check, the 18-case smoke test and GPU
+measurements, then froze a release candidate. Its first gate script was broken:
+the shell had run the back-quoted text inside the prompts as commands, so the
+prompts came out empty. It noticed, rewrote the script with the file editor, and
+started the gate at 17:59.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart LR
+  C["Release candidate<br/>frozen 17:58"]:::orch --> A["Requirements and motion<br/>real mouse swipes via CDP"]:::wf
+  C --> B["Visual<br/>90 scenes, pixel diffs"]:::wf
+  C --> D["Robustness and performance<br/>151 bad-CONFIG cases, GPU cost"]:::wf
+  A --> VA["Refuter: 3 of 3 real"]:::rev
+  B --> VB["Refuter: 3 of 3 real"]:::rev
+  D --> VD["Refuter: 6 of 6 real"]:::rev
+  VA --> M(["12 of 12 confirmed<br/>1 major, 11 minor<br/>20:38"]):::rev
+  VB --> M
+  VD --> M
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+</script>
+<figcaption>Figure 13. Phase 7 <span class="tag t-meas">measured</span>. All 40
+requirement ids passed, apart from small residuals that were part of the 12
+findings.</figcaption>
+</figure>
+<p>The major finding: under short bursts of background load, the quality governor
+lowered the resolution step by step and did not recover. In 3 of 4 runs the tank
+fell from 1600×900 to 960×540. The minor findings included a seahorse drawn
+behind the sea fan's lace, a regression caused by an earlier kelp fix.</p>
+
+<!-- Phase 8 -->
+<h3>Phase 8 · 20:38–21:57 · The orchestrator finishes alone</h3>
+<p>No more agents ran. The orchestrator fixed all 12 findings itself and checked
+almost every fix with the reviewers' own test scripts. At 20:57 its context reached
+967,942 tokens and Claude Code compacted it automatically to 15,164 tokens; work
+continued from the summary. It caught mistakes in its own checks. First, its
+parser read the wrong key. Second, a reviewer's resize probe ran on the old build, because
+the orchestrator's file-name change did not apply. The same probe also computed
+an old scaling formula, so the orchestrator checked that fix with screenshots
+instead. The last large change
+split the work after a window resize into small steps. The worst frame after a 4K
+resize fell from 66.7–83.5&nbsp;ms to 16.8–16.9&nbsp;ms
+<span class="tag t-meas">measured</span>. Then it ran the final static check
+(pass) and the smoke test (18 of 18 clean). An edge-case set was still running at
+delivery: 29 of 32 cases were done and clean, and all 32 were clean at 21:57.
+Section 8 shows how the run ended.</p>
+
+<!-- ============================================================ 6 -->
+<h2 id="quality">6. How the work was checked</h2>
+<p class="lede">Quality came from three habits. Agents looked at their own
+output in a real browser. A different agent checked most of the work. From Phase 3
+on, each review ran on a frozen build with a refuter behind every finder.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  B["Owner builds or fixes<br/>one module file only"]:::wf --> S["Self-test<br/>screenshots, motion traces,<br/>smoke test, GPU cost"]:::wf
+  S --> V["Independent verifier<br/>told not to edit,<br/>reproduces each claim"]:::rev
+  V -->|"pass"| N["Orchestrator integrates,<br/>static check, freezes build"]:::orch
+  V -->|"fail"| R["Re-fix with the<br/>verifier's report"]:::wf
+  R --> N
+  N --> F["New review<br/>finders + refuters<br/>on the frozen build"]:::rev
+  F -->|"confirmed findings"| B
+  F -->|"few minor findings"| D(["Deliver"]):::user
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure 14. The quality loop used in this run.</figcaption>
+</figure>
+
+<h3>Findings in each review</h3>
+<div class="scroll">
+<table aria-label="Findings by review">
+<tr><th>Review</th><th class="n">Found</th><th class="n">Confirmed</th><th class="n">Refuted</th><th class="n">Severity lowered</th><th class="n">Blocker or major</th></tr>
+<tr><td>Phase 1 critics (no refuter)</td><td class="n">109</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">30</td></tr>
+<tr><td>Phase 3 global review</td><td class="n">49</td><td class="n">46</td><td class="n">3</td><td class="n">10</td><td class="n">12</td></tr>
+<tr><td>Phase 5 final acceptance</td><td class="n">31</td><td class="n">30</td><td class="n">1</td><td class="n">4</td><td class="n">4</td></tr>
+<tr><td>Phase 7 release gate</td><td class="n">12</td><td class="n">12</td><td class="n">0</td><td class="n">1</td><td class="n">1</td></tr>
+</table>
+</div>
+<figure class="dia narrow">
+<script type="text/x-mermaid">
+xychart-beta
+  title "Confirmed findings per review"
+  x-axis ["Global review", "Final acceptance", "Release gate"]
+  y-axis "Findings" 0 --> 50
+  bar [46, 30, 12]
+  line [12, 4, 1]
+</script>
+<figcaption>Figure 15. Bars: all confirmed findings. Line: blocker and major
+findings only <span class="tag t-meas">measured</span>. Each review found fewer
+and smaller problems.</figcaption>
+</figure>
+<p>In the two fix rounds, verifiers failed 4 of 19 first attempts. They caught one
+bug that was reported as fixed but was not, three fixes that created new
+problems, and at least eight claimed gains that they could not reproduce. Without
+the verifiers, each of these would have reached the next review or the final
+file.</p>
+
+<h3>Measured results, before and after</h3>
+<div class="scroll">
+<table aria-label="Measured improvements">
+<tr><th>What</th><th>Before</th><th>After</th></tr>
+<tr><td>Freeze at start</td><td>1,795 ms</td><td>775 ms</td></tr>
+<tr><td>GPU main thread busy, 4K at full resolution</td><td>97.8–98.3%</td><td>47–48%</td></tr>
+<tr><td>Frame rate on slower cores, 1920×1080 at 2×, full resolution (release candidate)</td><td>26.4 fps</td><td>54.2 fps</td></tr>
+<tr><td>Worst frame after a 4K resize</td><td>66.7–83.5 ms</td><td>16.8–16.9 ms</td></tr>
+<tr><td>Crab tracks with no progress for over 60 s (re-fix owner's 72-seed sweep)</td><td>54 of 144</td><td>0 of 144</td></tr>
+<tr><td>Angelfish largest speed jump</td><td>221–250 px/s</td><td>9.5–13.2 px/s</td></tr>
+<tr><td>Tropical fish turning back after a swipe (72 swipes, 288 fish reactions)</td><td>29</td><td>0</td></tr>
+<tr><td>Microphone still live after "Microphone off"</td><td>1 track</td><td>0 tracks</td></tr>
+</table>
+</div>
+<p>All rows <span class="tag t-meas">measured</span> with headless Chrome during
+the session: the start freeze, the slow-core frame rate and the 4K resize by the
+orchestrator, and the other rows by its agents. They were not measured again for
+this page.</p>
+
+<h3>Tools used for checking</h3>
+<div class="scroll">
+<table aria-label="Verification tools">
+<tr><th>Tool</th><th>What it does</th></tr>
+<tr><td><code>shoot.mjs</code></td><td>Starts a hidden Chrome, loads the page, takes screenshots and close-ups, records console errors and network requests, runs test code at set times.</td></tr>
+<tr><td><code>smoke.mjs</code></td><td>18 cases: 4K, phone portrait, tiny window, resize storm, night, long run, all counts at 0 and very high, speed 0 and 5, other seeds. Checks for errors, NaN and creatures outside the tank.</td></tr>
+<tr><td><code>gate.mjs</code></td><td>27 static checks on the final file: DOCTYPE first, no external resources, no debug code, CONFIG first with the 7 required keys, no <code>console.log</code>.</td></tr>
+<tr><td><code>gpucost.mjs</code></td><td>Written by a Phase 3 verifier as <code>perfv.mjs</code> and adopted by the orchestrator. Measures Chrome's GPU process per frame on fast cores, and on slow cores as a stand-in for a mid-range PC.</td></tr>
+<tr><td>Dev probes (<code>__AQ</code>)</td><td>Cost per module in ms, state leaks, motion traces and filmstrips, so agents could measure motion, not only look at it.</td></tr>
+<tr><td><code>REQUIREMENTS.md</code></td><td>The prompt split into 40 checkable ids. Every requirements lens checked against it.</td></tr>
+</table>
+</div>
+
+<h3>What went wrong in the process</h3>
+<p>The process had faults too. An audit should show them. Each item comes from
+the logs <span class="tag t-meas">measured</span>; the dollar figures are
+<span class="tag t-deriv">derived</span>.</p>
+<ul>
+  <li>The WF1 script cut critic reviews to 9,000 characters. 72 of the 109 issues
+  did not reach a polish agent in full: 62 were missing and 10 were cut mid-text.
+  The orchestrator counted 71, found the fault and ran a polish round
+  ($202).</li>
+  <li>The same cut came back in the fix rounds. Re-fix prompts kept only the first
+  8,000 (WF4) or 7,000 (WF6) characters of the verifier's report. All 4 reports
+  were longer, and in 2 of the 4 re-fixes the list of remaining problems was
+  missing completely.</li>
+  <li>At max effort, build agents hit the 128,000-token output limit 6 times while
+  still thinking, and had to plan again. Cost: about 768,000 output tokens.</li>
+  <li>The plan's usage limit stopped 10 agents between 03:12 and 03:14. The restart lost their
+  conversations: about $106 and 18 minutes of idle time.</li>
+  <li>Agents counted up to 338 Chrome processes at once (this count may include
+  the user's own browser). The CPU was often at 100%, and agents had to repeat
+  timing runs and use median values.</li>
+  <li>Shell quoting broke a script or a patch at least 6 times, including
+  <code>gate.mjs</code>, <code>gpucost.mjs</code> and the first release-gate
+  script. Each time, the orchestrator noticed and rewrote the file with the editor
+  before any agent ran with bad input.</li>
+  <li>The orchestrator's own engine patch before fix round 1 was never checked by a
+  verifier. It caused 7 of the 8 regressions that the Phase 5 review found.</li>
+  <li>By design, re-fix results were not checked by a second verifier inside the
+  same workflow. The orchestrator's final 12 fixes were checked only by the
+  orchestrator itself.</li>
+</ul>
+
+<!-- ============================================================ 7 -->
+<h2 id="cost">7. Tokens and cost</h2>
+<p class="lede">The run processed 5,055,171,076 tokens. At API list price that is
+$2,010.42. Almost half of the cost is cache reads.</p>
+<div class="scroll">
+<table aria-label="Tokens and list-price cost by token type">
+<tr><th>Token type</th><th class="n">Tokens</th><th class="n">Price per million</th><th class="n">Cost</th></tr>
+<tr><td>Cache read (input seen before)</td><td class="n">4,923,895,025</td><td class="n">$0.20</td><td class="n">$984.78</td></tr>
+<tr><td>Cache write, 5-minute (subagents)</td><td class="n">102,185,879</td><td class="n">$5.00</td><td class="n">$510.93</td></tr>
+<tr><td>Cache write, 1-hour (main loop)</td><td class="n">5,550,281</td><td class="n">$8.00</td><td class="n">$44.40</td></tr>
+<tr><td>Output, of which 13,766,555 thinking</td><td class="n">23,509,203</td><td class="n">$20.00</td><td class="n">$470.18</td></tr>
+<tr><td>Input, not cached</td><td class="n">30,688</td><td class="n">$4.00</td><td class="n">$0.12</td></tr>
+<tr class="tot"><td>Total</td><td class="n">5,055,171,076</td><td class="n"></td><td class="n">$2,010.42</td></tr>
+</table>
+</div>
+<p>Token counts <span class="tag t-meas">measured</span> from the usage records of
+15,337 API requests, counted once per request. The logs also hold 10 "session
+limit" messages with no usage. 147 requests were logged without their final
+usage, so output and thinking tokens are a lower bound: about 0.3 M output tokens
+(about $6) may be missing <span class="tag t-est">estimate</span>. Prices are Anthropic's
+list prices for Opus&nbsp;5.5 <span class="tag t-cited">cited</span>. The costs are
+<span class="tag t-deriv">derived</span>.</p>
+
+<div class="scroll">
+<table aria-label="Cost by workflow">
+<tr><th>Part</th><th class="n">Wall time</th><th class="n">Agents</th><th class="n">Requests</th><th class="n">Output tokens</th><th class="n">Cache read</th><th class="n">List price</th></tr>
+<tr><td>WF1 build, critique, polish</td><td class="n">340 min</td><td class="n">30</td><td class="n">3,554</td><td class="n">7.30 M</td><td class="n">1,182 M</td><td class="n">$516.73</td></tr>
+<tr><td>WF2 polish round</td><td class="n">147 min</td><td class="n">10</td><td class="n">1,599</td><td class="n">2.55 M</td><td class="n">564 M</td><td class="n">$202.09</td></tr>
+<tr><td>WF3 global review</td><td class="n">112 min</td><td class="n">12</td><td class="n">1,127</td><td class="n">1.45 M</td><td class="n">314 M</td><td class="n">$124.81</td></tr>
+<tr><td>WF4 fix round 1</td><td class="n">375 min</td><td class="n">33</td><td class="n">4,151</td><td class="n">6.09 M</td><td class="n">1,382 M</td><td class="n">$546.15</td></tr>
+<tr><td>WF5 final acceptance</td><td class="n">171 min</td><td class="n">12</td><td class="n">1,506</td><td class="n">1.68 M</td><td class="n">431 M</td><td class="n">$160.32</td></tr>
+<tr><td>WF6 fix round 2</td><td class="n">348 min</td><td class="n">19</td><td class="n">2,229</td><td class="n">2.88 M</td><td class="n">648 M</td><td class="n">$285.87</td></tr>
+<tr><td>WF7 release gate</td><td class="n">159 min</td><td class="n">6</td><td class="n">778</td><td class="n">0.82 M</td><td class="n">224 M</td><td class="n">$79.30</td></tr>
+<tr><td>Orchestrator main loop</td><td class="n">about 194 min active</td><td class="n">–</td><td class="n">393</td><td class="n">0.75 M</td><td class="n">179 M</td><td class="n">$95.15</td></tr>
+<tr class="tot"><td>Total</td><td class="n">1,832 min</td><td class="n">122</td><td class="n">15,337</td><td class="n">23.51 M</td><td class="n">4,924 M</td><td class="n">$2,010.42</td></tr>
+</table>
+</div>
+<p>The total wall time is the length of the one user turn. The orchestrator's
+active time partly overlaps the workflows, so the column does not add up to the
+total.</p>
+
+<figure class="dia narrow">
+<script type="text/x-mermaid">
+pie showData
+  title List-price cost by kind of work (USD)
+  "Fix rounds WF4 and WF6" : 832.02
+  "Build and polish rounds WF1 and WF2" : 718.82
+  "Reviews WF3, WF5 and WF7" : 364.43
+  "Orchestrator main loop" : 95.15
+</script>
+<figcaption>Figure 16. Cost by kind of work <span class="tag t-deriv">derived</span>.
+The three review workflows cost 18% of the total. If you also count the Phase 1
+critics and the verifiers inside the fix rounds, all checking work cost about $673,
+or 33%.</figcaption>
+</figure>
+
+<h3>Why cache reads are so large</h3>
+<p>A model has no memory between requests. Each request sends the whole
+conversation so far: the instructions, every file read and every tool result. An
+agent that makes 300 requests with a 300,000-token context reads about 90 million
+tokens. Prompt caching makes these repeat reads cheap, at 5% of the normal input
+price. Without caching, the 4.92 billion cache-read tokens would cost about
+$19,700 at the full input price <span class="tag t-deriv">derived</span>. This is
+also why lower effort saves less money than you may expect: the largest cost
+grows with the number of requests and the length of each context, not with
+thinking.</p>
+
+<div class="v2">
+<p><strong>This run was not billed per token.</strong> Between 03:12 and 03:14,
+all 10 running agents stopped with the message "You've hit your session limit ·
+resets 3:30am". That message comes from a Claude subscription
+plan. So the user paid the plan fee, and
+the run used up the plan's limit once. The dollar figures on this page show what
+the same tokens cost at API list price. Use them to compare runs and explain
+scale. They are not an invoice.</p>
+<p><strong>Not included:</strong> the one context compaction call (about 968,000
+input tokens), small side calls such as session titles and recaps, and the cost
+of making this audit page.</p>
+</div>
+
+<!-- ============================================================ 8 -->
+<h2 id="stop">8. When the user stopped it</h2>
+<p class="lede">At 21:49 the user asked the model to wrap up. The model copied
+the file into place 33 seconds later and sent its final report at 21:50:56. The
+run had not finished its own plan.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+sequenceDiagram
+  participant U as User
+  participant Q as Claude Code queue
+  participant O as Orchestrator
+  participant B as Edge-case battery
+  Note over O: 21:47 final static check passes, 21:48 smoke test 18 of 18 clean
+  O->>B: 21:48 start edge, page-freeze and one-hour tests
+  U->>Q: 21:49:24 "I think is good enough please wrap up and produce the first output"
+  Q->>O: 21:49:31 message delivered during the turn
+  O->>B: running test moved to the background
+  O->>O: 21:49:44 check that the target file does not exist yet
+  O->>O: copy the final build to the target folder, load it, 0 errors
+  U->>Q: 21:50:25 "the rest of work we can continue after I publish this we call it version 1.0 no need to do further test"
+  O-->>U: 21:50:56 final report, the 30 h 32 min turn ends
+  O-->>U: 21:51:38 accepts version 1.0, saves a memory note with follow-ups
+  B-->>O: 21:56:33 tests finished
+  O-->>U: 21:57:11 32 edge cases clean, one Chrome warning
+</script>
+<figcaption>Figure 17. The last ten minutes <span class="tag t-meas">measured</span>.
+The two quotes are the user's own words.</figcaption>
+</figure>
+
+<h3>What was delivered</h3>
+<ul>
+  <li>One file, 1,372,769 bytes, 22,262 lines. It starts with
+  <code>&lt;!DOCTYPE html&gt;</code>, loads nothing from the network and, with
+  default settings, logs nothing to the console.</li>
+  <li>25 modules. 67 animals by default: the 9 kinds the prompt asked for, plus
+  clownfish, a pufferfish, a manta ray, a moray eel and a distant school.</li>
+  <li>Extra decor the prompt only suggested: a rock cave, an anchor, a diving
+  helmet that bubbles, a treasure chest that opens, a shipwreck in the
+  background.</li>
+  <li>A CONFIG object with 31 top-level keys and 507 values in total. Almost every
+  value has a comment, and about one in five also states a valid range.</li>
+  <li>Feeding by click or tap, a startle by fast cursor swipe, optional synthesized
+  sound, an optional microphone mode, keyboard controls and a day and night
+  cycle.</li>
+</ul>
+
+<h3>What was still open at the stop</h3>
+<div class="scroll">
+<table aria-label="Open items at delivery">
+<tr><th>Open item</th><th>Source</th></tr>
+<tr><td>The last 12 fixes were checked only by the orchestrator. No independent verifier ran on them.</td><td>main log 20:42–21:47</td></tr>
+<tr><td>GPU cost was not measured again after the last change to resize handling. A visual pass was planned and skipped.</td><td>final report 21:50 (GPU); main log 21:47 (plan for both)</td></tr>
+<tr><td>A Chrome warning about <code>getImageData</code> readback appears with a very short day and night cycle (0.2, 1 or 6 s). The cause was not found.</td><td>report 21:57, memory note</td></tr>
+<tr><td>After a 4K resize the treasure chest still rebuilds in one step of about 15 ms.</td><td>final report 21:50</td></tr>
+<tr><td>3 of 426 angelfish reactions and 1 of 182 crab reactions still turn back after a swipe.</td><td>main log 21:11</td></tr>
+<tr><td>The file grew 18.7% between the first and second reviews, and 25.5% by delivery (1.09 MB to 1.37 MB). About a quarter of it is comments. The code lens marked the growth "not resolved".</td><td>WF5 code lens, delivered file</td></tr>
+<tr><td>The source code, build script and test tools exist only in a temporary folder. No git commit was made.</td><td>final report 21:50</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ 9 -->
+<h2 id="longer">9. If it had kept running: a prediction</h2>
+<p class="lede">Ultracode has no built-in stop rule. Without a token budget in the
+prompt, the orchestrator stops when its own plan says the work is done, or when a
+person stops it. Here is what the
+next steps would most likely have been.</p>
+<div class="est">
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  NOW(["21:50 version 1.0 delivered<br/>12 last fixes checked by the orchestrator only"]):::user
+  NOW --> A["Planned but skipped:<br/>GPU cost again and a visual pass<br/>about 20 to 30 min"]:::est
+  A --> G["Second release gate<br/>3 lenses + 3 refuters on the fixed build<br/>about 2.5 h, about $80 to $160"]:::est
+  G --> Q{"What does it find?"}
+  Q -->|"a few minor findings"| M["Orchestrator fixes them itself<br/>about 1 to 1.5 h, about $30"]:::est
+  Q -->|"a major finding or<br/>new regressions"| W["Fix round 3: fix, verify, re-fix<br/>about 6 h, about $290 to $550"]:::est
+  W --> G
+  M --> F["Follow-ups from the memory note:<br/>Chrome readback warning,<br/>GPU cost check, chest 15 ms step"]:::est
+  F --> S(["Stop when a gate finds no major<br/>finding and no new regression"]):::user
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+  classDef est fill:#eeeaf9,stroke:#4a3f8f,stroke-dasharray:5 3,color:#1a1a1a
+</script>
+<figcaption>Figure 18. Most likely next steps <span class="tag t-est">estimate</span>.
+Times for the gate and the fix round are averages of earlier steps of the same
+kind. Price ranges run from the cheapest to the most expensive earlier step of
+that kind. The orchestrator-fix price is the cost of Phase 8 ($29). The time for
+the GPU and visual pass is a guess.</figcaption>
+</figure>
+<h3>What the user may have missed by stopping</h3>
+<div class="scroll">
+<table aria-label="Forecast of missed work">
+<tr><th>Likely work</th><th>Why it is likely</th><th>Likely value</th></tr>
+<tr><td>An independent check of the last 12 fixes</td><td>Every earlier fix round created new problems. 8 of the 30 acceptance findings were regressions. 7 came from the orchestrator's own unchecked engine patch, made just before fix round 1, and 1 came from fix round 1. The release gate found a regression caused by an earlier kelp fix.</td><td>1 to 3 small regressions found and fixed</td></tr>
+<tr><td>GPU cost and a visual pass on the final build</td><td>The orchestrator planned both at 21:47. The last change touched the engine and 7 of the 10 module files.</td><td>Confirms that the 54 fps result on slower cores (release candidate, 17:54) still holds</td></tr>
+<tr><td>Fix the Chrome readback warning</td><td>It is on the follow-up list.</td><td>A cleaner console in extreme settings</td></tr>
+<tr><td>Split the chest rebuild into steps</td><td>It is the last large single step after a resize.</td><td>Smoother 4K resizes</td></tr>
+<tr><td>Size and comment clean-up</td><td>The code lens marked file growth "not resolved".</td><td>A smaller file; no visible change</td></tr>
+</table>
+</div>
+<p>The trend in Figure 15 suggests the next review would confirm about 4 to 8
+findings, almost all minor. If the orchestrator could fix the findings itself,
+one more cycle would take about 4 hours and $110 to $190 at list price. If it
+needed a full fix round, it would take about 10 hours and $400 to $740, and a
+second gate after that round would add about 2.5 hours and $80 to $160. The gain
+would be polish that a viewer may not notice. This run also shows a risk. Each
+fix round produced a smaller set of new problems. So a strict "zero findings"
+goal may never be reached. A person has to define "done".
+Tag: <span class="tag t-est">estimate</span>.</p>
+</div>
+
+<!-- ============================================================ 10 -->
+<h2 id="case">10. What the cost bought</h2>
+<p class="lede">In this run, the main value of ultracode was checking. A separate
+agent checked most claims before they counted.</p>
+<h3>What the money bought</h3>
+<ul>
+  <li><strong>Independent checking of many claims.</strong> 88 findings were
+  confirmed by refuting verifiers, in addition to 109 issues from critics. If
+  duplicates inside the same review are merged, the 88 become about 71 distinct
+  problems, because some problems were found by two or three lenses. A few problems
+  came back in a later review, and these are counted once in each review. Verifiers rejected 4
+  false findings and caught 4 failed or harmful fixes before they shipped.</li>
+  <li><strong>Measured results.</strong> The before and after
+  numbers in section 6 come from tests that the orchestrator and its agents wrote and ran: frame rates on
+  fast and slow cores, GPU load, crab tracks over 72 random tanks.</li>
+  <li><strong>Full coverage of the brief.</strong> The release gate re-checked all
+  40 requirement ids against the running file.</li>
+  <li><strong>A visible difference in scope.</strong> 47 outputs from other models
+  for the same prompt have a median size of
+  37&nbsp;KB and a largest size of 93&nbsp;KB. This file is 1.37&nbsp;MB with 25 modules. Size is not quality,
+  so open the <a href="Opus_5.5_max_ultracode_1835min.html">delivered file</a>
+  beside another output and compare.</li>
+</ul>
+<h3>Unit costs <span class="tag t-deriv">derived</span></h3>
+<div class="scroll">
+<table aria-label="Unit costs">
+<tr><th>Measure</th><th class="n">Value</th></tr>
+<tr><td>List price per subagent-hour (subagent cost only)</td><td class="n">$14.02</td></tr>
+<tr><td>Whole-run list price per confirmed finding (88)</td><td class="n">$22.85</td></tr>
+<tr><td>Review-workflow cost per confirmed finding</td><td class="n">$4.14</td></tr>
+<tr><td>Share of cost spent on the three review workflows</td><td class="n">18%</td></tr>
+<tr><td>Share of cost spent on all checking agents (critics, finders, verifiers)</td><td class="n">33%</td></tr>
+<tr><td>Cost of the 10 conversations cut by the usage limit (the most that was lost)</td><td class="n">5.3%</td></tr>
+</table>
+</div>
+<h3>When to use it, and how to control it</h3>
+<ul>
+  <li>Use ultracode for a single deliverable where mistakes are expensive and
+  the work can be checked by running it. Do not use it for small edits or
+  questions.</li>
+  <li>The Opus&nbsp;5.5 guide says to start at <code>medium</code> and to use
+  <code>xhigh</code> or <code>max</code> only where a test shows a quality gain
+  (section 3). For a long coding run like this one, test <code>xhigh</code> before
+  <code>max</code>.</li>
+  <li>Set a token budget in the prompt, for example <code>+5M</code>. Claude
+  Code's workflow reference describes this as a hard ceiling: once the turn has
+  spent that many output tokens, workflows cannot start new agents
+  <span class="tag t-cited">cited</span>. This run used 23.5 M output
+  tokens.</li>
+  <li>Write the stop rule into the prompt, for example: "stop after a release gate
+  with no major findings". Without it, the orchestrator decides.</li>
+  <li>Ask for the orchestrator's own engine changes to be checked by a verifier
+  too. In this run, its unchecked patch before fix round 1 caused 7 of the 8 regressions
+  that the next review found.</li>
+  <li>Read the status message at the end of each workflow. That is the natural
+  point to stop or redirect, and this run had 7 of them.</li>
+  <li>Save the source. The session's source tree lives in a temporary folder that
+  can be deleted.</li>
+</ul>
+
+<!-- ============================================================ 11 -->
+<h2 id="method">11. Method and provenance</h2>
+<p>All facts come from the files of Claude Code session
+<code>80408b45-bcec-4927-bbfd-512767fc7e63</code> (Claude Code 2.1.289, model
+<code>claude-opus-5-5</code>, effort <code>max</code> on all 925 main-loop records
+and all 122 agent transcripts):</p>
+<ul>
+  <li>The main log, the session's <code>.jsonl</code> file in Claude Code's projects folder,
+  28 MB: every message, tool call, timestamp and usage record of the
+  orchestrator.</li>
+  <li>The 7 workflow records under <code>workflows/</code>: the script, the result,
+  logs and per-agent progress.</li>
+  <li>122 agent transcripts under <code>subagents/workflows/</code>, 1.2 GB, with a
+  journal per workflow.</li>
+  <li>The session's temporary folder: build sources, tools,
+  <code>REQUIREMENTS.md</code> and <code>AGENT_BRIEF.md</code>.</li>
+</ul>
+<p>Token counts use each request's last usage record once, keyed by request id.
+Thinking tokens come from the <code>thinking_tokens</code> field of each usage
+record. 147 requests have no final usage record, so output and thinking totals
+are a lower bound. 10 records are "session limit" messages with no usage and are
+not counted as requests. Times are the log timestamps plus 8 hours. Costs use Opus&nbsp;5.5 list
+prices: $4 input, $20 output, $0.20 cache read, $5 and $8 for 5-minute and
+1-hour cache writes, per million tokens.</p>
+<p>This page was produced by Claude Opus&nbsp;5.5 in Claude Code at effort
+<code>xhigh</code>. Nine read-only analyst agents reconstructed one workflow each,
+the main loop and the delivered product; the orchestrator computed all totals
+from the raw logs itself. A separate claim-check pass then compared the page with
+the logs. The session's own measurements (frame rates, GPU load, motion counts)
+were not repeated for this page.</p>
+
+<p class="foot">
+Session: 4–5 October 2026, local time UTC+8. Delivered file:
+<a href="Opus_5.5_max_ultracode_1835min.html">Opus_5.5_max_ultracode_1835min.html</a>
+(SHA-256 <code>ef3062e63fc49891…</code>). Prompt: <a href="prompt.md">prompt.md</a>.
+Dollar figures are API list-price equivalents, not an invoice.
+</p>
+
+</div>
+<noscript><p style="text-align:center">The diagrams on this page need JavaScript.</p></noscript>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+const blocks = [...document.querySelectorAll('script[type="text/x-mermaid"]')];
+const dark = () => {
+  const t = document.documentElement.dataset.theme;
+  if (t) return t === 'dark';
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+};
+let seq = 0;
+async function renderAll() {
+  const d = dark();
+  const C = d ? {
+    bg: '#1b1e24', fg: '#e8e6e3', muted: '#a2a6ad', line: '#a2a6ad', rule: '#3a3f48', soft: '#20242b',
+    blue: '#4f86b8', blueB: '#6f9fca', brown: '#9a5a2a', brownB: '#e0975a', red: '#a83232', redB: '#e88a8a',
+    p1: '#6f9fca', p2: '#e0975a', p3: '#7ec98f', p4: '#8a8f98', pText: '#14161a', note: '#3a3320'
+  } : {
+    bg: '#ffffff', fg: '#1a1a1a', muted: '#5a5a5a', line: '#6b6b6b', rule: '#d8d2c8', soft: '#f6f4f0',
+    blue: '#bcd4ea', blueB: '#2b5d8a', brown: '#ecc9a8', brownB: '#7a3b12', red: '#f0a8a8', redB: '#8a2020',
+    p1: '#2b5d8a', p2: '#b4642a', p3: '#2e7d45', p4: '#9a9a9a', pText: '#ffffff', note: '#fff4d6'
+  };
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    theme: 'base',
+    themeVariables: {
+      darkMode: d, background: C.bg, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+      primaryColor: d ? '#24384c' : '#dce9f5', primaryBorderColor: C.blueB, primaryTextColor: C.fg,
+      secondaryColor: C.soft, tertiaryColor: C.soft, textColor: C.fg, titleColor: C.fg, lineColor: C.line,
+      clusterBkg: C.soft, clusterBorder: C.rule, edgeLabelBackground: C.bg,
+      actorBkg: C.soft, actorBorder: C.rule, actorTextColor: C.fg, actorLineColor: C.muted,
+      signalColor: C.fg, signalTextColor: C.fg, labelBoxBkgColor: C.soft, labelTextColor: C.fg,
+      noteBkgColor: C.note, noteTextColor: C.fg, noteBorderColor: C.rule,
+      pie1: C.p1, pie2: C.p2, pie3: C.p3, pie4: C.p4, pieStrokeColor: C.bg, pieOuterStrokeColor: C.rule,
+      pieSectionTextColor: C.pText, pieLegendTextColor: C.fg, pieTitleTextColor: C.fg,
+      sectionBkgColor: C.soft, altSectionBkgColor: C.bg, sectionBkgColor2: C.soft,
+      taskBkgColor: C.blue, taskBorderColor: C.blueB, activeTaskBkgColor: C.blue, activeTaskBorderColor: C.blueB,
+      doneTaskBkgColor: C.brown, doneTaskBorderColor: C.brownB, critBkgColor: C.red, critBorderColor: C.redB,
+      taskTextColor: C.fg, taskTextDarkColor: C.fg, taskTextLightColor: C.fg, taskTextOutsideColor: C.fg, taskTextClickableColor: C.fg,
+      gridColor: C.rule, todayLineColor: C.redB,
+      xyChart: {
+        backgroundColor: C.bg, titleColor: C.fg, plotColorPalette: C.p1 + ', ' + C.p2,
+        xAxisLabelColor: C.muted, yAxisLabelColor: C.muted, xAxisTitleColor: C.muted, yAxisTitleColor: C.muted,
+        xAxisLineColor: C.rule, yAxisLineColor: C.rule, xAxisTickColor: C.rule, yAxisTickColor: C.rule
+      }
+    },
+    flowchart: { htmlLabels: true, curve: 'basis', padding: 10 },
+    sequence: { wrap: true, width: 180 },
+    gantt: { barHeight: 20, barGap: 6, fontSize: 13, sectionFontSize: 13, leftPadding: 110, topPadding: 40, gridLineStartPadding: 30, useWidth: 1240 },
+    xyChart: { width: 720, height: 340 },
+  });
+  for (const s of blocks) {
+    let host = s.nextElementSibling;
+    if (!host || !host.classList.contains('mermaid')) {
+      host = document.createElement('div');
+      host.className = 'mermaid';
+      s.after(host);
+    }
+    try {
+      const { svg } = await mermaid.render('mmd' + (seq++), s.textContent.trim());
+      host.innerHTML = svg;
+      host.dataset.processed = 'true';
+    } catch (e) {
+      host.innerHTML = '';
+      const pre = document.createElement('pre');
+      pre.textContent = 'This diagram could not be drawn.\n\n' + s.textContent.trim();
+      host.appendChild(pre);
+      host.dataset.processed = 'true';
+      console.error('mermaid', e);
+    }
+  }
+}
+renderAll();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (!document.documentElement.dataset.theme) renderAll();
+});
+</script>
+</body>
+</html>

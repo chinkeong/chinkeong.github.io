@@ -58,6 +58,19 @@
     padding: 20px 24px; transition: border-color 0.15s;
   }
   a.card:hover, a.card:focus-visible { border-color: var(--accent); }
+  div.card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); padding: 20px 24px;
+  }
+  .card .links {
+    display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 0 0 12px;
+  }
+  .card .links a {
+    font-family: var(--mono); font-size: 13px; color: var(--accent-ink);
+    border: 1px solid var(--line); background: var(--ground);
+    padding: 5px 10px; text-decoration: none; transition: border-color 0.15s;
+  }
+  .card .links a:hover, .card .links a:focus-visible { border-color: var(--accent); }
   .card h2 {
     font-family: var(--mono); font-size: 17px; line-height: 1.4;
     margin: 0 0 6px; color: var(--accent-ink);
@@ -94,6 +107,15 @@
     <p>Two 9B models of identical internal shape, measured on one RTX&nbsp;3090 in a single alternating session. Same decode speed to within 0.5&nbsp;%, and one of them finishes the same 175 prompts in 41&nbsp;% of the wall clock. Includes the full Ornith-1.5-9B field guide: which file to download, the memory map at the full 262,144-token window, energy per token by quantisation, and where its vision stops being able to read.</p>
     <p class="meta">2026-09 · local inference · every number measured on one machine</p>
   </a>
+  <div class="card">
+    <h2>Aquarium Opus 5.5, built with ultracode</h2>
+    <p>One prompt, one single-file animated aquarium. Claude Opus&nbsp;5.5, at max effort and with ultracode on, worked for 30 hours, ran 7 workflows and 122 subagent runs, and processed 5.06 billion tokens. The second page shows each build phase as a diagram, how the work was checked, and what it cost.</p>
+    <p class="links">
+      <a href="/ultracode/Opus_5.5_max_ultracode_1835min.html">Aquarium Opus 5.5 →</a>
+      <a href="/ultracode/">How it was built using ultracode →</a>
+    </p>
+    <p class="meta">2026-10 · agentic coding · every number from the session logs</p>
+  </div>
 </div>
 
 <footer>
