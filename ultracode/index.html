@@ -140,6 +140,7 @@ cost. Every number comes from the session's own log files.<br>
     <li><a href="#method">Method and provenance</a></li>
   </ol>
   <p style="margin:.4rem 0 0"><a href="#appendix">Appendix: how the prompts shape the work</a> — the instructions behind each box of Figure&nbsp;1</p>
+  <p style="margin:.2rem 0 0"><a href="#appendix-b">Appendix B: where 150&nbsp;GB of temporary files came from</a> — the disk cost of the run</p>
 </nav>
 
 <p>Tags used on this page: <span class="tag t-meas">measured</span> means read
@@ -1900,6 +1901,221 @@ choice, the prompt is the place to set them:</p>
   verifiers", "send a verifier your own engine patches too". The orchestrator
   writes such requests into the script; nothing else will.</li>
 </ul>
+
+<!-- ============================================================ B -->
+<h2 id="appendix-b">Appendix B. Where 150&nbsp;GB of temporary files came from</h2>
+<p class="lede">The run left 150.59&nbsp;GB in 3,252,751 files in Claude Code's
+temporary folder for this session, on drive C:. The delivered product is
+1.37&nbsp;MB. The user noticed when C: had 24.4&nbsp;GB free. Almost nine tenths
+of the 150&nbsp;GB is leftover profile folders of headless Chrome, which the test
+tools started thousands of times and often failed to delete.</p>
+
+<div class="kpis" role="list" aria-label="Disk usage key numbers">
+  <div class="kpi" role="listitem"><b>150.59 GB</b><span>temporary data, 3.25 million files</span></div>
+  <div class="kpi" role="listitem"><b>133.68 GB</b><span>dead Chrome profile folders, 14,065 of them</span></div>
+  <div class="kpi" role="listitem"><b>13.34 GB</b><span>screenshots: 14,177 PNG files</span></div>
+  <div class="kpi" role="listitem"><b>78.59 GB</b><span>left during WF6, mostly in 4 hours</span></div>
+  <div class="kpi" role="listitem"><b>1.37 MB</b><span>the delivered file</span></div>
+  <div class="kpi" role="listitem"><b>29 MB</b><span>worth keeping: source, tools, scripts, results</span></div>
+</div>
+
+<p><strong>Method.</strong> Two read-only scans of the folder on 7&nbsp;October: a
+full walk of every file (8 minutes), and a pass that measured each top-level
+folder and each Chrome profile with its creation time. A workflow of four
+read-only agents then attributed the bytes. One placed every profile and file in
+the session's time windows. One read the tools' cleanup code and sampled 24
+leftover profiles. One mapped each agent's folders and screenshots. A reconciler
+re-computed every total, made the categories add up to the byte, and corrected 12
+errors in the analysts' reports. GB means 1024<sup>3</sup> bytes. The figures are
+file sizes; the space taken on disk is about 153&nbsp;GB
+<span class="tag t-est">estimate</span>, because 3.25 million mostly small files
+each fill whole disk clusters.</p>
+
+<h3 id="b-what">B.1 What is in the folder</h3>
+<div class="scroll">
+<table aria-label="Disk usage by category">
+<tr><th>Category</th><th class="n">Folders</th><th class="n">GB</th><th class="n">Files</th><th class="n">Share</th><th>Made by</th></tr>
+<tr class="hi"><td>Leftover profiles of the shared capture tool (<code>tmp/chrome-*</code>)</td><td class="n">11,712</td><td class="n">101.06</td><td class="n">2,608,592</td><td class="n">67.1%</td><td><code>tools/shoot.mjs</code>, used by every agent and by the smoke test</td></tr>
+<tr><td>Profiles from one WF4 agent pair's own scripts (<code>tmp/w3_bottom</code>)</td><td class="n">1,169</td><td class="n">22.12</td><td class="n">384,402</td><td class="n">14.7%</td><td>fix:bottom and refix:bottom, the crab and lobster owner, with their own sweep scripts</td></tr>
+<tr><td>Screenshots and capture logs (<code>shots</code>)</td><td class="n">–</td><td class="n">13.34</td><td class="n">15,597</td><td class="n">8.9%</td><td>every agent's captures: 14,177 PNG files of about 1&nbsp;MB</td></tr>
+<tr><td>Profiles of the GPU cost tool (<code>tmp/gpucost-chrome</code>)</td><td class="n">939</td><td class="n">6.94</td><td class="n">152,931</td><td class="n">4.6%</td><td><code>tools/gpucost/gpucost.mjs</code> and two agent copies of it</td></tr>
+<tr><td>Other agents' Chrome profiles</td><td class="n">245</td><td class="n">3.56</td><td class="n">76,253</td><td class="n">2.4%</td><td>launchers that agents wrote themselves, in WF1, WF4, WF5 and WF7</td></tr>
+<tr><td>Agent and orchestrator work files (<code>tmp</code>, not profiles)</td><td class="n">–</td><td class="n">3.20</td><td class="n">13,786</td><td class="n">2.1%</td><td>test scripts and results; about 2.2&nbsp;GB of it is HTML variant builds for A/B tests</td></tr>
+<tr><td>Builds (<code>dist</code>)</td><td class="n">–</td><td class="n">0.37</td><td class="n">550</td><td class="n">0.2%</td><td>per-agent builds and the frozen review builds</td></tr>
+<tr><td>Source, tools and other small files</td><td class="n">–</td><td class="n">0.01</td><td class="n">640</td><td class="n">0.0%</td><td>the orchestrator</td></tr>
+<tr class="tot"><td>Total</td><td class="n">14,065 profiles</td><td class="n">150.59</td><td class="n">3,252,751</td><td class="n">100%</td><td>161,698,585,367 bytes</td></tr>
+</table>
+</div>
+<figure class="dia narrow">
+<script type="text/x-mermaid">
+pie showData
+  title Temporary data by kind (GB)
+  "Chrome profiles of the shared capture tool" : 101.06
+  "Other Chrome profiles (agent scripts, GPU tool)" : 32.62
+  "Screenshots and capture logs" : 13.34
+  "Work files, test builds, source" : 3.58
+</script>
+<figcaption>Figure B1. What the 150.59&nbsp;GB is <span class="tag t-meas">measured</span>.
+Chrome profile folders are 133.68&nbsp;GB, or 88.8%. The source code that matters
+is a few megabytes.</figcaption>
+</figure>
+
+<h3 id="b-when">B.2 When it was made</h3>
+<p>Each profile folder is placed in a session window by its creation time, and
+other files by their last change. The orchestrator also ran tools while workflows
+ran, so the split is approximate; the windows in which only the orchestrator ran
+add up to just 0.34&nbsp;GB <span class="tag t-meas">measured</span>.</p>
+<div class="scroll">
+<table aria-label="Disk usage by session window">
+<tr><th>Window</th><th>Time (local)</th><th class="n">GB</th><th class="n">Chrome profiles left</th><th>Main source</th></tr>
+<tr><td>WF1 build, critique, polish</td><td>4 Oct 15:57–21:37</td><td class="n">1.64</td><td class="n">5</td><td>screenshots; the orchestrator deleted WF1's 172 leftover profiles by hand at 21:40</td></tr>
+<tr><td>WF2 polish round</td><td>21:57–00:24</td><td class="n">5.07</td><td class="n">393</td><td>shared-tool profiles 3.78&nbsp;GB, screenshots 1.26&nbsp;GB</td></tr>
+<tr><td>WF3 global review</td><td>5 Oct 00:27–02:19</td><td class="n">1.80</td><td class="n">101</td><td>profiles 0.90&nbsp;GB, screenshots 0.69&nbsp;GB</td></tr>
+<tr class="hi"><td>WF4 fix round 1</td><td>02:34–08:50</td><td class="n">52.35</td><td class="n">4,465</td><td>the crab and lobster pair's sweeps 22.12&nbsp;GB; shared-tool profiles 19.96&nbsp;GB</td></tr>
+<tr><td>WF5 final acceptance</td><td>08:55–11:46</td><td class="n">7.98</td><td class="n">661</td><td>shared-tool profiles 5.54&nbsp;GB, screenshots 1.36&nbsp;GB</td></tr>
+<tr class="hi"><td>WF6 fix round 2</td><td>12:04–17:52</td><td class="n">78.59</td><td class="n">8,299</td><td>shared-tool profiles 69.92&nbsp;GB, all made between 12:04 and 15:59</td></tr>
+<tr><td>WF7 release gate</td><td>17:59–20:38</td><td class="n">2.83</td><td class="n">140</td><td>screenshots 1.45&nbsp;GB, profiles 1.28&nbsp;GB</td></tr>
+<tr><td>Orchestrator alone (Phases 0, 2, 4, 6, 8 and gaps)</td><td>between workflows</td><td class="n">0.34</td><td class="n">1</td><td>smoke runs: 1 leftover in 90 launches</td></tr>
+<tr class="tot"><td colspan="2">Total</td><td class="n">150.59</td><td class="n">14,065</td><td></td></tr>
+</table>
+</div>
+<figure class="dia narrow">
+<script type="text/x-mermaid">
+xychart-beta
+  title "Temporary data left per workflow (GB)"
+  x-axis ["WF1", "WF2", "WF3", "WF4", "WF5", "WF6", "WF7", "Orch."]
+  y-axis "GB" 0 --> 80
+  bar [1.64, 5.07, 1.80, 52.35, 7.98, 78.59, 2.83, 0.34]
+</script>
+<figcaption>Figure B2. Disk use per workflow <span class="tag t-meas">measured</span>.
+The two fix rounds left 130.94&nbsp;GB, 87% of the total. The three hours from
+12:00 to 15:00 on 5 October, inside WF6, alone left 70.13&nbsp;GB.</figcaption>
+</figure>
+<p>The leak followed the number of agents running at once, not the code path.
+The orchestrator's own smoke runs, with the machine otherwise quiet, left 1
+profile in 90 browser launches. From 16:00 to 17:52, with 1 to 3 agents running,
+nothing was left. Between 12:04 and 15:59, with 9 to 14 agents running in
+parallel, WF6 left 7,917 profiles of the shared tool alone
+<span class="tag t-meas">measured</span>.</p>
+
+<h3 id="b-why">B.3 Why the profiles were not deleted</h3>
+<p>Every capture started Chrome with a brand-new profile folder. The cleanup was
+one delete on a fixed timer after a forced kill that nothing waited for, with no
+retry and an empty error handler. This is the shared capture tool,
+<code>tools/shoot.mjs</code>:</p>
+<pre><code>const profile = fs.mkdtempSync(path.join(tmpRoot, 'chrome-'));
+…
+function cleanup() {
+  // Kill the whole Chrome process tree (GPU/utility/renderer children included).
+  if (process.platform === 'win32') { try { spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore' }); } catch {} }
+  try { proc.kill(); } catch {}
+  setTimeout(() => { try { fs.rmSync(profile, { recursive: true, force: true }); } catch {} }, 600);
+}
+…
+main().then(() => { console.log(JSON.stringify(report, null, 1)); cleanup(); setTimeout(() => process.exit(0), 900); })</code></pre>
+<figure class="dia">
+<script type="text/x-mermaid">
+sequenceDiagram
+  participant T as shoot.mjs
+  participant C as Chrome, about 10 processes
+  participant D as Profile folder
+  T->>D: create tmp/chrome-XXXXXX
+  T->>C: start headless Chrome with this profile
+  C->>D: shader cache, empty caches, crash metrics, downloads
+  T->>C: taskkill /T /F, not awaited
+  Note over T: 600 ms later
+  T->>D: delete once, errors ignored
+  C-->>D: some processes still hold files open
+  D-->>T: delete stops part-way, nothing logged
+  Note over T: at 900 ms the tool exits
+  Note over D: the folder stays, about 9 MiB
+</script>
+<figcaption>Figure B3. How a profile leaked. Under load, Chrome's processes
+take longer than 600&nbsp;ms to let go of their files.</figcaption>
+</figure>
+<p>On Windows a file that a process still has open cannot be deleted. When Chrome's
+crash handler, network or GPU processes still held a file, such as the crash
+metrics file or the HTTP cache, the delete stopped part-way and the error was
+dropped. 34–35% of the leftover shared-tool folders still hold the crash metrics
+file, so their delete stopped at or before it. One sampled folder shows signs that
+the delete never ran at all <span class="tag t-meas">measured</span>. The GPU cost
+tool had the same code with a 1,500&nbsp;ms timer, and agents copied it at least 9
+times into their own launchers. Nothing counted or swept the folders. The
+orchestrator's checks at 08:50 and 17:53 looked only for live Chrome processes.
+After WF1 it found 172 leftover profiles and deleted them by hand, but it did not
+fix the tool, and from then on no one looked again.</p>
+
+<h3 id="b-inside">B.4 What fills a leftover profile</h3>
+<div class="scroll">
+<table aria-label="What fills the Chrome profiles">
+<tr><th>Part of the profile</th><th class="n">GB</th><th>Why it is there</th></tr>
+<tr class="hi"><td>GPU shader cache (<code>GrShaderCache</code>)</td><td class="n">60.96</td><td>A fresh profile compiles every GPU shader from cold and stores it: about 4.8&nbsp;MiB each. Likely made by the GPU raster flags (<code>--enable-gpu</code>, <code>--use-angle=d3d11</code>); not tested.</td></tr>
+<tr><td>Empty, pre-sized GPU caches</td><td class="n">21.69</td><td>Space Chrome reserves per profile for further caches, used or not: about 557&nbsp;KB each.</td></tr>
+<tr><td>HTTP disk cache</td><td class="n">10.54</td><td>Empty cache files of about 1.8&nbsp;MiB; the pages were local files.</td></tr>
+<tr><td>Profile scaffolding</td><td class="n">10.13</td><td>The small databases every new profile creates: 1.47 million files.</td></tr>
+<tr><td>Model downloads</td><td class="n">9.51</td><td>Background machine-learning model downloads in profiles that lived 20 seconds or more, mostly the WF4 crab pair's long sweeps.</td></tr>
+<tr><td>Profile root files</td><td class="n">5.89</td><td>The 1&nbsp;MiB crash metrics file and settings files.</td></tr>
+<tr><td>Icons of preinstalled web apps</td><td class="n">4.45</td><td>603,059 small files; no launcher turned the default apps off.</td></tr>
+<tr><td>Component updater payloads</td><td class="n">2.25</td><td>Downloads Chrome's updater starts in every fresh profile.</td></tr>
+<tr><td>Profiles the scan could not break down</td><td class="n">8.26</td><td>Mostly the GPU cost tool's folders, which use a different name pattern.</td></tr>
+<tr class="tot"><td>All Chrome profile data</td><td class="n">133.68</td><td>14,065 folders</td></tr>
+</table>
+</div>
+
+<h3 id="b-ultracode">B.5 What this has to do with ultracode</h3>
+<ul>
+  <li><strong>Disk use grew with parallel testing.</strong> Ultracode asks for "the
+  most exhaustive, correct answer" and says "token cost is not a constraint"
+  <span class="tag t-cited">cited</span>. In this run that meant many agents
+  testing at the same time in real browsers, and the leak grew with the number of
+  agents running at once.</li>
+  <li><strong>No instruction covers disk space.</strong> The size guideline counts
+  agents, not bytes. The workflow reference mentions disk once, as a cost of
+  worktree isolation ("~200-500ms setup + disk per agent")
+  <span class="tag t-cited">cited</span>. Nothing asks the orchestrator to budget
+  or sweep temporary files, and the tokens and dollars in section&nbsp;7 do not
+  show this cost.</li>
+  <li><strong>Copied tools copy their faults.</strong> The orchestrator wrote one
+  capture tool in Phase&nbsp;0. Agents copied its launch-and-cleanup pattern at
+  least 9 times, each copy with the same fault.</li>
+  <li><strong>A one-off check was not enough.</strong> The orchestrator saw the
+  leak once, after WF1, and cleaned up by hand. Without a fix in the tool or a
+  sweep after each workflow, the next six workflows left 133&nbsp;GB more.</li>
+</ul>
+
+<h3 id="b-fixes">B.6 What would prevent it</h3>
+<ul>
+  <li>One shared launcher that shuts down in order: close the browser, kill the
+  process tree and wait for it to exit, then delete the profile with retries and
+  log any failure. Forbid per-agent copies.</li>
+  <li>Far fewer launches: one browser per agent and a new tab per test case. The
+  release-gate verifier's runner did this and left no profiles.</li>
+  <li>One profile folder per workflow, deleted by the orchestrator at the end of
+  each workflow, with the number of gigabytes removed printed in its summary and an
+  alarm above a budget.</li>
+  <li>Smaller profiles, after a test on the Chrome version in use:
+  <code>--disable-gpu-shader-disk-cache</code>,
+  <code>--disable-component-update</code>,
+  <code>--disable-background-networking</code>,
+  <code>--disable-default-apps</code>, <code>--disable-breakpad</code>.</li>
+  <li>Smaller captures: clipped or scaled screenshots for long series, and each
+  agent's screenshots and test builds deleted once its verifier has passed the
+  work.</li>
+  <li>For users: watch the free space during a long ultracode run, and say in the
+  prompt that temporary files must be cleaned up.</li>
+</ul>
+
+<h3 id="b-cleanup">B.7 The cleanup</h3>
+<p>At the user's request, the session's temporary folder was deleted after this
+appendix was published. Before that, the parts worth keeping were copied to
+another drive: the modular source, the build script, the test tools,
+<code>AGENT_BRIEF.md</code> and <code>REQUIREMENTS.md</code>, the review workflow
+scripts and their results, the two disk scans, and the final builds (29&nbsp;MB in
+42 files). Not touched: the delivered file, its copy on this site, and Claude
+Code's session transcripts, which live in the user's profile folder, not in the
+temporary folder. Also not touched: 1,111 Chrome updater folders in the system
+temporary folder that were created during the session; their size was not
+measured. Before the cleanup, C: had 19.5&nbsp;GB free (7&nbsp;October, 01:46).</p>
 
 <p class="foot">
 Session: 4–5 October 2026, local time UTC+8. Delivered file:
