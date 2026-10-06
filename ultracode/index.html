@@ -139,6 +139,7 @@ cost. Every number comes from the session's own log files.<br>
     <li><a href="#case">What the cost bought</a></li>
     <li><a href="#method">Method and provenance</a></li>
   </ol>
+  <p style="margin:.4rem 0 0"><a href="#appendix">Appendix: how the prompts shape the work</a> — the instructions behind each box of Figure&nbsp;1</p>
 </nav>
 
 <p>Tags used on this page: <span class="tag t-meas">measured</span> means read
@@ -197,7 +198,8 @@ flowchart LR
 </script>
 <figcaption>Figure 1. In normal mode one model loop does everything. In ultracode
 mode the main loop plans and checks, and the work is spread over many subagents
-that run at the same time.</figcaption>
+that run at the same time. The <a href="#appendix">appendix</a> shows the
+instructions and the real scripts behind each box.</figcaption>
 </figure>
 
 <div class="box">
@@ -1352,6 +1354,552 @@ the main loop and the delivered product; the orchestrator computed all totals
 from the raw logs itself. A separate claim-check pass then compared the page with
 the logs. The session's own measurements (frame rates, GPU load, motion counts)
 were not repeated for this page.</p>
+
+<!-- ============================================================ A -->
+<h2 id="appendix">Appendix. How the prompts shape the work</h2>
+<p class="lede">Figure&nbsp;1 has four boxes: the orchestrator, the workflow
+script, the subagents and the verifiers. This appendix shows the instructions
+behind each box, a real example of each from this run, and who decided how many
+agents and verifiers ran. The short answer: Claude Code's prompts give rules,
+patterns and safety limits, but no counts. Every count in this run was set by the
+orchestrator while it worked, and the scripts then changed some counts based on
+the results.</p>
+<p><strong>Sources.</strong> The quoted instructions are the texts in the model's
+context in this session on 6&nbsp;October 2026. This appendix was written from
+inside the same session after the run. Claude Code can change these texts between
+versions, and the session log does not keep tool descriptions, so the wording the
+model saw on 4 and 5 October may differ slightly. These quotes are tagged
+<span class="tag t-cited">cited</span>. The scripts are quoted from the 7 workflow
+records, which also store the start time, duration and result of every agent.
+Numbers from them are tagged <span class="tag t-meas">measured</span>. Code is
+shortened where it shows <code>…</code>.</p>
+
+<!-- A.1 -->
+<h3 id="a-layers">A.1 Where the instructions come from</h3>
+<p>The orchestrator reads four kinds of instructions that it did not write. From
+them it writes a fifth kind: the workflow script, with one prompt per agent. A
+subagent never sees the orchestrator's instructions. It sees its own system
+prompt, the user's <code>CLAUDE.md</code> files ("Subagents get the same CLAUDE.md
+files injected at start that you did") and whatever its prompt tells it to
+read.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TB
+  subgraph CC["Written by Claude Code"]
+    direction LR
+    T1["System prompt and tool list<br/>always present<br/>Workflow tool: when it<br/>may run, size guideline"]:::cc
+    T2["Mode reminder<br/>on each user turn<br/>'Ultracode is on ...'"]:::cc
+    T3["Workflow reference<br/>a skill, loaded on demand<br/>API, limits, patterns"]:::cc
+    T1 ~~~ T2 ~~~ T3
+  end
+  T4["The user's<br/>CLAUDE.md files"]:::user
+  O["Orchestrator<br/>plans in its own reasoning"]:::orch
+  subgraph RT["Written by the orchestrator during the run"]
+    direction LR
+    W["Workflow script<br/>items, stages, schemas"]:::wf
+    P["One prompt per agent<br/>role, rules, input"]:::wf
+    F["Shared files<br/>AGENT_BRIEF.md,<br/>REQUIREMENTS.md"]:::wf
+    W ~~~ P ~~~ F
+  end
+  S["Each subagent sees its own system prompt, the CLAUDE.md files,<br/>its prompt and the files it is told to read"]:::rev
+  CC --> O
+  T4 --> O
+  O --> RT
+  RT --> S
+  T4 --> S
+  classDef cc fill:#ece9e4,stroke:#5a5a5a,color:#1a1a1a
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure A1. Five layers of instructions. Grey: texts from Claude Code.
+Purple: the user's files. Blue: texts the orchestrator wrote during the run.</figcaption>
+</figure>
+<p>Only some of these texts mention numbers, and none of them sets the number of
+agents, lenses or verifiers for a task <span class="tag t-cited">cited</span>:</p>
+<div class="scroll">
+<table aria-label="What each instruction text says about the number of agents">
+<tr><th>Text</th><th>Where</th><th>What it says about how many agents</th><th>Kind</th></tr>
+<tr><td>Workflow tool description</td><td>tool list</td><td>"This session has the default workflow size guideline: medium — keep workflows under 10 agents. This is a guideline, not a hard limit — follow it unless the user's prompt calls for a different scale. The user can raise or remove it with "Dynamic workflow size" in /config."</td><td>soft guideline</td></tr>
+<tr><td>Workflow tool description</td><td>tool list</td><td>"ONLY call this tool when the user has explicitly opted into multi-agent orchestration. Workflows can spawn dozens of agents and consume a large amount of tokens; the user must request that scale, not have it inferred." Ultracode counts as that opt-in.</td><td>rule: whether, not how many</td></tr>
+<tr><td>Ultracode reminder</td><td>each user turn</td><td>"optimize for the most exhaustive, correct answer — not the fastest or cheapest. Use the Workflow tool on every substantive task; token cost is not a constraint." (full text in section 1)</td><td>pushes toward more</td></tr>
+<tr><td>Workflow reference: scaling</td><td>skill</td><td>"Scale to what the user asked for. "find any bugs" → a few finders, single-vote verify. "thoroughly audit this" or "be comprehensive" → larger finder pool, 3–5 vote adversarial pass, synthesis stage. When unsure, lean toward thoroughness for research/review/audit requests and toward brevity for quick checks."</td><td>soft advice, in words</td></tr>
+<tr><td>Workflow reference: limits</td><td>skill</td><td>"Concurrent agent() calls are capped at min(16, available CPUs - 2) per workflow — excess calls queue and run as slots free up." "Total agent count across a workflow's lifetime is capped at 1000 — a runaway-loop backstop set far above any real workflow." "A single parallel()/pipeline() call accepts at most 4096 items".</td><td>hard limits</td></tr>
+<tr><td>Workflow reference: budget</td><td>skill</td><td>A token target from a "+500k"-style directive in the user's prompt "is a HARD ceiling, not advisory: once spent() reaches total, further agent() calls throw." This run had no such directive.</td><td>hard limit, if the user sets it</td></tr>
+<tr><td>Workflow reference: patterns</td><td>skill</td><td>"Adversarial verify: spawn N independent skeptics per finding, each prompted to REFUTE. Kill if ≥majority refute." N is left open; the example code uses 3.</td><td>pattern with an example</td></tr>
+</table>
+</div>
+
+<!-- A.2 -->
+<h3 id="a-orch">A.2 The orchestrator: the main model loop</h3>
+<p>The orchestrator is the model loop that talks to the user. Besides the reminder
+quoted in section&nbsp;1, the workflow reference tells it how to behave when
+ultracode is on <span class="tag t-cited">cited</span>:</p>
+<pre class="prompt"><code>Ultracode. When a system-reminder confirms ultracode is on, that opt-in is
+standing: author and run a workflow for every substantive task by default. The
+goal is the most exhaustive, correct answer you can produce — token cost is not a
+constraint. For multi-phase work (understand → design → implement → review), that
+often means several workflows in sequence — one per phase — so you stay in the
+loop between them. The quality patterns below (adversarial verify, multi-modal
+sweep, completeness critic, loop-until-dry) are the tools; pick what fits the
+task. Lean toward orchestrating with workflows and adversarially verifying your
+findings — unless the work is trivial or already verified. Solo only on
+conversational turns or trivial mechanical edits. When a reminder says ultracode
+is off, revert to the opt-in rule in the Workflow tool description.</code></pre>
+<p>Two more lines shape the loop. The reference advises a "hybrid" start: "scout
+inline first (list the files, find the channels, scope the diff) to discover the
+work-list, then call Workflow to pipeline over it." And the tool description says
+"Workflows run in the background — this tool returns immediately with a task ID,
+and a &lt;task-notification&gt; arrives when the workflow completes." So the
+orchestrator is free while its agents work. In the later turn that asked for this
+appendix, ultracode was off, and Claude Code added: "Ultracode is off — the
+Workflow tool's standard opt-in rule applies again."
+<span class="tag t-cited">cited</span></p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  U(["User prompt"]):::user --> R["Read the task, scout inline:<br/>what is the work list?"]:::orch
+  R --> Q{"Substantive<br/>task?"}:::orch
+  Q -->|"no"| SOLO["Do it alone<br/>with normal tools"]:::orch
+  SOLO --> D1(["Answer"]):::user
+  Q -->|"yes"| PL["Plan the shape,<br/>write the script"]:::orch
+  PL --> CALL["Workflow call<br/>agents run in the background"]:::wf
+  CALL -.-> BG["Meanwhile: status line,<br/>own side work"]:::orch
+  CALL --> RD["Read the structured result<br/>journal if something looks wrong"]:::rev
+  RD --> NX{"What<br/>next?"}:::orch
+  NX -->|"findings"| FIX["Fix shared code,<br/>route the rest"]:::orch
+  FIX --> PL
+  NX -->|"good enough"| D2(["Answer"]):::user
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+</script>
+<figcaption>Figure A2. The orchestrator's loop, as the instructions describe it and
+as this run followed it: one workflow per phase, 7 in all, with the orchestrator's
+own work in between.</figcaption>
+</figure>
+<p><strong>Example: one hand-off, as it happened.</strong> When the global review
+(WF3) ended, the orchestrator turned its result into fix round&nbsp;1 (WF4) in 15
+minutes. The quotes are its visible messages <span class="tag t-meas">measured</span>.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+sequenceDiagram
+  participant W3 as WF3 global review
+  participant O as Orchestrator
+  participant D as Files on disk
+  participant W4 as WF4 fix round 1
+  participant U as User
+  W3-->>O: 02:19:27 result, 46 of 49 findings confirmed
+  O->>O: 02:19:32 'Review complete (12 agents). Let me pull the confirmed findings'
+  O->>D: 02:24 to 02:29 patches the shared engine files itself
+  O->>D: 02:33 'route every confirmed finding to the module group that owns it'
+  O->>D: new brief section and one input file per group
+  O->>W4: 02:34 Workflow call, script aquarium-wave3-fix-verify, 10 groups
+  W4-->>O: task ID at once
+  O->>D: 02:35 tests its engine patches in an isolated copy
+  O-->>U: 02:44 status, engine fixes done, WF4 still running
+  W4-->>O: 08:50 result, 7 groups pass, 3 re-fixed
+</script>
+<figcaption>Figure A3. The WF3 to WF4 hand-off <span class="tag t-meas">measured</span>.
+The engine patch made between 02:24 and 02:29 is the one no verifier checked;
+it caused 7 of the 8 regressions found in Phase&nbsp;5.</figcaption>
+</figure>
+<p>The reminder says to use the Workflow tool "on every substantive task". The
+orchestrator still did large pieces alone: all of Phase&nbsp;0 (engine, tools,
+brief), the engine fixes before WF4 and WF6, and all 12 fixes of Phase&nbsp;8.
+Nothing in Claude Code forces a workflow; the reminder is an instruction the
+model weighs. Its visible messages give no reason for working alone in
+Phase&nbsp;8.</p>
+
+<!-- A.3 -->
+<h3 id="a-wf">A.3 The workflow script: phases, fan-out, pipelines</h3>
+<p>A workflow script is plain JavaScript that Claude Code runs. It must start
+with a <code>meta</code> object (name, description, phases). The reference gives
+these building blocks <span class="tag t-cited">cited</span>:</p>
+<div class="scroll">
+<table aria-label="Workflow script building blocks">
+<tr><th>Block</th><th>What the reference says</th></tr>
+<tr><td><code>agent(prompt, opts)</code></td><td>Starts one subagent. "With schema (a JSON Schema), the subagent is forced to call a StructuredOutput tool and agent() returns the validated object." It "Returns null if the user skips the agent mid-run or the subagent dies on a terminal API error after retries." Options: label, phase, schema, model, effort, isolation, agentType.</td></tr>
+<tr><td><code>parallel(thunks)</code></td><td>Runs tasks at the same time. "This is a BARRIER: awaits all thunks before returning."</td></tr>
+<tr><td><code>pipeline(items, stage1, stage2, …)</code></td><td>"run each item through all stages independently, NO barrier between stages. Item A can be in stage 3 while item B is still in stage 1. This is the DEFAULT for multi-stage work. Wall-clock = slowest single-item chain, not sum-of-slowest-per-stage."</td></tr>
+<tr><td><code>phase()</code>, <code>log()</code></td><td>Progress groups and narrator lines for the user.</td></tr>
+<tr><td><code>args</code>, <code>budget</code>, <code>workflow()</code></td><td>Input data, the token ceiling, and one level of nesting. This run used none of them.</td></tr>
+</table>
+</div>
+<p>The rule for choosing between them: "DEFAULT TO pipeline(). Only reach for a
+barrier (parallel between stages) when you genuinely need ALL prior-stage results
+together." <span class="tag t-cited">cited</span> This run used
+<code>pipeline()</code> in 6 workflows and <code>parallel()</code> once, for a
+one-stage workflow where a barrier costs nothing.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TB
+  subgraph PA["1. parallel(): fan-out with a barrier - WF2"]
+    direction LR
+    a0["10 groups"]:::orch --> a1["owner 1"]:::wf & a2["owner 2"]:::wf & a3["owner ..."]:::wf
+    a1 & a2 & a3 --> ab["wait for all 10"]:::prob
+    ab --> ar(["10 reports together"]):::rev
+  end
+  subgraph PI["2. pipeline(): no barrier - WF1, WF3, WF5, WF7"]
+    direction LR
+    b0["item A"]:::orch --> b1["stage 1"]:::wf --> b2["stage 2"]:::wf --> b3["stage 3"]:::wf --> br(["A done"]):::rev
+    c0["item B"]:::orch --> c1["stage 1"]:::wf --> c2["stage 2"]:::wf --> c3["stage 3"]:::wf --> cr(["B done"]):::rev
+  end
+  subgraph CO["3. pipeline() with a stage that may not run - WF4, WF6"]
+    direction LR
+    d1["fix"]:::wf --> d2["verify"]:::rev --> d3{"verdict"}:::rev
+    d3 -->|"pass"| d4(["done, no more agents"]):::rev
+    d3 -->|"fail"| d5["re-fix"]:::wf --> d6(["done"]):::rev
+  end
+  PA ~~~ PI
+  PI ~~~ CO
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure A4. The three shapes used in this run. With a pipeline, item B
+can still be in stage 1 while item A is in stage 3.</figcaption>
+</figure>
+
+<p><strong>Example 1: phases and a three-stage pipeline (WF1).</strong> Ten
+groups, each through build, critique and polish. Each later stage runs only if the
+earlier one returned something. The <code>.slice()</code> calls are the silent
+cuts that lost 72 critic issues (section&nbsp;6).</p>
+<pre><code>export const meta = {
+  name: 'aquarium-build-modules',
+  description: 'Build, critique and polish the aquarium creature/decor modules (10 specialist groups, pipelined)',
+  phases: [
+    { title: 'Build', detail: 'one specialist per module group, self-verified with headless screenshots' },
+    { title: 'Critique', detail: 'independent art-director + QA review per group (read-only)' },
+    { title: 'Polish', detail: 'apply the critique, re-verify, final report' },
+  ],
+}
+const GROUPS = [ { id: 'decor_rocks', title: 'Rocks, cave + moray eel, …', task: `YOUR FILE: src/modules/decor_rocks.js. …` }, … ]  // 10 groups
+// [note added for this page] the prompt builders cut their inputs:
+//   builder report → critic: JSON.stringify(rep).slice(0, 6000)
+//   critic review → polish: .slice(0, 9000)   builder report → polish: .slice(0, 5000)
+const results = await pipeline(
+  GROUPS,
+  g => agent(buildPrompt(g), { label: `build:${g.id}`, phase: 'Build', schema: REPORT }),
+  (rep, g) => rep ? agent(critiquePrompt(g, rep), { label: `critique:${g.id}`, phase: 'Critique', schema: REVIEW }).then(rev => ({ rep, rev })) : null,
+  (x, g) => x ? agent(fixPrompt(g, x.rep, x.rev || …), { label: `polish:${g.id}`, phase: 'Polish', schema: REPORT }).then(…) : null,
+)</code></pre>
+
+<p><strong>Example 2: fan-out with a barrier (WF2).</strong> One stage, ten owners,
+results returned together.</p>
+<pre><code>const results = await parallel(GROUPS.map(g => () =>
+  agent(prompt(g), { label: `polish2:${g.id}`, phase: 'Polish', schema: REPORT })
+    .then(r => ({ id: g.id, report: r }))))</code></pre>
+
+<p><strong>Example 3: a pipeline whose last stage runs only on failure (WF4; WF6
+is the same).</strong> The verifier's schema has <code>verdict: enum ['pass',
+'fail']</code>, so the script can branch on it.</p>
+<pre><code>const results = await pipeline(
+  GROUPS,
+  g => agent(fixPrompt(g), { label: `fix:${g.id}`, phase: 'Fix', schema: REPORT }),
+  (rep, g) => rep ? agent(verifyPrompt(g, rep), { label: `verify:${g.id}`, phase: 'Verify', schema: VERDICT }).then(v => ({ rep, v })) : null,
+  (x, g) => {
+    if (!x) return null
+    if (x.v &amp;&amp; x.v.verdict === 'pass') return { id: g.id, rep: x.rep, verify: x.v, refix: null }
+    return agent(refixPrompt(g, x.rep, x.v || …), { label: `refix:${g.id}`, phase: 'Refix', schema: REPORT })
+      .then(r2 => ({ id: g.id, rep: x.rep, verify: x.v, refix: r2 }))
+  },
+)</code></pre>
+
+<p><strong>Example 4: find, then refute (WF7; WF3 and WF5 have the same shape with
+6 lenses).</strong> A refuter starts only if its finder reported something, and a
+finding counts only if its refuter marked it real.</p>
+<pre><code>const LENSES = [
+  { key: 'reqmotion',  prompt: `LENS: REQUIREMENTS + MOTION. Re-verify EVERY item in REQUIREMENTS.md …` },
+  { key: 'visual',     prompt: `LENS: VISUAL. Judge the release candidate as a premium desktop decoration …` },
+  { key: 'robustperf', prompt: `LENS: ROBUSTNESS + PERFORMANCE. Run node tools/smoke.mjs …` },
+]
+const results = await pipeline(
+  LENSES,
+  L => agent(`${CONTEXT}\n\n${L.prompt}\n\nPrefix finding ids with "${L.key}-". …`, { label: `find:${L.key}`, phase: 'Find', schema: FINDINGS }),
+  (res, L) => {
+    if (!res || !res.findings.length) return { lens: L.key, summary: res ? res.summary : 'no result', findings: [], verdicts: [] }
+    return agent(`${CONTEXT}\n\nYou are an independent, skeptical VERIFIER. … try hard to REFUTE it …`, { label: `verify:${L.key}`, phase: 'Verify', schema: VERDICTS })
+      .then(v => ({ lens: L.key, summary: res.summary, findings: res.findings, verdicts: v ? v.verdicts : [] }))
+  },
+)
+const out = results.filter(Boolean)
+const confirmed = []
+for (const r of out) for (const f of r.findings) { const v = r.verdicts.find(x => x.id === f.id); if (v &amp;&amp; v.real) confirmed.push({ ...f, severity: v.severity === 'none' ? f.severity : v.severity, verifierReason: v.reason }) }</code></pre>
+
+<p><strong>A pipeline at work.</strong> Figure A5 plots the 12 agents of WF3 from
+their records. Each refuter started within one second of its own finder's end.</p>
+<figure class="dia bleed">
+<script type="text/x-mermaid">
+gantt
+  dateFormat YYYY-MM-DD HH:mm:ss
+  axisFormat %H:%M
+  tickInterval 15minute
+  todayMarker off
+  section Finders
+  Find visual         :f4, 2026-10-05 00:26:59, 2026-10-05 01:02:26
+  Find motion         :f5, 2026-10-05 00:26:59, 2026-10-05 01:05:02
+  Find code           :f6, 2026-10-05 00:26:59, 2026-10-05 01:10:11
+  Find requirements   :f1, 2026-10-05 00:26:59, 2026-10-05 01:32:48
+  Find robustness     :f3, 2026-10-05 00:26:59, 2026-10-05 01:44:23
+  Find performance    :f2, 2026-10-05 00:26:59, 2026-10-05 01:44:49
+  section Refuters
+  Refute visual       :v4, 2026-10-05 01:02:27, 2026-10-05 01:27:22
+  Refute motion       :v5, 2026-10-05 01:05:03, 2026-10-05 01:19:50
+  Refute code         :v6, 2026-10-05 01:10:12, 2026-10-05 01:25:42
+  Refute requirements :v1, 2026-10-05 01:32:48, 2026-10-05 01:42:37
+  Refute robustness   :v3, 2026-10-05 01:44:24, 2026-10-05 02:13:26
+  Refute performance  :v2, 2026-10-05 01:44:50, 2026-10-05 02:19:27
+</script>
+<figcaption>Figure A5. WF3, 00:26:59 to 02:19:27 <span class="tag t-meas">measured</span>.
+Four refuters had finished before the slowest finder ended. The workflow still
+took as long as its slowest chain: performance, 77.8 minutes to find and 34.6 to
+refute.</figcaption>
+</figure>
+<p>How much did "no barrier" save? The table compares each workflow's real length
+with the length it would have had with a barrier after every stage, assuming every
+agent took as long as it really did.</p>
+<div class="scroll">
+<table aria-label="Wall time saved by pipelines">
+<tr><th>Workflow</th><th>Shape</th><th class="n">Real length</th><th class="n">With barriers</th><th class="n">Saved</th></tr>
+<tr><td>WF1 build, critique, polish</td><td>3 stages, 10 groups</td><td class="n">340 min</td><td class="n">407 min</td><td class="n">67 min</td></tr>
+<tr><td>WF4 fix, verify, re-fix</td><td>3 stages, 10 groups, re-fix in 3</td><td class="n">375 min</td><td class="n">447 min</td><td class="n">72 min</td></tr>
+<tr><td>WF6 fix, verify, re-fix</td><td>3 stages, 9 groups, re-fix in 1</td><td class="n">348 min</td><td class="n">365 min</td><td class="n">17 min</td></tr>
+<tr><td>WF3, WF5, WF7 reviews</td><td>2 stages, 6, 6 and 3 lenses</td><td class="n">112, 171, 159 min</td><td class="n">the same</td><td class="n">0 min</td></tr>
+<tr class="tot"><td colspan="4">All pipelined workflows</td><td class="n">156 min</td></tr>
+</table>
+</div>
+<p>Real lengths and agent durations <span class="tag t-meas">measured</span>;
+the barrier lengths are the sum of the slowest agent of each stage
+<span class="tag t-deriv">derived</span>. For WF4 the fixers' stage is counted
+from the workflow start, including the usage-limit pause. In all three reviews the
+slowest finder also had the slowest refuter, so a pipeline could not save time
+there.</p>
+
+<!-- A.4 -->
+<h3 id="a-agents">A.4 The kinds of subagents</h3>
+<p>All 122 agent runs used the same agent type: the default workflow subagent,
+with the session's model (Opus&nbsp;5.5) and effort (<code>max</code>). None of the
+7 scripts set the <code>agentType</code>, <code>model</code>, <code>effort</code>
+or <code>isolation</code> option <span class="tag t-meas">measured</span>. So each
+agent's role came only from its prompt and its output schema. The "read-only"
+agents were read-only because their prompts said so ("You do NOT edit any source
+file"; "read-only: do not edit src"), not because tools were taken away.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TB
+  subgraph L1["Build lane - WF1, then WF2"]
+    direction LR
+    B["Builder x10"]:::wf -->|"report"| CR["Critic x10"]:::rev -->|"issues"| PO["Polish agent x10<br/>+10 in WF2"]:::wf
+  end
+  subgraph L2["Review lane - WF3, WF5, WF7"]
+    direction LR
+    FI["Lens finder x15"]:::rev -->|"findings"| RE["Lens refuter x15"]:::rev -->|"confirmed"| O["Orchestrator<br/>routes findings<br/>to file owners"]:::orch
+  end
+  subgraph L3["Fix lane - WF4, WF6"]
+    direction LR
+    FX["Owner fixer x19<br/>+10 re-runs"]:::wf -->|"report"| VE["Fix verifier x19"]:::rev -->|"fail"| RF["Re-fixer x4"]:::wf
+  end
+  L1 ~~~ L2
+  L2 -->|"next workflow"| L3
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+</script>
+<figcaption>Figure A6. Eight roles, all made from one agent type by prompt and
+schema alone. Blue: makers, which may edit their own module file. Green:
+checkers, told not to edit the source. 112 planned runs, 122 with the re-runs
+after the usage limit <span class="tag t-meas">measured</span>.</figcaption>
+</figure>
+<div class="scroll">
+<table aria-label="Subagent roles in this run">
+<tr><th>Role</th><th>In</th><th class="n">Runs</th><th>Edits</th><th>Returns (schema)</th><th>What its prompt asks</th></tr>
+<tr><td>Builder</td><td>WF1</td><td class="n">10</td><td>its own module file</td><td>report</td><td>"a specialist artist-engineer": build one module group, screenshot it, self-test</td></tr>
+<tr><td>Critic</td><td>WF1</td><td class="n">10</td><td>no</td><td>verdict <code>ship</code> / <code>needs-work</code> / <code>broken</code>, strengths, issues by severity</td><td>"an exacting ART DIRECTOR and QA ENGINEER", a 5-point checklist; "'ship' only if it is excellent"</td></tr>
+<tr><td>Polish agent</td><td>WF1, WF2</td><td class="n">20</td><td>its own module file</td><td>report</td><td>apply the critique or the missed issues, re-verify</td></tr>
+<tr><td>Lens finder</td><td>WF3, WF5, WF7</td><td class="n">15</td><td>no; writes only its own test folders</td><td>findings: id, severity, file, title, detail, evidence, fix</td><td>one lens over the frozen build; "Report only real problems — no padding — but do not miss real ones."</td></tr>
+<tr><td>Lens refuter</td><td>WF3, WF5, WF7</td><td class="n">15</td><td>no</td><td>verdicts: id, real, severity, reason</td><td>"try hard to REFUTE it: reproduce it yourself"</td></tr>
+<tr><td>Owner fixer</td><td>WF4, WF6</td><td class="n">19 (+10)</td><td>its own module file</td><td>report with an outcome for every finding id</td><td>fix the findings routed to its file, measure GPU cost before and after</td></tr>
+<tr><td>Fix verifier</td><td>WF4, WF6</td><td class="n">19</td><td>no</td><td>verdict <code>pass</code> / <code>fail</code>, check per finding, GPU before/after, regressions, remaining problems</td><td>check the owner's claims with its own measurements</td></tr>
+<tr><td>Re-fixer</td><td>WF4, WF6</td><td class="n">4</td><td>its own module file</td><td>report</td><td>fix what the verifier listed; runs only after a <code>fail</code></td></tr>
+</table>
+</div>
+<p><strong>Available, but not used here</strong> <span class="tag t-cited">cited</span>:</p>
+<ul>
+  <li><code>agentType</code> picks another agent type "instead of the default
+  workflow subagent". The Agent tool lists types such as general-purpose,
+  Explore ("Read-only search agent") and Plan, and "fork", a copy of the main loop
+  with its whole context.</li>
+  <li><code>effort</code> per agent: "omit to inherit the session effort; use 'low'
+  for cheap mechanical stages and higher tiers only for the hardest verify/judge
+  stages." This run let all 122 agents inherit <code>max</code>.</li>
+  <li><code>model</code>: "Default to omitting it — the agent inherits the main-loop
+  model".</li>
+  <li><code>isolation: 'worktree'</code>: "EXPENSIVE … use ONLY when agents mutate
+  files in parallel and would otherwise conflict". This run avoided conflicts
+  differently: each agent was told to edit only its own module file.</li>
+</ul>
+
+<!-- A.5 -->
+<h3 id="a-verify">A.5 The verifiers that try to refute the work</h3>
+<p>Three roles checked other agents' work, and they were built differently.</p>
+<div class="box">
+<dl>
+  <dt>Lens refuter</dt><dd>Reviews WF3, WF5 and WF7. Gets the whole finding list of one lens and must reproduce each finding with its own tests. Only findings it marks real are confirmed. It refuted 3 of 49, 1 of 31 and 0 of 12, and lowered the severity of 10, 4 and 1 findings.</dd>
+  <dt>Fix verifier</dt><dd>Fix rounds WF4 and WF6. Checks one owner's report: each finding id, GPU cost before and after, regressions. Its <code>fail</code> starts a re-fix. It failed 3 of 10 groups, then 1 of 9.</dd>
+  <dt>Critic</dt><dd>WF1 only. Judges quality and lists issues. It is not asked to refute anything, and no one checked the critics' 109 issues.</dd>
+</dl>
+</div>
+<p>The two refuting prompts, as the scripts sent them <span class="tag t-meas">measured</span>:</p>
+<pre class="prompt"><code>Lens refuter (WF3, WF5, WF7):
+You are an independent, skeptical VERIFIER. Another reviewer (lens: ${L.key})
+reported the findings below. For EACH finding, try hard to REFUTE it: reproduce it
+yourself (screenshots, measurements, code reading). Mark real=true only if you
+reproduced/confirmed it; otherwise real=false with the reason. Re-assess severity
+honestly (none if not real).
+
+Fix verifier (WF4):
+YOU ARE AN INDEPENDENT VERIFIER (read-only: do not edit src). The owner of
+src/modules/${g.id}.js just worked through AQ/tmp/wave3/${g.id}.json …
+Check, skeptically and with your own measurements:
+1. Each finding id in the input file: is it really resolved in the current
+   code/behaviour? Reproduce the original evidence where possible.
+2. GPU cost: measure tools/gpucost/gpucost.mjs … on the pre-wave build … vs a
+   fresh build of the current file …
+3. Regressions: compare DPR-2 close-up clips and normal screenshots old vs new …
+Verdict 'pass' only if every finding is resolved or soundly declined, GPU cost did
+not get worse (and dropped where the target asked for it), and there are no
+regressions.</code></pre>
+<p>The workflow reference names more ways to verify than this run used
+<span class="tag t-cited">cited</span>:</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  REF["Quality patterns in the<br/>workflow reference"]:::cc
+  REF --> A1["Adversarial verify<br/>N skeptics per finding,<br/>a majority refutes = drop it"]:::cc
+  REF --> A2["Perspective-diverse verify<br/>a different lens per verifier"]:::cc
+  REF --> A3["Judge panel<br/>N attempts, judges score,<br/>build on the winner"]:::cc
+  REF --> A4["Loop-until-dry<br/>new finders until K rounds<br/>find nothing new"]:::cc
+  REF --> A5["Completeness critic<br/>what is missing?"]:::cc
+  REF --> A6["No silent caps<br/>log what was dropped"]:::cc
+  A1 --> U1["Lighter form used:<br/>1 refuter per lens batch,<br/>15 refuter runs for 92 findings"]:::rev
+  A2 --> U2["Used to find, not to verify:<br/>6 lenses, then 3"]:::rev
+  A3 --> N3["Not used"]:::prob
+  A4 --> N4["Not as a loop in a script:<br/>3 review rounds by hand,<br/>46, 30, 12 confirmed, never dry"]:::prob
+  A5 --> U5["Partly: the WF1 critics,<br/>the 40 requirement ids"]:::rev
+  A6 --> N6["Broken in WF1, WF4, WF6:<br/>reports cut with .slice()<br/>and nothing logged"]:::prob
+  classDef cc fill:#ece9e4,stroke:#5a5a5a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure A7. Verification patterns in the reference (grey) and how this
+run used them. Green: used. Red: not used, or used against the advice.</figcaption>
+</figure>
+<p>The reference's own scaling line asks for a "3–5 vote adversarial pass" when
+the user wants something "thorough" or "comprehensive". This run used one vote: a
+single refuter judged a whole lens's list. Across the three reviews, 92 findings
+were judged by 15 refuter runs. Three to five votes per finding would have meant
+276 to 460 refuter runs <span class="tag t-deriv">derived</span>. The reference
+also says: "No silent caps: if a workflow bounds coverage (top-N, no-retry,
+sampling), log() what was dropped — silent truncation reads as "covered
+everything" when it didn't." <span class="tag t-cited">cited</span> The cuts in
+Example&nbsp;1 did exactly that, and the orchestrator found them only by reading the
+journal.</p>
+
+<!-- A.6 -->
+<h3 id="a-howmany">A.6 Who decided how many agents?</h3>
+<p>No instruction text set a count. The counts came from three places, in this
+order.</p>
+<figure class="dia">
+<script type="text/x-mermaid">
+flowchart TD
+  M["Mode reminder<br/>ultracode: a workflow for every<br/>substantive task, cost is<br/>not a constraint"]:::cc
+  G["Soft guidance in the prompts<br/>size guideline: under 10 agents<br/>scale to what the user asked<br/>default to pipeline()<br/>quality patterns"]:::cc
+  O["1. The orchestrator's judgment<br/>while it writes each script"]:::orch
+  S["2. Constants in the script<br/>GROUPS: 10, 10, 10, 9<br/>LENSES: 6, 6, 3<br/>1 refuter per lens"]:::wf
+  R["3. Results while it runs<br/>no findings: no refuter<br/>pass: no re-fix<br/>usage limit: automatic re-run"]:::rev
+  N(["Agents that ran<br/>112 planned, 122 with re-runs"]):::user
+  H["Hard limits from Claude Code<br/>min(16, CPUs - 2) at once<br/>1000 per workflow<br/>4096 items per call<br/>budget, if the user sets one"]:::prob
+  M --> O
+  G --> O
+  O --> S
+  S --> R
+  R --> N
+  H -.->|"never reached<br/>in this run"| N
+  classDef cc fill:#ece9e4,stroke:#5a5a5a,color:#1a1a1a
+  classDef orch fill:#f3e3d3,stroke:#7a3b12,color:#1a1a1a
+  classDef wf fill:#dce9f5,stroke:#2b5d8a,color:#1a1a1a
+  classDef rev fill:#dcefe0,stroke:#1c5f2e,color:#1a1a1a
+  classDef user fill:#e6e0f7,stroke:#4a3f8f,color:#1a1a1a
+  classDef prob fill:#f7dcdc,stroke:#8a2020,color:#1a1a1a
+</script>
+<figcaption>Figure A8. Where the agent counts came from. The prompts shape the
+orchestrator's choices; the script fixes them; the results trim them.</figcaption>
+</figure>
+<div class="scroll">
+<table aria-label="Agent counts per workflow and what set them">
+<tr><th>Workflow</th><th>Shape</th><th class="n">Runs</th><th>Set by the orchestrator in the script</th><th>Changed by results at run time</th></tr>
+<tr><td>WF1 <code>aquarium-build-modules</code></td><td>pipeline: build → critique → polish</td><td class="n">30</td><td>10 groups, one per module file</td><td>none; every builder and critic returned</td></tr>
+<tr><td>WF2 <code>aquarium-polish-wave2</code></td><td>parallel, one stage</td><td class="n">10</td><td>one owner per group</td><td>none</td></tr>
+<tr><td>WF3 <code>aquarium-global-review</code></td><td>pipeline: find → refute</td><td class="n">12</td><td>6 lenses, 1 refuter each</td><td>a refuter runs only if its finder found something; all 6 did</td></tr>
+<tr><td>WF4 <code>aquarium-wave3-fix-verify</code></td><td>pipeline: fix → verify → re-fix if failed</td><td class="n">23 (+10)</td><td>10 groups with routed findings</td><td>re-fix for the 3 that failed; Claude Code re-ran all 10 fixers after the usage limit (attempt 2 in the records)</td></tr>
+<tr><td>WF5 <code>aquarium-final-acceptance</code></td><td>pipeline: find → refute</td><td class="n">12</td><td>the same 6 lenses</td><td>all 6 finders found something</td></tr>
+<tr><td>WF6 <code>aquarium-wave4-final-fixes</code></td><td>pipeline: fix → verify → re-fix if failed</td><td class="n">19</td><td>9 groups; no assignment went to flora</td><td>re-fix for 1 group (angelfish and manta)</td></tr>
+<tr><td>WF7 <code>aquarium-release-gate</code></td><td>pipeline: find → refute</td><td class="n">6</td><td>3 merged lenses, 1 refuter each</td><td>all 3 finders found something</td></tr>
+</table>
+</div>
+<p>All rows <span class="tag t-meas">measured</span> from the scripts and the
+workflow records. The script names count "waves" differently from this page:
+the orchestrator's wave 3 is WF4 and its wave 4 is WF6.</p>
+<p><strong>So, dynamic or hard-coded?</strong></p>
+<ul>
+  <li><strong>Not hard-coded in Claude Code.</strong> Neither the tool
+  descriptions, the ultracode reminder nor the workflow reference names a count
+  for any task. The reference is a skill of patterns. Its numbers are examples: 3
+  skeptics in the adversarial-verify code, 3–5 votes for "be comprehensive", 2
+  empty rounds in the loop-until-dry code, 10 in a loop-until-count example.</li>
+  <li><strong>Decided at run time, twice.</strong> First by the orchestrator when
+  it wrote each script: the 10 groups follow the 10 module files it planned in
+  Phase&nbsp;0, and the lens lists are its own. Its visible messages state each
+  shape at launch ("six independent lenses … each followed by a skeptical
+  verifier"; "3 lenses … each followed by a refuting verifier") but give no reason
+  for the numbers. Second, by the results inside the script: skipped refuters,
+  conditional re-fixes and automatic re-runs.</li>
+  <li><strong>Only the safety caps are fixed numbers.</strong> This run never
+  reached them. At most 10 agents ran at once in any workflow, against a cap of
+  16 on this 20-thread CPU <span class="tag t-deriv">derived</span>, and the
+  largest workflow had 33 runs, against 1,000. No agent waited for a free slot;
+  the only delay was the usage-limit pause in WF4
+  <span class="tag t-meas">measured</span>.</li>
+  <li><strong>The size guideline.</strong> The tool text in this session asks for
+  fewer than 10 agents per workflow unless the user's prompt calls for a different
+  scale. Only WF7 (6 runs) stayed under 10; the others had 10 to 33 runs. The
+  logs do not keep the tool text the model saw on 4 and 5 October, so this page
+  cannot say whether the same guideline was in force then. If it was, six of the
+  seven workflows went past it; as a guideline, it stops nothing.</li>
+  <li><strong>Saved workflows are the exception.</strong> The Workflow tool can
+  also run a predefined workflow by name ("built-in or from .claude/workflows/"),
+  and such a script can fix its own counts. This run used none: all 7 scripts
+  were written during the run, for this task.</li>
+</ul>
+<p><strong>How to steer it.</strong> Because the counts are the orchestrator's
+choice, the prompt is the place to set them:</p>
+<ul>
+  <li>Turn ultracode on for one message by writing "ultracode" in it, or for the
+  session with <code>/effort</code>, as in this run.</li>
+  <li>Cap the spend with a budget such as <code>+5M</code>. It is a hard ceiling:
+  once the turn has spent that many output tokens, workflows cannot start new
+  agents.</li>
+  <li>Raise or remove the size guideline with "Dynamic workflow size" in
+  <code>/config</code>.</li>
+  <li>Name the shape you want: "3 refuters per finding", "repeat the review until
+  two rounds find nothing new", "use lower effort for builders and max only for
+  verifiers", "send a verifier your own engine patches too". The orchestrator
+  writes such requests into the script; nothing else will.</li>
+</ul>
 
 <p class="foot">
 Session: 4–5 October 2026, local time UTC+8. Delivered file:
