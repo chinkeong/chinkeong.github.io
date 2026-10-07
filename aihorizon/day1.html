@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Horizon Day 1</title>
+<meta name="description" content="AI Horizon 2026, Day 1 (6 Oct 2026): programme and session notes.">
+<style>
+  :root {
+    --ground: #fafbf7; --surface: #f0f3ea; --ink: #1d2118; --muted: #5d6555;
+    --line: #dde3d2; --accent: #5a8f00; --accent-ink: #3f6600;
+    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
+    --body: "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
+      --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
+    --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--body); font-size: 16px; line-height: 1.65;
+    margin: 0; min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 72px 16px 96px; }
+  header { border-bottom: 2px solid var(--ink); padding-bottom: 30px; margin-bottom: 40px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+  }
+  .eyebrow a { color: inherit; text-decoration: none; }
+  h1 {
+    font-family: var(--mono); font-size: clamp(26px, 5vw, 36px);
+    line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em;
+  }
+  .lede { color: var(--muted); margin: 0; max-width: 60ch; }
+  a { color: var(--accent-ink); }
+  .section-label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 48px 0 18px;
+  }
+  .section-label::before { content: "§ "; color: var(--accent); }
+  .note {
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 3px solid var(--accent); padding: 14px 18px; font-size: 15px;
+  }
+  .note p { margin: 0; }
+  ol.agenda { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  ol.agenda > li {
+    display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 16px;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+  }
+  .t {
+    font-family: var(--mono); font-size: 13px; color: var(--muted);
+    font-variant-numeric: tabular-nums; padding-top: 2px;
+  }
+  ol.agenda h3 { font-size: 16px; line-height: 1.4; margin: 0; }
+  .who { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  .who span { display: block; }
+  li.brk h3 { font-weight: 400; color: var(--muted); font-size: 14px; }
+  .sum { margin: 10px 0 0; font-size: 15px; }
+  .sum ul { margin: 6px 0 0; padding-left: 20px; }
+  .sum li { display: list-item; padding: 0; border: 0; margin: 0 0 6px; }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  @media (max-width: 520px) {
+    ol.agenda > li { grid-template-columns: 1fr; }
+  }
+  footer {
+    margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow"><a href="/">chinkeong.github.io</a> / <a href="./">aihorizon</a> / day 1</p>
+  <h1>AI Horizon 2026 · Day 1</h1>
+  <p class="lede">Tuesday 6 October 2026 · Penang Waterfront Convention Centre (PWCC) · organised by Tech Dome Penang.</p>
+</header>
+
+<div class="note"><p>So far only the opening speech has notes, taken from press coverage. The other sessions show the title and speaker from the printed programme, and their notes will be added. Times are as printed and may have shifted on the day.</p></div>
+
+<p class="section-label">Programme</p>
+<ol class="agenda">
+  <li class="brk">
+    <span class="t">8:00–9:00</span>
+    <div>
+      <h3>Arrival of participants and conference check-in</h3>
+    </div>
+  </li>
+  <li>
+    <span class="t">9:00–9:15</span>
+    <div>
+      <h3>Welcome speech to AI Horizon 2026</h3>
+      <p class="who">YB Jagdeep Singh Deo, Deputy Chief Minister II; Chairman of Tech Dome Penang &amp; AI Horizon 2026</p>
+      <div class="sum">
+        <ul>
+          <li>Penang's case for itself: about 10% of the world's semiconductor chips are made there, with roughly 450 multinationals and 7,500 SMEs in the state.</li>
+          <li>On AI itself: “We have to embrace it and ensure that it does not take control over us. That's the most important challenge.” He also spoke of the move from AI towards “SI … super intelligence”.</li>
+          <li>On working together: “Nowadays, you cannot work in silos. You have to work with everyone.” He cited recent MOUs signed in Shanghai, Shenzhen and India, and talks with British counterparts.</li>
+        </ul>
+        <p class="src">From press coverage: <a href="https://www.buletinmutiara.com/global-ai-minds-gather-in-penang/">Buletin Mutiara</a>, <a href="https://thesun.my/business/global-positioning-keeps-penang-ahead-in-ai-race/">The Sun</a>, both 6 Oct 2026.</p>
+      </div>
+    </div>
+  </li>
+  <li class="brk">
+    <span class="t">9:15–9:30</span>
+    <div>
+      <h3>Opening gimmick and memento</h3>
+    </div>
+  </li>
+  <li class="brk">
+    <span class="t">9:30–9:50</span>
+    <div>
+      <h3>Departure of guest of honour and break</h3>
+    </div>
+  </li>
+  <li>
+    <span class="t">9:50–10:00</span>
+    <div>
+      <h3>Programme overview by conference chair</h3>
+      <p class="who">Mr. ET Tan, Founder, ET Partners</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">10:05–10:25</span>
+    <div>
+      <h3>Keynote: Building an AI Ecosystem — A Practical Path from AI Experimentation to Industry Transformation</h3>
+      <p class="who">Mr. Raja Segaran, Director, Regional Digital Economy Office, MDEC</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">10:30–10:50</span>
+    <div>
+      <h3>ASUS Blackwell Implementation for Local LLM &amp; OpenClaw</h3>
+      <p class="who">Dr. Ahmad Nizar Harun, CEO, MIMOS Academy</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">10:55–11:15</span>
+    <div>
+      <h3>Beyond the Grayscale: Bringing Clarity to Medical Diagnostic &amp; Health Screening</h3>
+      <p class="who">Mr. Justin Koh, Founder &amp; Managing Director, VPara</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">11:20–11:40</span>
+    <div>
+      <h3>Building a Start-up with AI as Infrastructure</h3>
+      <p class="who">Dato&#x27; Ts. Dr. Shanmuganathan Palanisamy, CEO, ECTrons</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">11:45–12:05</span>
+    <div>
+      <h3>Gov AI Tani Implementation: Scaling AI-Powered Field Guidance to Malaysia&#x27;s Paddy Farmers via WhatsApp</h3>
+      <p class="who">Mr. Bjarte Olsen, Managing Director, Global AI Village</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">12:10–12:30</span>
+    <div>
+      <h3>From Crisis Response to Accredited Excellence: Building Sustainable Digital Health Systems</h3>
+      <p class="who">Ms. Viva Shaik Farid, Director &amp; General Manager, United Crest Healthcare</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li class="brk">
+    <span class="t">12:30–1:40</span>
+    <div>
+      <h3>Lunch and networking</h3>
+    </div>
+  </li>
+  <li>
+    <span class="t">1:45–2:45</span>
+    <div>
+      <h3>Panel: The AI Reality Check — Challenges, Lessons and Breakthroughs</h3>
+      <p class="who"><span>Moderator: Mr. Aziz Kevin Lee, Head of Northern Region Digital Economy Office (RDEO), MDEC</span><span>Mr. Calum Halcrow, CEO, HiveKind</span><span>Mr. Jan Henrik Bartscht, CEO, Leadapreneur</span><span>Mr. Chan Kee Siak, CEO, Exabytes</span><span>Mr. Kai Chin Low, VP of Global Alliances &amp; Channel Sales, CERTIS</span></p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">2:50–3:10</span>
+    <div>
+      <h3>Humanoid Robots Are Coming. Is Your Business Ready?</h3>
+      <p class="who">Mr. Edwin Yap, CEO, Mr. Robot</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">3:15–3:35</span>
+    <div>
+      <h3>The Smart Expressway: How AI Is Redefining Malaysia&#x27;s Highway Journey</h3>
+      <p class="who">Ts. Muhammad Hadzrin Mahdi, Head Customer Solutions, TERAS Teknologi</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li class="brk">
+    <span class="t">3:35–3:50</span>
+    <div>
+      <h3>Tea break and networking</h3>
+    </div>
+  </li>
+  <li>
+    <span class="t">3:55–4:15</span>
+    <div>
+      <h3>Make AI Real: How AI Moves from Digital to Physical</h3>
+      <p class="who">Mr. Tindaro Danze, CEO, Siemens Malaysia</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">4:20–4:40</span>
+    <div>
+      <h3>Crossing the AI Chasm: From Fear to Adoption in Finance GBS</h3>
+      <p class="who">Ms. Oh Ming Poh, General Manager, Wilmar Global Business Services</p>
+      <!-- notes -->
+    </div>
+  </li>
+  <li>
+    <span class="t">4:45–5:00</span>
+    <div>
+      <h3>Key takeaways and closing remarks</h3>
+      <!-- notes -->
+    </div>
+  </li>
+</ol>
+
+<footer>
+  <span>© 2026 chinkeong</span>
+  <a href="./">AI Horizon 2026 notes</a>
+  <a href="https://www.techdomepenang.org/ai-horizon-2026/">Event site</a>
+</footer>
+</div>
+</body>
+</html>
