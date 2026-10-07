@@ -4,247 +4,306 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Horizon Day 1</title>
-<meta name="description" content="AI Horizon 2026, Day 1 (6 Oct 2026): programme and session notes.">
+<meta name="description" content="AI Horizon 2026, Day 1 (6 Oct 2026, Penang): 11 talks distilled into the points worth sharing with the team.">
 <style>
-  :root {
-    --ground: #fafbf7; --surface: #f0f3ea; --ink: #1d2118; --muted: #5d6555;
-    --line: #dde3d2; --accent: #5a8f00; --accent-ink: #3f6600;
-    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
-    --body: "Segoe UI", system-ui, sans-serif;
+:root{
+  --bg:#fafbf7; --surface:#f0f3ea; --card:#ffffff; --ink:#1d2118; --muted:#5d6555;
+  --line:#dde3d2; --accent:#5a8f00; --accent-ink:#3f6600; --accent-soft:#e6f0d4;
+  --mono:"Cascadia Code",Consolas,"Courier New",monospace;
+  --body:"Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131610; --surface:#1b1f15; --card:#1f2419; --ink:#e5eadb; --muted:#9aa38c;
+    --line:#2b3122; --accent:#9ed845; --accent-ink:#b5e763; --accent-soft:#26301a;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
-      --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
-    }
-  }
-  :root[data-theme="dark"] {
-    --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
-    --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
-  }
-  * { box-sizing: border-box; }
-  body {
-    background: var(--ground); color: var(--ink);
-    font-family: var(--body); font-size: 16px; line-height: 1.65;
-    margin: 0; min-height: 100vh;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 72px 16px 96px; }
-  header { border-bottom: 2px solid var(--ink); padding-bottom: 30px; margin-bottom: 40px; }
-  .eyebrow {
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
-  }
-  .eyebrow a { color: inherit; text-decoration: none; }
-  h1 {
-    font-family: var(--mono); font-size: clamp(26px, 5vw, 36px);
-    line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em;
-  }
-  .lede { color: var(--muted); margin: 0; max-width: 60ch; }
-  a { color: var(--accent-ink); }
-  .section-label {
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--muted); margin: 48px 0 18px;
-  }
-  .section-label::before { content: "§ "; color: var(--accent); }
-  .note {
-    background: var(--surface); border: 1px solid var(--line);
-    border-left: 3px solid var(--accent); padding: 14px 18px; font-size: 15px;
-  }
-  .note p { margin: 0; }
-  ol.agenda { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  ol.agenda > li {
-    display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 16px;
-    padding: 14px 0; border-bottom: 1px solid var(--line);
-  }
-  .t {
-    font-family: var(--mono); font-size: 13px; color: var(--muted);
-    font-variant-numeric: tabular-nums; padding-top: 2px;
-  }
-  ol.agenda h3 { font-size: 16px; line-height: 1.4; margin: 0; }
-  .who { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
-  .who span { display: block; }
-  li.brk h3 { font-weight: 400; color: var(--muted); font-size: 14px; }
-  .sum { margin: 10px 0 0; font-size: 15px; }
-  .sum ul { margin: 6px 0 0; padding-left: 20px; }
-  .sum li { display: list-item; padding: 0; border: 0; margin: 0 0 6px; }
-  .src { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 8px 0 0; }
-  @media (max-width: 520px) {
-    ol.agenda > li { grid-template-columns: 1fr; }
-  }
-  footer {
-    margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
-    font-family: var(--mono); font-size: 12px; color: var(--muted);
-    display: flex; flex-wrap: wrap; gap: 8px 24px;
-  }
+}
+:root[data-theme="dark"]{
+  --bg:#131610; --surface:#1b1f15; --card:#1f2419; --ink:#e5eadb; --muted:#9aa38c;
+  --line:#2b3122; --accent:#9ed845; --accent-ink:#b5e763; --accent-soft:#26301a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (min-width:1100px) and (min-height:720px){ html{scroll-snap-type:y proximity} }
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5;
+  font-size:clamp(16px,0.55vw + 10px,22px)}
+a{color:var(--accent-ink)}
+#bar{position:fixed;top:0;left:0;height:4px;width:0;background:var(--accent);z-index:10}
+.slide{min-height:100svh;display:flex;align-items:center;scroll-snap-align:start;
+  border-bottom:1px solid var(--line);padding:clamp(48px,6vh,96px) 16px}
+.slide:nth-child(even){background:var(--surface)}
+.in{width:100%;max-width:1480px;margin:0 auto;padding:0 clamp(0px,3vw,64px)}
+.kicker{font-family:var(--mono);font-size:.72em;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 .9em}
+.kicker a{color:inherit;text-decoration:none}
+h1{font-family:var(--mono);font-size:clamp(34px,4.2vw,84px);line-height:1.08;margin:0 0 .35em;letter-spacing:-.02em}
+h2{font-size:clamp(24px,2.1vw,46px);line-height:1.18;margin:0 0 .3em;letter-spacing:-.01em}
+.head{font-size:clamp(19px,1.35vw,30px);line-height:1.35;color:var(--accent-ink);font-weight:600;margin:.2em 0 0;max-width:34ch}
+.who{color:var(--muted);font-size:.86em;margin:.9em 0 0;padding:0;list-style:none}
+.who li{margin:.15em 0}
+.lede{font-size:clamp(18px,1.25vw,28px);color:var(--muted);max-width:46ch;margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,80px);align-items:start}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin:1.6em 0 0}
+.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);
+  padding:.7em .9em;flex:1 1 9.5em;max-width:16em}
+.stat b{display:block;font-family:var(--mono);font-size:clamp(20px,1.55vw,34px);line-height:1.15;color:var(--ink)}
+.stat span{display:block;font-size:.78em;color:var(--muted);margin-top:.3em;line-height:1.35}
+ul.pts{list-style:none;margin:0;padding:0}
+ul.pts li{position:relative;padding:.55em 0 .55em 1.3em;border-bottom:1px solid var(--line)}
+ul.pts li:last-child{border-bottom:0}
+ul.pts li::before{content:"";position:absolute;left:0;top:1.15em;width:.5em;height:.5em;background:var(--accent)}
+ul.pts b{color:var(--ink)}
+.take{margin:1.2em 0 0;background:var(--accent-soft);border-left:4px solid var(--accent);padding:.8em 1em}
+.take::before{content:"Takeaway for us";display:block;font-family:var(--mono);font-size:.68em;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent-ink);margin-bottom:.25em}
+.note{font-size:.75em;color:var(--muted);margin:1em 0 0;font-style:italic}
+.num{font-family:var(--mono);color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,19em),1fr));gap:14px;margin-top:1.4em}
+.tile{background:var(--card);border:1px solid var(--line);padding:1em 1.1em}
+.tile h3{margin:0 0 .3em;font-size:1.05em}
+.tile p{margin:0;color:var(--ink);font-size:.92em}
+.tile small{display:block;margin-top:.6em;font-family:var(--mono);font-size:.68em;color:var(--muted)}
+.tile .n{font-family:var(--mono);color:var(--accent);font-size:.8em}
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,21em),1fr));gap:8px 24px;margin:1.6em 0 0;padding:0;list-style:none;font-size:.9em}
+.toc a{display:flex;gap:.7em;text-decoration:none;color:var(--ink);padding:.35em 0;border-bottom:1px solid var(--line)}
+.toc a:hover{color:var(--accent-ink)}
+.toc .t{font-family:var(--mono);color:var(--muted);min-width:3.2em}
+.hint{margin-top:2.2em;font-family:var(--mono);font-size:.7em;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+nav.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:9}
+nav.dots a{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);display:block}
+nav.dots a.on{background:var(--accent);border-color:var(--accent)}
+footer{padding:28px 16px 40px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+footer a{margin:0 10px}
+@media (max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .slide{min-height:auto}
+  nav.dots{display:none}
+  .stat{max-width:none}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <p class="eyebrow"><a href="/">chinkeong.github.io</a> / <a href="./">aihorizon</a> / day 1</p>
-  <h1>AI Horizon 2026 · Day 1</h1>
-  <p class="lede">Tuesday 6 October 2026 · Penang Waterfront Convention Centre (PWCC) · organised by Tech Dome Penang.</p>
-</header>
+<div id="bar"></div>
+<nav class="dots" aria-label="Slides"><a href="#top" title="Cover"></a><a href="#themes" title="Day 1 in one minute"></a><a href="#mdec" title="01 Building an AI Ecosystem"></a><a href="#mimos" title="02 ASUS Blackwell implementation for local LLM &amp; OpenClaw"></a><a href="#vpara" title="03 Beyond the Grayscale"></a><a href="#ectrons" title="04 Building a start-up with AI as infrastructure"></a><a href="#tani" title="05 Gov AI Tani"></a><a href="#crest" title="06 From crisis response to accredited excellence"></a><a href="#panel" title="07 Panel"></a><a href="#robot" title="08 Humanoid robots are coming. Is your business ready?"></a><a href="#teras" title="09 The Smart Expressway"></a><a href="#siemens" title="10 Make AI Real"></a><a href="#wilmar" title="11 Crossing the AI Chasm"></a><a href="#close" title="Closing"></a></nav>
+<main>
+<section class="slide" id="top">
+ <div class="in">
+  <p class="kicker"><a href="/">chinkeong.github.io</a> / <a href="./">aihorizon</a> / day 1</p>
+  <h1>AI Horizon 2026<br>Day 1</h1>
+  <p class="lede">Tuesday 6 October · Penang Waterfront Convention Centre. 11 talks, cut down to what's worth sharing. About 5 minutes to read.</p>
+  <ul class="toc"><li><a href="#mdec"><span class="t">01</span><span>Building an AI Ecosystem</span></a></li><li><a href="#mimos"><span class="t">02</span><span>ASUS Blackwell implementation for local LLM &amp; OpenClaw</span></a></li><li><a href="#vpara"><span class="t">03</span><span>Beyond the Grayscale</span></a></li><li><a href="#ectrons"><span class="t">04</span><span>Building a start-up with AI as infrastructure</span></a></li><li><a href="#tani"><span class="t">05</span><span>Gov AI Tani</span></a></li><li><a href="#crest"><span class="t">06</span><span>From crisis response to accredited excellence</span></a></li><li><a href="#panel"><span class="t">07</span><span>Panel</span></a></li><li><a href="#robot"><span class="t">08</span><span>Humanoid robots are coming. Is your business ready?</span></a></li><li><a href="#teras"><span class="t">09</span><span>The Smart Expressway</span></a></li><li><a href="#siemens"><span class="t">10</span><span>Make AI Real</span></a></li><li><a href="#wilmar"><span class="t">11</span><span>Crossing the AI Chasm</span></a></li></ul>
+  <p class="hint">↓ Scroll</p>
+ </div>
+</section>
 
-<div class="note"><p>So far only the opening speech has notes, taken from press coverage. The other sessions show the title and speaker from the printed programme, and their notes will be added. Times are as printed and may have shifted on the day.</p></div>
+<section class="slide" id="themes">
+ <div class="in">
+  <p class="kicker">Day 1 in one minute</p>
+  <h2>What speaker after speaker kept saying</h2>
+  <div class="tiles"><div class="tile"><span class="n">1</span><h3>Start small, win fast</h3><p>The first experiment should build confidence, not chase the biggest prize.</p><small>Wilmar · Mr. Robot · Chair</small></div><div class="tile"><span class="n">2</span><h3>Data is the real bottleneck</h3><p>Silos, quality and ownership come before models. 80% of industrial data goes unused.</p><small>Siemens · Certis · Wilmar</small></div><div class="tile"><span class="n">3</span><h3>Governance before scale</h3><p>Shadow AI and personal tools leak company and customer data.</p><small>Certis · Exabytes</small></div><div class="tile"><span class="n">4</span><h3>AI triages, humans decide</h3><p>AI sorts and flags, and people verify and escalate.</p><small>Certis · VPara · United Crest</small></div><div class="tile"><span class="n">5</span><h3>Leaders set the speed</h3><p>Approvals, culture and walking the talk limit progress more than the tech does.</p><small>Panel · Wilmar · Chair</small></div><div class="tile"><span class="n">6</span><h3>Go where users already are</h3><p>WhatsApp and voice beat a new app.</p><small>Rakyat Tani · Certis</small></div><div class="tile"><span class="n">7</span><h3>Physical AI is next</h3><p>Test in a digital twin first. The application and your data are the moat.</p><small>Siemens · Mr. Robot</small></div></div>
+ </div>
+</section>
 
-<p class="section-label">Programme</p>
-<ol class="agenda">
-  <li class="brk">
-    <span class="t">8:00–9:00</span>
-    <div>
-      <h3>Arrival of participants and conference check-in</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">9:00–9:15</span>
-    <div>
-      <h3>Welcome speech to AI Horizon 2026</h3>
-      <p class="who">YB Jagdeep Singh Deo, Deputy Chief Minister II; Chairman of Tech Dome Penang &amp; AI Horizon 2026</p>
-      <div class="sum">
-        <ul>
-          <li>Penang's case for itself: about 10% of the world's semiconductor chips are made there, with roughly 450 multinationals and 7,500 SMEs in the state.</li>
-          <li>On AI itself: “We have to embrace it and ensure that it does not take control over us. That's the most important challenge.” He also spoke of the move from AI towards “SI … super intelligence”.</li>
-          <li>On working together: “Nowadays, you cannot work in silos. You have to work with everyone.” He cited recent MOUs signed in Shanghai, Shenzhen and India, and talks with British counterparts.</li>
-        </ul>
-        <p class="src">From press coverage: <a href="https://www.buletinmutiara.com/global-ai-minds-gather-in-penang/">Buletin Mutiara</a>, <a href="https://thesun.my/business/global-positioning-keeps-penang-ahead-in-ai-race/">The Sun</a>, both 6 Oct 2026.</p>
-      </div>
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">9:15–9:30</span>
-    <div>
-      <h3>Opening gimmick and memento</h3>
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">9:30–9:50</span>
-    <div>
-      <h3>Departure of guest of honour and break</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">9:50–10:00</span>
-    <div>
-      <h3>Programme overview by conference chair</h3>
-      <p class="who">Mr. ET Tan, Founder, ET Partners</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">10:05–10:25</span>
-    <div>
-      <h3>Keynote: Building an AI Ecosystem — A Practical Path from AI Experimentation to Industry Transformation</h3>
-      <p class="who">Mr. Raja Segaran, Director, Regional Digital Economy Office, MDEC</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">10:30–10:50</span>
-    <div>
-      <h3>ASUS Blackwell Implementation for Local LLM &amp; OpenClaw</h3>
-      <p class="who">Dr. Ahmad Nizar Harun, CEO, MIMOS Academy</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">10:55–11:15</span>
-    <div>
-      <h3>Beyond the Grayscale: Bringing Clarity to Medical Diagnostic &amp; Health Screening</h3>
-      <p class="who">Mr. Justin Koh, Founder &amp; Managing Director, VPara</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">11:20–11:40</span>
-    <div>
-      <h3>Building a Start-up with AI as Infrastructure</h3>
-      <p class="who">Dato&#x27; Ts. Dr. Shanmuganathan Palanisamy, CEO, ECTrons</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">11:45–12:05</span>
-    <div>
-      <h3>Gov AI Tani Implementation: Scaling AI-Powered Field Guidance to Malaysia&#x27;s Paddy Farmers via WhatsApp</h3>
-      <p class="who">Mr. Bjarte Olsen, Managing Director, Global AI Village</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">12:10–12:30</span>
-    <div>
-      <h3>From Crisis Response to Accredited Excellence: Building Sustainable Digital Health Systems</h3>
-      <p class="who">Ms. Viva Shaik Farid, Director &amp; General Manager, United Crest Healthcare</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">12:30–1:40</span>
-    <div>
-      <h3>Lunch and networking</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">1:45–2:45</span>
-    <div>
-      <h3>Panel: The AI Reality Check — Challenges, Lessons and Breakthroughs</h3>
-      <p class="who"><span>Moderator: Mr. Aziz Kevin Lee, Head of Northern Region Digital Economy Office (RDEO), MDEC</span><span>Mr. Calum Halcrow, CEO, HiveKind</span><span>Mr. Jan Henrik Bartscht, CEO, Leadapreneur</span><span>Mr. Chan Kee Siak, CEO, Exabytes</span><span>Mr. Kai Chin Low, VP of Global Alliances &amp; Channel Sales, CERTIS</span></p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">2:50–3:10</span>
-    <div>
-      <h3>Humanoid Robots Are Coming. Is Your Business Ready?</h3>
-      <p class="who">Mr. Edwin Yap, CEO, Mr. Robot</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">3:15–3:35</span>
-    <div>
-      <h3>The Smart Expressway: How AI Is Redefining Malaysia&#x27;s Highway Journey</h3>
-      <p class="who">Ts. Muhammad Hadzrin Mahdi, Head Customer Solutions, TERAS Teknologi</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">3:35–3:50</span>
-    <div>
-      <h3>Tea break and networking</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">3:55–4:15</span>
-    <div>
-      <h3>Make AI Real: How AI Moves from Digital to Physical</h3>
-      <p class="who">Mr. Tindaro Danze, CEO, Siemens Malaysia</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">4:20–4:40</span>
-    <div>
-      <h3>Crossing the AI Chasm: From Fear to Adoption in Finance GBS</h3>
-      <p class="who">Ms. Oh Ming Poh, General Manager, Wilmar Global Business Services</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">4:45–5:00</span>
-    <div>
-      <h3>Key takeaways and closing remarks</h3>
-      <!-- notes -->
-    </div>
-  </li>
-</ol>
+<section class="slide" id="mdec">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">01</span> · 10:05</p>
+   <h2>Building an AI Ecosystem: from experimentation to industry</h2>
+   <ul class="who"><li>Raja Segaran · Director, Regional Digital Economy Office, MDEC</li></ul>
+   <p class="head">Malaysia&#x27;s AI push is about balancing supply and demand, not just buying GPUs.</p>
+   <div class="stats"><div class="stat"><b>23.4%</b><span>digital economy share of GDP (DOSM 2024)</span></div><div class="stat"><b>100+</b><span>AI solution providers in MDEC&#x27;s network</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Grow the cake, not just the slice.</b> The digital share of GDP matters less than the size of the whole economy.</li><li><b>Five building blocks:</b> local tech supply with its own IP (not only MNCs), real demand from industry, talent at every level from board to entry, compute, and data governance.</li><li><b>The bubble question:</b> dot-com era fibre lasted 20–30 years. GPU spending is bigger and ages faster, so real demand has to keep pace.</li><li><b>Decide the trust level per process:</b> human-in-the-loop, on-the-loop or out-of-the-loop, especially in regulated sectors.</li></ul>
+   <p class="take">MDEC&#x27;s northern office in George Town matches companies with AI vendors and runs use-case labs. It&#x27;s a free door to knock on.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="mimos">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">02</span> · 10:30</p>
+   <h2>ASUS Blackwell implementation for local LLM &amp; OpenClaw</h2>
+   <ul class="who"><li>Dr. Ahmad Nizar Harun · CEO, MIMOS Academy</li></ul>
+   <p class="head">Run a small LLM locally for private data, and treat AI as a worker, not a chatbot.</p>
+   <div class="stats"><div class="stat"><b>6,000+</b><span>people trained by MIMOS Academy</span></div><div class="stat"><b>2 weeks</b><span>how often the AI landscape shifts, in his words</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Three levels of use:</b> companion (think with it) → assistant (one draft flows through Excel, PowerPoint and more) → workers (a team of agents with skills such as finance, legal or accounting).</li><li><b>A local box:</b> an ASUS Blackwell desktop runs small open models on-premises, so sensitive data never leaves the building. GPU memory shortages are pushing prices up.</li><li><b>Paper → knowledge base:</b> scan old records to PDF and load them into a local LLM. One example correlated police investigation files to link suspects and victims. Another turned 10 years of paper maintenance logs into fast troubleshooting.</li><li><b>An always-on agent</b> gives him a morning brief of every AI announcement.</li><li><b>Non-developers</b> in his classes now build their own HR, point-of-sale and tutoring apps.</li></ul>
+   <p class="take">A local LLM over our own archive of reports is a low-risk first project.</p>
+   <p class="note">Audio was poor; details are approximate.</p>
+  </div>
+ </div>
+</section>
+<section class="slide" id="vpara">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">03</span> · 10:55</p>
+   <h2>Beyond the Grayscale: clarity for medical diagnostics &amp; health screening</h2>
+   <ul class="who"><li>Justin Koh · Founder &amp; Managing Director, VPara</li></ul>
+   <p class="head">AI ultrasound at GP-clinic prices could move screening out of hospitals.</p>
+   <div class="stats"><div class="stat"><b>&lt;10 s</b><span>to flag a lesion in the live demo</span></div><div class="stat"><b>&lt; gaming PC</b><span>device cost, within a GP&#x27;s budget</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Live demo:</b> a handheld ultrasound probe on a Samsung tablet scanned a breast phantom. The AI flagged a possible lesion and rated it BI-RADS 3 in under 10 seconds.</li><li><b>Leapfrogging:</b> give screening tools to GP clinics instead of hospitals. Patients get earlier detection and clinics get a new source of revenue.</li><li><b>The doctor stays in charge.</b> The tool raises a GP's capability. It doesn't replace the specialist.</li></ul>
+   <p class="take">An expensive specialist step becomes cheap triage, and the expert only sees escalations. The pattern travels well beyond healthcare.</p>
+   <p class="note">The slides failed on stage and most of the talk is inaudible on the recording. Only the demo was captured clearly.</p>
+  </div>
+ </div>
+</section>
+<section class="slide" id="ectrons">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">04</span> · 11:20</p>
+   <h2>Building a start-up with AI as infrastructure</h2>
+   <ul class="who"><li>Dato&#x27; Ts. Dr. Shanmuganathan Palanisamy · CEO, ECTrons</li></ul>
+   <p class="head">Build AI into the company from day one, with humans as the master and AI as the servant.</p>
+   <div class="stats"><div class="stat"><b>3 mo → 2 wk</b><span>complex PCB design time with AI routing and layout</span></div><div class="stat"><b>~1 month</b><span>layout and software done in parallel</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>AI-native from day one:</b> a “virtual workforce” of AI agents covers roles a small firm can't staff.</li><li><b>Watch the cost trap:</b> swapping salaries for data-centre bills may just move the cost around.</li><li><b>Some jobs stay human-only.</b> That rule is set at the foundation, not added later.</li><li><b>Virtual PCB:</b> firmware is brought up on a digital board while the layout is still being done, so software is ready when the hardware lands.</li><li>“Innovation is not an exhibition, it's an assessment.” A small local company can compete with the big players.</li></ul>
+   <p class="take">Run hardware and software development in parallel on a digital twin instead of in sequence.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="tani">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">05</span> · 11:45</p>
+   <h2>Gov AI Tani: AI field guidance for paddy farmers via WhatsApp</h2>
+   <ul class="who"><li>Bjarte Olsen · Managing Director, Global AI Village</li></ul>
+   <p class="head">Not a chatbot. A state machine per farmer, delivered on WhatsApp.</p>
+   <div class="stats"><div class="stat"><b>~50%</b><span>Malaysia&#x27;s rice self-sufficiency</span></div><div class="stat"><b>&lt;1,000</b><span>farmers on the scheme today, against a 10,000 target</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Meet users where they are:</b> it runs on WhatsApp, so there's no app to download. Farmers use voice, text or photos, one-handed.</li><li><b>State, not Q&amp;A:</b> each farmer's ~120-day rice cycle is tracked stage by stage, from soil prep to sowing to harvest. When a step slips, the AI re-plans the rest.</li><li><b>Layers:</b> research papers and expert know-how, plus satellite soil moisture and hyper-local weather.</li><li><b>Per-farmer data shows who is struggling,</b> so the few field officers go where they're needed instead of visiting at random.</li><li><b>Mixed models:</b> commercial and open-source models, with a router that picks the right one per task.</li><li><b>Next:</b> use satellite data on paddy methane to nudge water practices, which could earn carbon credits. Subsidies and micro-insurance are planned too.</li></ul>
+   <p class="take">Any SOP-driven workforce (ships, construction, maintenance) can be modelled as states, with AI re-planning when reality drifts.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="crest">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">06</span> · 12:10</p>
+   <h2>From crisis response to accredited excellence: sustainable digital health</h2>
+   <ul class="who"><li>Viva Shaik Farid · Director &amp; General Manager, United Crest Healthcare</li></ul>
+   <p class="head">Grants built the system during COVID. Only a business model keeps it alive.</p>
+   <div class="stats"><div class="stat"><b>20×</b><span>more Singapore doctors used telemedicine during COVID</span></div><div class="stat"><b>2,500</b><span>doctors certified in telemedicine</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Continuous beats episodic:</b> home monitoring with IoT devices instead of seeing patients only at the clinic. GPs can earn from it.</li><li><b>AI voice triage (during COVID):</b> automated calls sorted enrolled patients into those who needed a doctor now and those who could wait.</li><li><b>Remote eye screening:</b> fundus images are read at GP level and sent to an ophthalmologist only when needed.</li><li><b>AI is a force multiplier for clinicians,</b> not a replacement for the care relationship.</li></ul>
+   <p class="take">Plan for when the funding stops: what pays for this once the pilot money is gone?</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="panel">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">07</span> · 1:45</p>
+   <h2>Panel: The AI Reality Check: challenges, lessons and breakthroughs</h2>
+   <ul class="who"><li>Moderator: Aziz Kevin Lee · MDEC RDEO</li><li>Calum Halcrow · HiveKind</li><li>Jan Henrik Bartscht · Leadapreneur</li><li>Chan Kee Siak · Exabytes</li><li>Kai Chin Low · CERTIS</li></ul>
+   <p class="head">The bottleneck isn&#x27;t the model. It&#x27;s data, approvals and people.</p>
+   <div class="stats"><div class="stat"><b>~400</b><span>alerts a day at Jewel Changi, triaged by AI first</span></div><div class="stat"><b>~1,000</b><span>CCTV cameras watched by computer vision</span></div><div class="stat"><b>~1,000</b><span>roles Certis can never fill</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Certis (25,000 staff):</b> a 24/7 voice AI helpdesk serves frontline staff and gives faster fixes with a fraction of the people. AI checks CCTV before a human decides (“real fire or faulty sensor?”). About 100 patrol robots work at Singapore sites.</li><li><b>Leaks come from inside:</b> one model was built on a customer's data and was caught in an audit. A staff member's personal AI use exposed private information.</li><li><b>Exabytes:</b> common mistakes are too many tools, people experimenting alone with no company policy, and data left on outside platforms.</li><li><b>The approval bottleneck:</b> 100 AI ideas and 5 approvers stalls everything, and good people leave.</li><li><b>“Slop grenades”:</b> AI sounds confident, so beginners trust it and pass along work they don't understand.</li><li><b>The cheapest start:</b> give operations teams AI for everyday tasks. No special use case is needed.</li><li><b>The human's job moves from doing to verifying,</b> so set up checks and metrics for AI output. Physical-world work still needs human oversight.</li></ul>
+   <p class="take">Publish an approved-tools list and a simple data policy before usage spreads on its own.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="robot">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">08</span> · 2:50</p>
+   <h2>Humanoid robots are coming. Is your business ready?</h2>
+   <ul class="who"><li>Edwin Yap · CEO, Mr. Robot</li></ul>
+   <p class="head">One wheeled humanoid instead of five separate automation cells.</p>
+   <div class="stats"><div class="stat"><b>6 tasks</b><span>pick, sort, inspect, pack, move and palletise, on one robot</span></div><div class="stat"><b>10M+</b><span>invested in a robot-training data centre</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Wheels, not legs, for industry:</b> faster and more stable. The upper body is human-shaped because human training video is abundant.</li><li><b>Replaces a multi-vendor stack:</b> picking cell, sorting cell, vision inspection, AMR fleet and tote station, which can easily cost millions.</li><li><b>Teach by demonstration:</b> remote-control the robot, record camera and joint data, train on GPUs, deploy. Tasks are scheduled with no-code drag and drop.</li><li><b>Hot-swap batteries</b> keep it running three shifts.</li><li><b>Hardware and AI models will commoditise.</b> The lasting advantage is the application and your own data, so start small to get the data flywheel going.</li></ul>
+   <p class="take">The first question isn&#x27;t which robot to buy. It&#x27;s which repetitive task we&#x27;d record first.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="teras">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">09</span> · 3:15</p>
+   <h2>The Smart Expressway: AI on Malaysia&#x27;s highways</h2>
+   <ul class="who"><li>Ts. Muhammad Hadzrin Mahdi · Head Customer Solutions, TERAS Teknologi</li></ul>
+   <p class="head">Highway tolls are moving to barrier-free, drive-through payment.</p>
+   <div class="stats"><div class="stat"><b>MLFF</b><span>Multi-Lane Free Flow, the end goal</span></div><div class="stat"><b>1,000+ km</b><span>of PLUS highway in scope</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Detection today:</b> RFID, number-plate recognition and video analytics classify vehicles and prevent double charging.</li><li><b>The path:</b> Single Lane Free Flow first, then Multi-Lane Free Flow, where you drive through at highway speed and the toll is charged to a registered e-wallet.</li><li><b>No on-board unit:</b> unlike Singapore's GNSS-based ERP, the approach relies on cameras and RFID. Detection rules are standardised across every concessionaire.</li><li><b>AI for safety:</b> highway CCTV detects people at risk on a stretch of road and dispatches patrol cars. This is done with the state government.</li></ul>
+   <p class="take">In regulated industries, standardising the detection rules matters as much as the AI model.</p>
+   <p class="note">Parts of this recording are inaudible.</p>
+  </div>
+ </div>
+</section>
+<section class="slide" id="siemens">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">10</span> · 3:55</p>
+   <h2>Make AI Real: how AI moves from digital to physical</h2>
+   <ul class="who"><li>Tindaro Danze · CEO, Siemens Malaysia</li></ul>
+   <p class="head">AI is a brain in a jar until you connect it to the shop floor.</p>
+   <div class="stats"><div class="stat"><b>3,000</b><span>smart factories targeted by 2030 (NIMP 2030)</span></div><div class="stat"><b>&lt;5%</b><span>of that target reached so far</span></div><div class="stat"><b>80%</b><span>of industrial data never used</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Consumer AI can be 80% right. The shop floor needs close to 100%,</b> especially when robots act on its output.</li><li><b>1 · Connect:</b> join the silos (PLM, ERP, MES, machines) with a shared data model so AI has context.</li><li><b>2 · Test safely:</b> Siemens simulates humanoids in a digital twin (NVIDIA Omniverse) first. “The virtual fails before the physical.” Cobots in its own packaging line show how hard edge cases are: grip, angle, and whether the box will close.</li><li><b>3 · Scale where it pays.</b> Don't pilot things that don't meet a business need.</li><li><b>Ready today:</b> an engineering agent for TIA Portal. You describe the intent and it generates PLC function blocks. It's safer because it stays digital, and it helps with an engineer shortage: semiconductors need ~60,000 engineers.</li></ul>
+   <p class="take">Late adopters can leapfrog, the way developing countries skipped landlines for mobile. Start with connecting data, not with robots.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="wilmar">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">11</span> · 4:20</p>
+   <h2>Crossing the AI Chasm: from fear to adoption in finance GBS</h2>
+   <ul class="who"><li>Oh Ming Poh · General Manager, Wilmar Global Business Services</li></ul>
+   <p class="head">One hour a week of AI time led to 1,300 automations in three months.</p>
+   <div class="stats"><div class="stat"><b>150k → ~500k</b><span>invoices a year, without adding headcount</span></div><div class="stat"><b>1,300</b><span>staff-built automations in 3 months</span></div><div class="stat"><b>~600 h</b><span>saved per week across ~300 people</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>The question was never whether to use AI.</b> It was how to scale without adding people, across 77 entities in 5 countries.</li><li><b>The journey:</b> transactional work (2013) → standardisation → RPA → AI.</li><li><b>Playbook:</b> find a real pain point → simplify first (stop reports nobody reads) → build something close to the person's daily work → celebrate small wins.</li><li><b>One hour a week</b> of AI exploration for the whole team: 260 use cases after two months and 1,300 after three.</li><li><b>Copying spreads it:</b> one finance staff member's no-code Power Automate flow was reused by colleagues, saving about 600 hours a week.</li><li><b>Use cases:</b> accounts-payable three-way match, vendor reconciliation, billing reminders, reading bank remittances, and real-time reporting.</li><li><b>Guardrails:</b> a solid data foundation, a safe sandbox, data controls, and leaders who walk the talk.</li></ul>
+   <p class="take">Trust comes from people seeing it, doing it, then embracing it. Announcements don&#x27;t close the gap.</p>
+   
+  </div>
+ </div>
+</section>
 
-<footer>
-  <span>© 2026 chinkeong</span>
-  <a href="./">AI Horizon 2026 notes</a>
-  <a href="https://www.techdomepenang.org/ai-horizon-2026/">Event site</a>
-</footer>
-</div>
+<section class="slide" id="close">
+ <div class="in">
+  <p class="kicker">Closing · ET Tan, conference chair</p>
+  <h2>It's not about the technology</h2>
+  <p class="head">Pick the problem that gives a small win. Use tools people can manage. Lead from the front.</p>
+  <p class="kicker" style="margin-top:2.2em">Worth trying</p>
+  <div class="tiles"><div class="tile"><h3>Protected AI hour</h3><p>One hour a week for everyone to automate one of their own tasks, then share it so others can copy it.</p><small>from: Wilmar</small></div><div class="tile"><h3>Approved tools and a data rule</h3><p>A short list of sanctioned AI tools and one clear rule on what data may go into them.</p><small>from: Certis · Exabytes</small></div><div class="tile"><h3>Archive → knowledge base</h3><p>Put old reports, logs and SOPs into a local LLM so we can search and troubleshoot them.</p><small>from: MIMOS Academy</small></div><div class="tile"><h3>Fast approval path</h3><p>A lightweight way to approve small AI ideas so they don&#x27;t queue behind big projects.</p><small>from: Panel</small></div></div>
+  <p class="note">Distilled from attendee recordings of each talk. Some audio was poor, so names follow the printed programme and figures are as stated by speakers, not independently checked. Day 2 focuses on factories and physical AI.</p>
+ </div>
+</section>
+</main>
+<footer><a href="./">AI Horizon 2026 notes</a><a href="day2.html">Day 2 →</a><a href="https://www.techdomepenang.org/ai-horizon-2026/">Event site</a></footer>
+<script>
+(function(){
+  var bar=document.getElementById('bar');
+  function prog(){var h=document.documentElement;var m=h.scrollHeight-h.clientHeight;bar.style.width=(m>0?h.scrollTop/m*100:0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  if(!('IntersectionObserver' in window))return;
+  var links={};document.querySelectorAll('nav.dots a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){
+    Object.keys(links).forEach(function(k){links[k].classList.toggle('on',k===en.target.id);});}});},{rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('section.slide').forEach(function(s){io.observe(s);});
+})();
+</script>
 </body>
 </html>

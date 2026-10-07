@@ -9,4 +9,4 @@ One page per day:
 | 1 | Tue 6 Oct 2026 | `day1.html` |
 | 2 | Wed 7 Oct 2026 | `day2.html` |
 
-Each day page lists the printed programme. Session notes go inside that session's `<li>`, where the `<!-- notes -->` marker is.
+Day pages are scroll-through slide decks: one slide per talk, distilled from attendee recordings. A day without notes yet shows the printed programme.
