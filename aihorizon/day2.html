@@ -4,242 +4,338 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Horizon Day 2</title>
-<meta name="description" content="AI Horizon 2026, Day 2 (7 Oct 2026): programme and session notes.">
+<meta name="description" content="AI Horizon 2026, Day 2 (7 Oct 2026, Penang): 13 talks on deploying AI in banking, factories, workplaces and customer service, distilled into the points worth sharing with the team.">
 <style>
-  :root {
-    --ground: #fafbf7; --surface: #f0f3ea; --ink: #1d2118; --muted: #5d6555;
-    --line: #dde3d2; --accent: #5a8f00; --accent-ink: #3f6600;
-    --mono: "Cascadia Code", Consolas, "Courier New", monospace;
-    --body: "Segoe UI", system-ui, sans-serif;
+:root{
+  --bg:#fafbf7; --surface:#f0f3ea; --card:#ffffff; --ink:#1d2118; --muted:#5d6555;
+  --line:#dde3d2; --accent:#5a8f00; --accent-ink:#3f6600; --accent-soft:#e6f0d4;
+  --mono:"Cascadia Code",Consolas,"Courier New",monospace;
+  --body:"Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131610; --surface:#1b1f15; --card:#1f2419; --ink:#e5eadb; --muted:#9aa38c;
+    --line:#2b3122; --accent:#9ed845; --accent-ink:#b5e763; --accent-soft:#26301a;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
-      --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
-    }
-  }
-  :root[data-theme="dark"] {
-    --ground: #131610; --surface: #1b1f15; --ink: #e5eadb; --muted: #9aa38c;
-    --line: #2b3122; --accent: #9ed845; --accent-ink: #b5e763;
-  }
-  * { box-sizing: border-box; }
-  body {
-    background: var(--ground); color: var(--ink);
-    font-family: var(--body); font-size: 16px; line-height: 1.65;
-    margin: 0; min-height: 100vh;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 72px 16px 96px; }
-  header { border-bottom: 2px solid var(--ink); padding-bottom: 30px; margin-bottom: 40px; }
-  .eyebrow {
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
-  }
-  .eyebrow a { color: inherit; text-decoration: none; }
-  h1 {
-    font-family: var(--mono); font-size: clamp(26px, 5vw, 36px);
-    line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em;
-  }
-  .lede { color: var(--muted); margin: 0; max-width: 60ch; }
-  a { color: var(--accent-ink); }
-  .section-label {
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--muted); margin: 48px 0 18px;
-  }
-  .section-label::before { content: "§ "; color: var(--accent); }
-  .note {
-    background: var(--surface); border: 1px solid var(--line);
-    border-left: 3px solid var(--accent); padding: 14px 18px; font-size: 15px;
-  }
-  .note p { margin: 0; }
-  ol.agenda { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  ol.agenda > li {
-    display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 16px;
-    padding: 14px 0; border-bottom: 1px solid var(--line);
-  }
-  .t {
-    font-family: var(--mono); font-size: 13px; color: var(--muted);
-    font-variant-numeric: tabular-nums; padding-top: 2px;
-  }
-  ol.agenda h3 { font-size: 16px; line-height: 1.4; margin: 0; }
-  .who { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
-  .who span { display: block; }
-  li.brk h3 { font-weight: 400; color: var(--muted); font-size: 14px; }
-  .sum { margin: 10px 0 0; font-size: 15px; }
-  .sum ul { margin: 6px 0 0; padding-left: 20px; }
-  .sum li { display: list-item; padding: 0; border: 0; margin: 0 0 6px; }
-  .src { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: 8px 0 0; }
-  @media (max-width: 520px) {
-    ol.agenda > li { grid-template-columns: 1fr; }
-  }
-  footer {
-    margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
-    font-family: var(--mono); font-size: 12px; color: var(--muted);
-    display: flex; flex-wrap: wrap; gap: 8px 24px;
-  }
+}
+:root[data-theme="dark"]{
+  --bg:#131610; --surface:#1b1f15; --card:#1f2419; --ink:#e5eadb; --muted:#9aa38c;
+  --line:#2b3122; --accent:#9ed845; --accent-ink:#b5e763; --accent-soft:#26301a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (min-width:1100px) and (min-height:720px){ html{scroll-snap-type:y proximity} }
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5;
+  font-size:clamp(16px,0.55vw + 10px,22px)}
+a{color:var(--accent-ink)}
+#bar{position:fixed;top:0;left:0;height:4px;width:0;background:var(--accent);z-index:10}
+.slide{min-height:100svh;display:flex;align-items:center;scroll-snap-align:start;
+  border-bottom:1px solid var(--line);padding:clamp(48px,6vh,96px) 16px}
+.slide:nth-child(even){background:var(--surface)}
+.in{width:100%;max-width:1480px;margin:0 auto;padding:0 clamp(0px,3vw,64px)}
+.kicker{font-family:var(--mono);font-size:.72em;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 .9em}
+.kicker a{color:inherit;text-decoration:none}
+h1{font-family:var(--mono);font-size:clamp(34px,4.2vw,84px);line-height:1.08;margin:0 0 .35em;letter-spacing:-.02em}
+h2{font-size:clamp(24px,2.1vw,46px);line-height:1.18;margin:0 0 .3em;letter-spacing:-.01em}
+.head{font-size:clamp(19px,1.35vw,30px);line-height:1.35;color:var(--accent-ink);font-weight:600;margin:.2em 0 0;max-width:34ch}
+.who{color:var(--muted);font-size:.86em;margin:.9em 0 0;padding:0;list-style:none}
+.who li{margin:.15em 0}
+.lede{font-size:clamp(18px,1.25vw,28px);color:var(--muted);max-width:46ch;margin:0}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,80px);align-items:start}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin:1.6em 0 0}
+.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);
+  padding:.7em .9em;flex:1 1 9.5em;max-width:16em}
+.stat b{display:block;font-family:var(--mono);font-size:clamp(20px,1.55vw,34px);line-height:1.15;color:var(--ink)}
+.stat span{display:block;font-size:.78em;color:var(--muted);margin-top:.3em;line-height:1.35}
+ul.pts{list-style:none;margin:0;padding:0}
+ul.pts li{position:relative;padding:.55em 0 .55em 1.3em;border-bottom:1px solid var(--line)}
+ul.pts li:last-child{border-bottom:0}
+ul.pts li::before{content:"";position:absolute;left:0;top:1.15em;width:.5em;height:.5em;background:var(--accent)}
+ul.pts b{color:var(--ink)}
+.take{margin:1.2em 0 0;background:var(--accent-soft);border-left:4px solid var(--accent);padding:.8em 1em}
+.take::before{content:"Takeaway for us";display:block;font-family:var(--mono);font-size:.68em;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent-ink);margin-bottom:.25em}
+.note{font-size:.75em;color:var(--muted);margin:1em 0 0;font-style:italic}
+.num{font-family:var(--mono);color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,19em),1fr));gap:14px;margin-top:1.4em}
+.tile{background:var(--card);border:1px solid var(--line);padding:1em 1.1em}
+.tile h3{margin:0 0 .3em;font-size:1.05em}
+.tile p{margin:0;color:var(--ink);font-size:.92em}
+.tile small{display:block;margin-top:.6em;font-family:var(--mono);font-size:.68em;color:var(--muted)}
+.tile .n{font-family:var(--mono);color:var(--accent);font-size:.8em}
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,21em),1fr));gap:8px 24px;margin:1.6em 0 0;padding:0;list-style:none;font-size:.9em}
+.toc a{display:flex;gap:.7em;text-decoration:none;color:var(--ink);padding:.35em 0;border-bottom:1px solid var(--line)}
+.toc a:hover{color:var(--accent-ink)}
+.toc .t{font-family:var(--mono);color:var(--muted);min-width:3.2em}
+.hint{margin-top:2.2em;font-family:var(--mono);font-size:.7em;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+nav.dots{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:9}
+nav.dots a{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--muted);display:block}
+nav.dots a.on{background:var(--accent);border-color:var(--accent)}
+footer{padding:28px 16px 40px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+footer a{margin:0 10px}
+@media (max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .slide{min-height:auto}
+  nav.dots{display:none}
+  .stat{max-width:none}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <p class="eyebrow"><a href="/">chinkeong.github.io</a> / <a href="./">aihorizon</a> / day 2</p>
-  <h1>AI Horizon 2026 · Day 2</h1>
-  <p class="lede">Wednesday 7 October 2026 · Penang Waterfront Convention Centre (PWCC) · organised by Tech Dome Penang.</p>
-</header>
+<div id="bar"></div>
+<nav class="dots" aria-label="Slides"><a href="#top" title="Cover"></a><a href="#themes" title="Day 2 in one minute"></a><a href="#ryt" title="01 Ryt AI × ILMU"></a><a href="#dell" title="02 Case study"></a><a href="#ignivex" title="03 Building an AI employee sentiment agent"></a><a href="#growthpro" title="04 A dual-engine AI strategy for high-tech manufacturing"></a><a href="#happily" title="05 Deploying behavioural AI at scale"></a><a href="#experior" title="06 The master key nobody dares use"></a><a href="#vitrox" title="07 From prompt to product"></a><a href="#intel" title="08 Robotics and automation in facility operations"></a><a href="#panel" title="09 Panel"></a><a href="#aai" title="10 From call centre to AI command centre"></a><a href="#ams" title="11 Edge AI in action"></a><a href="#shrdc" title="12 AI innovation in industry"></a><a href="#keyway" title="13 From hype to shop floor"></a><a href="#close" title="Closing"></a></nav>
+<main>
+<section class="slide" id="top">
+ <div class="in">
+  <p class="kicker"><a href="/">chinkeong.github.io</a> / <a href="./">aihorizon</a> / day 2</p>
+  <h1>AI Horizon 2026<br>Day 2</h1>
+  <p class="lede">Wednesday 7 October · Penang Waterfront Convention Centre. Deployment day: banking, factories, workplaces and customer service. 13 talks, cut down to what's worth sharing. About 6 minutes to read.</p>
+  <ul class="toc"><li><a href="#ryt"><span class="t">01</span><span>Ryt AI × ILMU</span></a></li><li><a href="#dell"><span class="t">02</span><span>Case study</span></a></li><li><a href="#ignivex"><span class="t">03</span><span>Building an AI employee sentiment agent</span></a></li><li><a href="#growthpro"><span class="t">04</span><span>A dual-engine AI strategy for high-tech manufacturing</span></a></li><li><a href="#happily"><span class="t">05</span><span>Deploying behavioural AI at scale</span></a></li><li><a href="#experior"><span class="t">06</span><span>The master key nobody dares use</span></a></li><li><a href="#vitrox"><span class="t">07</span><span>From prompt to product</span></a></li><li><a href="#intel"><span class="t">08</span><span>Robotics and automation in facility operations</span></a></li><li><a href="#panel"><span class="t">09</span><span>Panel</span></a></li><li><a href="#aai"><span class="t">10</span><span>From call centre to AI command centre</span></a></li><li><a href="#ams"><span class="t">11</span><span>Edge AI in action</span></a></li><li><a href="#shrdc"><span class="t">12</span><span>AI innovation in industry</span></a></li><li><a href="#keyway"><span class="t">13</span><span>From hype to shop floor</span></a></li></ul>
+  <p class="hint">↓ Scroll</p>
+ </div>
+</section>
 
-<div class="note"><p>Day 2 is underway. This is the printed programme. Notes for each session will be added after the day. Times are as printed and may have shifted on the day.</p></div>
+<section class="slide" id="themes">
+ <div class="in">
+  <p class="kicker">Day 2 in one minute</p>
+  <h2>What speaker after speaker kept saying</h2>
+  <div class="tiles"><div class="tile"><span class="n">1</span><h3>One problem first, then scale</h3><p>Pick 2–4 use cases, prove them, then expand. Ryt Bank&#x27;s twist: think big to list every risk, then cut back.</p><small>Dell · Keyway · AAI · GrowthPro · Ryt Bank</small></div><div class="tile"><span class="n">2</span><h3>Clean, connected data first</h3><p>Clean the data, connect business, production and machine systems, and treat data as a product.</p><small>Dell · Experior · YGL · Intel</small></div><div class="tile"><span class="n">3</span><h3>AI employees, not chatbots</h3><p>Agents get a role, a login, skills, tool access and a human manager.</p><small>AMD · Keyway · SHRDC · ViTrox</small></div><div class="tile"><span class="n">4</span><h3>Let AI act alone only where it can be undone</h3><p>AI handles routine, reversible actions. Money, legal and safety decisions stay with people.</p><small>AMD · ams OSRAM · GrowthPro · Ryt Bank</small></div><div class="tile"><span class="n">5</span><h3>Measure before and after</h3><p>Record the starting point, set a target and a deadline, and track what people actually do.</p><small>Dell · Keyway · Happily.ai · AAI</small></div><div class="tile"><span class="n">6</span><h3>Test hard, keep control</h3><p>Test what goes wrong, retest after every model change, log everything and be able to roll back.</p><small>AAI · ams OSRAM · Dell</small></div><div class="tile"><span class="n">7</span><h3>Enable, don&#x27;t lock down</h3><p>Blocking AI drives staff to unapproved tools. Give them approved ones and room to experiment.</p><small>SHRDC</small></div><div class="tile"><span class="n">8</span><h3>Fundamentals and lean first</h3><p>Simplify the process and keep experienced people. AI amplifies whatever is already there.</p><small>Experior · Intel · Dell</small></div></div>
+ </div>
+</section>
 
-<p class="section-label">Programme</p>
-<ol class="agenda">
-  <li class="brk">
-    <span class="t">8:00–8:45</span>
-    <div>
-      <h3>Arrival of participants and conference check-in</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">8:45–8:55</span>
-    <div>
-      <h3>Programme overview by conference chair</h3>
-      <p class="who">Mr. ET Tan, Founder, ET Partners</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">9:00–9:20</span>
-    <div>
-      <h3>Ryt AI × ILMU: Sovereign Intelligence for Digital Banking</h3>
-      <p class="who">Mr. Nic Ngoo, Chief Technology Officer, Ryt Bank</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">9:25–9:45</span>
-    <div>
-      <h3>Case Study: Enterprise AI Deployment from Pilot to Production</h3>
-      <p class="who">Mr. PK Gupta, Global CTO &amp; APJ Presales Lead, Dell Technologies</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">9:50–10:10</span>
-    <div>
-      <h3>Beyond AI Hype: Building an AI Employee Sentiment Agent That Delivers Real Business Insight</h3>
-      <p class="who">Mr. Kelvin Tang Seng Ban, Founder &amp; Principal Consultant, IgniveX Technology</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">10:15–10:35</span>
-    <div>
-      <h3>Beyond the Hype: Building a Dual-Engine AI Strategy for High-Tech Manufacturing</h3>
-      <p class="who">Mr. Peter Kua, Co-Founder, GrowthPro.Asia</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">10:35–10:50</span>
-    <div>
-      <h3>Tea break</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">10:55–11:15</span>
-    <div>
-      <h3>Deploying Behavioural AI at Scale: What 10 Million Workplace Interactions Taught Us</h3>
-      <p class="who">Mr. Tareef Jafferi, Founder &amp; CEO, Happily.ai</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">11:20–11:40</span>
-    <div>
-      <h3>The Master Key Nobody Dares Use: Getting the Fundamentals Right to Unlock AI in Malaysian Manufacturing</h3>
-      <p class="who">Mr. Eugene Khoo, Founder, Experior</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">11:45–12:05</span>
-    <div>
-      <h3>From Prompt to Product: How a Non-Developer Built a Working Manufacturing CRM in 8 Weeks Using AI</h3>
-      <p class="who">Dr. Gary CY Leong, Senior Director &amp; Analytics Intelligence Solutions, ViTrox Corporation</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">12:10–12:30</span>
-    <div>
-      <h3>Robotics and Automation in Facility Operations (special appearance: robot dog)</h3>
-      <p class="who">Mr. Vincent Saw, Global Senior Facilities Director, Advanced Packaging Technology &amp; Manufacturing, Intel Corporation</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">12:30–1:40</span>
-    <div>
-      <h3>Lunch and networking</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">1:45–2:45</span>
-    <div>
-      <h3>Panel: Beyond the AI Hype — Real Manufacturing Success Stories</h3>
-      <p class="who"><span>Moderator: Ts. Teresa Toh, Program Director, Market and Industry Development, Crest</span><span>Mr. Lee Hoong Fei, Director of Software Development, AMD Malaysia</span><span>Ms. Meredy Mun, Regional Business Development Manager, Innowave Tech</span><span>Mr. Yeap Kong Chean, CEO, YGL Convergence Berhad</span><span>Ts. Nizmar Mohd Nazar, Chief Operating Officer, MARii</span></p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">2:50–3:10</span>
-    <div>
-      <h3>From Call Centre to AI Command Centre: The Future of Customer Service</h3>
-      <p class="who">Ms. Sophia Siong, Partner, Academy of Artificial Intelligence</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">3:15–3:35</span>
-    <div>
-      <h3>Edge AI in Action — Intelligence on the Shop Floor</h3>
-      <p class="who"><span>Mr. Chong Hui Tan, AI &amp; Data Automation Developer, ams OSRAM</span><span>Mr. Hong Phuah, Information Technology Specialist, ams OSRAM</span></p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li class="brk">
-    <span class="t">3:35–3:50</span>
-    <div>
-      <h3>Tea break</h3>
-    </div>
-  </li>
-  <li>
-    <span class="t">3:55–4:15</span>
-    <div>
-      <h3>AI Innovation in Industry: Practical Approaches Towards Intelligent Manufacturing</h3>
-      <p class="who">Dr. Chua Wen-Shyan, Head, Malaysian Smart Factory 4.0, Selangor Human Resource Development Centre</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">4:20–4:40</span>
-    <div>
-      <h3>From Hype to Shop Floor: Deploying Agentic AI in Real-World SME Operations</h3>
-      <p class="who">Dr. Wong Kee Wei, CEO, Keyway Digital Labs</p>
-      <!-- notes -->
-    </div>
-  </li>
-  <li>
-    <span class="t">4:45–5:00</span>
-    <div>
-      <h3>Closing remarks</h3>
-      <!-- notes -->
-    </div>
-  </li>
-</ol>
+<section class="slide" id="ryt">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">01</span> · 9:00</p>
+   <h2>Ryt AI × ILMU: sovereign intelligence for digital banking</h2>
+   <ul class="who"><li>Nic Ngoo · Chief Technology Officer, Ryt Bank</li></ul>
+   <p class="head">Customers bank by chatting, on an AI model built and hosted in Malaysia.</p>
+   <div class="stats"><div class="stat"><b>12M+</b><span>Ryt AI interactions by customers in a year</span></div><div class="stat"><b>1 of 5</b><span>digital bank licences issued by Bank Negara Malaysia</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Banking by chat:</b> type who to pay, or upload a JomPAY bill, a receipt or even a handwritten note. The AI pulls out the details, and the customer confirms every payment.</li><li><b>Older customers use it too:</b> parents who struggle with three different banking apps just type what they want, in Malay, Chinese, English or a mix of all three.</li><li><b>Why sovereign:</b> if a foreign AI service gets cut off by sanctions or a policy change, the bank can't keep serving customers. Regulators and boards flag that risk.</li><li><b>The stack:</b> YTL power and data centres, plus ILMU, a Malaysian LLM built by YTL AI Labs with Universiti Malaya on Dewan Bahasa dan Pustaka texts. Western models drift into Bahasa Indonesia, but ILMU handles Manglish and dialects such as Kelantanese.</li><li><b>Guardrails:</b> the assistant only answers banking requests.</li><li><b>Think big first, then scale down:</b> starting big puts every risk on the table early. Starting small hides risks until production.</li></ul>
+   <p class="take">AI can&#x27;t be a side project. Ryt designed the bank around it from day one and went beyond a customer-service chatbot to real transactions.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="dell">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">02</span> · 9:25</p>
+   <h2>Case study: enterprise AI from pilot to production</h2>
+   <ul class="who"><li>PK Gupta · Global CTO &amp; APJ Presales Lead, Dell Technologies</li></ul>
+   <p class="head">Dell&#x27;s own lesson: 946 AI ideas failed, then 4 focused use cases paid off.</p>
+   <div class="stats"><div class="stat"><b>946 → 4</b><span>use cases, after a failed first year</span></div><div class="stat"><b>6–8 h/wk</b><span>saved per salesperson on average (top sellers: 13–15 h)</span></div><div class="stat"><b>34k → 14k</b><span>SharePoint sites after the data clean-up</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Why pilots fail:</b> AI is treated as a model to install, not a new way of operating. Goals stay vague, pilots use test data, and governance is left for later.</li><li><b>“Can we build it?” is not “can we run it?”</b> for 1,000 or 50,000 users. Pick 2–4 use cases. The World Economic Forum lists 140 for manufacturing alone.</li><li><b>Dell's reset (Jan 2024):</b> sales meeting prep, service self-help, a coding assistant and supply chain. Claimed results: 17% fewer bad part shipments, 70–80% of R&amp;D code written by AI, 10×+ return in supply chain.</li><li><b>Data as a product:</b> four to five months of clean-up. Departments keep ownership of their data but share it through APIs so AI agents can use it. “Gold in, gold out.”</li><li><b>Simplify the workflow first:</b> some processes went from 120 steps to 2 or 3.</li><li><b>From building to buying:</b> Dell went from building 70% of its AI tools to buying 70%. Each tool is kept for two years, with the search for a replacement starting at month 18.</li><li><b>Adoption takes time:</b> a year to reach 25 uses a week per person. Some now use it 200–800 times a week. Sponsors check in weekly.</li></ul>
+   <p class="take">Before go-live, record the starting point and set the target: hours saved, handling time, customer satisfaction and weekly active users, each with a deadline.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="ignivex">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">03</span> · 9:50</p>
+   <h2>Building an AI employee sentiment agent</h2>
+   <ul class="who"><li>Kelvin Tang Seng Ban · Founder &amp; Principal Consultant, IgniveX Technology</li></ul>
+   <p class="head">AI reads staff comments so leaders know where to respond.</p>
+   <div class="stats"><div class="stat"><b>3 bots</b><span>one to hear, one to extract, one to act</span></div><div class="stat"><b>~1 month</b><span>to deliver, versus months before AI</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>The problem:</b> internal posts get hundreds of comments. When leaders don't reply, staff feel ignored and objections grow.</li><li><b>Three bots:</b> the <b>hear bot</b> collects posts, comments, replies and likes from each channel. The <b>extract bot</b> labels each comment (positive, negative, suggestion, sarcastic) and writes down why, so a person can check its reasoning. The <b>action bot</b> sends leaders the top issues and the comments nobody has answered.</li><li><b>Responsible by design:</b> no names stored (IDs only), a visible notice that AI reads the comments, data deleted when no longer needed, and the AI model named on every report.</li><li><b>More context, better accuracy:</b> comments on their own gave weak results. Adding the replies, likes, the post itself and its channel improved accuracy a lot.</li><li><b>Hard cases:</b> mixed messages (“thank you, but this makes our life harder”), sarcasm, and posts with mixed reactions. You can't give a whole post one label.</li><li><b>Silence isn't good news.</b> No comments can mean people have given up.</li></ul>
+   <p class="take">Leaders didn&#x27;t know what report they wanted. Build it around “where do I need to act?”, not a dashboard of everything.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="growthpro">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">04</span> · 10:15</p>
+   <h2>A dual-engine AI strategy for high-tech manufacturing</h2>
+   <ul class="who"><li>Peter Kua · Co-Founder, GrowthPro.Asia</li></ul>
+   <p class="head">One engine answers technicians from your SOPs. The other generates fake defect images so inspection AI works from day one.</p>
+   <div class="stats"><div class="stat"><b>45 min → &lt;60 s</b><span>to find the right SOP answer</span></div><div class="stat"><b>~95%</b><span>automated inspection accuracy</span></div><div class="stat"><b>US$2M</b><span>saved per plant per year, in one case</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Engine 1, answers from your documents:</b> SOPs and manuals are indexed on site, so company know-how never leaves the network. Answers fit the reader: simple steps for trainees, full detail for senior engineers.</li><li><b>Safety built in:</b> it won't give instructions for a dangerous mechanical fix until the machine is switched off. Answers it isn't confident about go to a human engineer.</li><li><b>Engine 2, synthetic defects:</b> yields are so high that real defect photos are scarce. From one real scratch it makes hundreds of realistic variations (different lighting, angles and textures), so the inspection AI can be trained without waiting 6–12 months.</li><li><b>Keeping fake data realistic:</b> a statistical method (a Gaussian copula) keeps related measurements moving together, and every batch passes a 5-point check before it's used.</li><li><b>Read freely, change with approval:</b> the AI can read plant data on its own, but anything that changes a machine needs a person to sign off.</li></ul>
+   <p class="take">Start with a low-risk proof of concept on a single production line, then scale.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="happily">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">05</span> · 10:55</p>
+   <h2>Deploying behavioural AI at scale: what 10 million workplace interactions taught us</h2>
+   <ul class="who"><li>Tareef Jafferi · Founder &amp; CEO, Happily.ai</li></ul>
+   <p class="head">Predicting who will quit changed little. Nudges that changed everyday behaviour did.</p>
+   <div class="stats"><div class="stat"><b>~125 → ~2,000</b><span>peer recognitions a year in a 200-person company</span></div><div class="stat"><b>3×</b><span>more likely to recognise others after being recognised publicly</span></div><div class="stat"><b>+48</b><span>average employee NPS gain (claimed)</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Predictions alone don't fix anything:</b> warnings about who might quit, shown to the right manager, still didn't change much. People mostly leave because of their manager, and the signs show up long before the exit interview.</li><li><b>Behaviour = motivation × ability × prompt</b> (the Fogg model). Raise motivation, make the action easier, and prompt at the right moment.</li><li><b>People are motivated differently:</b> some like to compete, some to achieve, some to socialise, some to explore, and some need a purpose. AI can now tailor the nudge to each person, at scale.</li><li><b>Make recognition public:</b> when people see others being thanked, they start thanking too. Often matters more than big: one sentence every week beats a stage award once a year.</li><li><b>The well-being link:</b> among people recognised regularly, 4 in 100 report poor well-being. Among those never recognised, almost half do. That's a correlation, not proven cause, measured on the WHO-5 well-being index.</li><li><b>People decisions stay human.</b> Happily.ai deliberately doesn't automate the person-to-person moments.</li></ul>
+   <p class="take">Measure what people do, not just what they say. Keep changes small, frequent and fresh.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="experior">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">06</span> · 11:20</p>
+   <h2>The master key nobody dares use: fundamentals before AI in Malaysian manufacturing</h2>
+   <ul class="who"><li>Eugene Khoo · Founder, Experior</li></ul>
+   <p class="head">AI can&#x27;t make up for weak fundamentals: people, infrastructure and leadership.</p>
+   <div class="stats"><div class="stat"><b>50 years</b><span>of Malaysia competing on low cost</span></div><div class="stat"><b>10 yrs vs 6 mo</b><span>an experienced engineer can&#x27;t be replaced by a cheaper graduate after six months&#x27; training</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>The “spaghetti monster”:</b> at one large listed company, the IT team won't touch its own systems, after years of undocumented, unlabelled add-ons.</li><li><b>Low-cost thinking backfires:</b> replacing experienced staff with cheaper graduates, and treating IT as a pure cost, removes the very people AI depends on.</li><li><b>Not a talent shortage, a pay problem:</b> companies earning billions say they can't match MNC salaries. Their low-margin business model sets the budget.</li><li><b>Build know-how instead of outsourcing it:</b> calling the supplier every time a machine fails means your own team never learns, and AI needs that knowledge.</li><li><b>A policy idea:</b> reward results with rebates after delivery, instead of grants up front. Too many grant-funded pilots fade when the money runs out.</li></ul>
+   <p class="take">Decide whether to be a cheaper maker of things or a smarter one. AI only pays off for the smarter one.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="vitrox">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">07</span> · 11:45</p>
+   <h2>From prompt to product: a non-developer&#x27;s manufacturing CRM in 8 weeks</h2>
+   <ul class="who"><li>Dr. Gary CY Leong · Senior Director, Analytics Intelligence Solutions, ViTrox Corporation</li></ul>
+   <p class="head">A senior director who last wrote code 30 years ago built a working CRM with Claude Code.</p>
+   <div class="stats"><div class="stat"><b>1 yr → 8 wk</b><span>compared with ViTrox&#x27;s 2018 CRM project</span></div><div class="stat"><b>1 → 100+</b><span>reusable AI skills built in three months</span></div><div class="stat"><b>3</b><span>AI agents inside the CRM</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Why he did it:</b> the IT queue. The quotation tool he wanted would have waited behind other projects.</li><li><b>What it does:</b> scans name cards into contacts, maps who reports to whom and who approves, tracks deals from quote to purchase order, and produces quotations in minutes instead of days.</li><li><b>Bidding studio:</b> upload a tender document (RFP) and drawings. It pulls out the line items, matches them to the price list and drafts questions to ask the customer.</li><li><b>Three agents:</b> a CRM assistant (weekly summary, deals at risk), a veteran sales advisor for stalled deals, and a technical advisor covering 12 areas, such as a solder bridge on a chip's leads.</li><li><b>The reality:</b> nights and weekends, 8 failed deployments in a row in week 5, and hitting usage limits. Taking a walk and coming back solved more than forcing it.</li><li><b>His method:</b> start from the end result you want, paste every error back into the AI, and save each solved step as a reusable skill. Skills build on each other.</li></ul>
+   <p class="take">People who know the business can now build their own tools. Pick the right platform and expect to keep at it.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="intel">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">08</span> · 12:10</p>
+   <h2>Robotics and automation in facility operations</h2>
+   <ul class="who"><li>Vincent Saw · Global Senior Facilities Director, Advanced Packaging Technology &amp; Manufacturing, Intel Corporation</li></ul>
+   <p class="head">Moving facilities from reactive to autonomous, with a robot dog on daily rounds.</p>
+   <div class="stats"><div class="stat"><b>~20 + ~30</b><span>chemicals and gases an advanced-packaging site supplies</span></div><div class="stat"><b>24/7</b><span>robot rounds on a fixed daily schedule</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Data is the key to automation:</b> chillers, cooling towers and compressors produce data that mostly goes unused. Put it on one platform, add analytics and a digital model of the plant, and fix equipment before it fails.</li><li><b>Robot dog “CHIP”</b> (a customised Boston Dynamics Spot) listens for leaks, scans for hot spots with a thermal camera, and reads analogue gauges that aren't connected to the building system. Readings outside limits alert the control room.</li><li><b>Blocked fire exits:</b> computer vision on the existing security cameras spots boxes and trolleys in front of exits and alerts the response team. It cost little because the cameras were already there.</li><li><b>Remote operating centres:</b> a few central control rooms monitor, start, stop and switch equipment in other countries. Alarms, backup status and chiller efficiency are visible on a phone.</li><li><b>Predictive maintenance and AI-tuned chillers</b> already run on cleanroom air handling and ultra-pure water systems. The long-term aim is facilities that run with no one on site.</li></ul>
+   <p class="take">Lean first: cut the steps you don&#x27;t need, then automate what&#x27;s left.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="panel">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">09</span> · 1:45</p>
+   <h2>Panel: Beyond the AI Hype: real manufacturing success stories</h2>
+   <ul class="who"><li>Moderator: Ts. Teresa Toh · CREST</li><li>Lee Hoong Fei · AMD Malaysia</li><li>Meredy Mun · Innowave Tech</li><li>Yeap Kong Chean · YGL Convergence Berhad</li><li>Ts. Nizmar Mohd Nazar · MARii</li></ul>
+   <p class="head">AI agents now have employee IDs. The real question is what they&#x27;re allowed to do on their own.</p>
+   <div class="stats"><div class="stat"><b>30+</b><span>AI agents reporting to one AMD manager</span></div><div class="stat"><b>15 steps</b><span>rebate process run end to end by agents</span></div><div class="stat"><b>2 wk → 2–3 days</b><span>root-cause analysis with AI</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>AMD, agents as staff:</b> each agent has its own login, employee ID and manager, who approves its purchase requests. Securing an open-source agent framework took about six months. People step in only for unresolved conflicts and approvals.</li><li><b>AMD's autonomy rule:</b> AI may do things that can be undone, such as scheduling maintenance. Anything with financial, legal or reputational impact stays with people.</li><li><b>Innowave:</b> a quality system built once and reused across machines. Root-cause analysis dropped from two weeks to two or three days, with AI ranking the five likeliest causes.</li><li><b>YGL, at a glove maker:</b> business, production and machine data combined to trace defects to temperature and material settings, stopping the line before bad gloves ship. Matching departments' records by timestamp ended the blame meetings.</li><li><b>No failure data?</b> Machines are serviced before they break, so failures are rare. Collect sensor data and look for early patterns. A maintenance log in Excel plus production data is enough to start.</li><li><b>MARii, automotive:</b> Tesla and BYD make almost everything in-house, so Malaysian suppliers must go fully digital to stay in global supply chains.</li><li><b>Malaysia's opening:</b> we don't make GPUs, but AI applications built on deep industry knowledge are wide open.</li></ul>
+   <p class="take">Sort each AI idea into invest, test or wait. The room put both robots and an AI helper built on SOPs in “test”, and almost nobody said “wait”.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="aai">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">10</span> · 2:50</p>
+   <h2>From call centre to AI command centre: the future of customer service</h2>
+   <ul class="who"><li>Sophia Siong · Partner, Academy of Artificial Intelligence</li></ul>
+   <p class="head">Two live AI agents serve customers by conversation, and she shared the ten lessons behind them.</p>
+   <div class="stats"><div class="stat"><b>10×</b><span>the capacity of 20 call-centre seats, around the clock</span></div><div class="stat"><b>$2M</b><span>projected new after-hours revenue for the insurer</span></div><div class="stat"><b>400–500</b><span>test conversations before launch</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>Insurer (Singapore):</b> a voice and chat agent sells travel insurance. Customers can change travellers, country or dates mid-conversation without starting over. Personal details go into a secure link that expires, never into the chat.</li><li><b>Specialist clinic:</b> a WhatsApp assistant recognises patients by phone number, books and reschedules appointments (reminders move too), and replies in Malay, Mandarin or English. It never diagnoses, and it hands over to staff with the full story.</li><li><b>Customer first, technology last:</b> redesign the workflow, then build it step by step, not as one giant prompt.</li><li><b>Write for the ear and for the eye:</b> the same answer needs different wording when spoken and when shown as text.</li><li><b>Check each action in order:</b> to reschedule, free up the old slot, book the new one, then move the reminder.</li><li><b>Test what goes wrong, not just what goes right:</b> customers changing their mind, acting for someone else, switching language, or asking something the agent can't answer. Rerun the tests after every AI model change.</li><li><b>New measures of success:</b> problems resolved, accuracy, and customer effort. Not how many messages were sent.</li></ul>
+   <p class="take">Staff own and shape the service. They keep the judgment calls, the exceptions and fixing what goes wrong.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="ams">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">11</span> · 3:15</p>
+   <h2>Edge AI in action: intelligence on the shop floor</h2>
+   <ul class="who"><li>Chong Hui Tan · AI &amp; Data Automation Developer, ams OSRAM</li><li>Hong Phuah · IT Specialist, ams OSRAM</li></ul>
+   <p class="head">Most shop-floor value comes from machine learning running right at the machine, not from chatbots.</p>
+   <div class="stats"><div class="stat"><b>up to 70%</b><span>fewer manual alarm interventions (Penang pilots)</span></div><div class="stat"><b>40%+</b><span>less time on routine tasks</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>How it's connected:</b> machine → a small computer beside it (the “edge box”) → the factory execution system (MES) → AI → control room. When the system reaches the limit of what it's allowed to do, it hands over to a person.</li><li><b>Alarm handling:</b> the edge box gathers the details. If the alarm matches pre-approved conditions, automation software applies the routine fix. Anything unusual goes to an engineer.</li><li><b>Spotting trouble early:</b> a model trained with experienced engineers on what “normal” looks like runs at the edge. When expected and actual readings drift apart, engineers investigate before bad output spreads downstream.</li><li><b>Variable materials:</b> like coffee beans that all pass inspection but taste different, the model suggests small recipe adjustments to keep output consistent.</li><li><b>Managing the models:</b> a person approves every release, every model and data version is logged, a model can be rolled back if it starts going wrong, and each model has a named owner. Statistical process control catches a model that is drifting.</li></ul>
+   <p class="take">Generative AI helps people find knowledge. Machine learning moves the operational numbers. Know which one you need.</p>
+   <p class="note">Results are from internal pilots, and the speakers stressed they are not a benchmark.</p>
+  </div>
+ </div>
+</section>
+<section class="slide" id="shrdc">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">12</span> · 3:55</p>
+   <h2>AI innovation in industry: practical approaches towards intelligent manufacturing</h2>
+   <ul class="who"><li>Dr. Chua Wen-Shyan · Head, Malaysian Smart Factory 4.0, Selangor Human Resource Development Centre (SHRDC)</li></ul>
+   <p class="head">Locking AI down pushes staff to unapproved tools. Make it safe to experiment instead.</p>
+   <div class="stats"><div class="stat"><b>3.7</b><span>highest smart-factory readiness score in Malaysia (SIRI). Many factories sit near 2</span></div><div class="stat"><b>&lt;RM100</b><span>a month for a capable personal AI agent</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>What's next:</b> people working alongside software agents, and humanoid robots, which are agents with a body.</li><li><b>Gaps even in Malaysia's best factories:</b> production planning still done offline, data used to explain problems after they happen rather than to prevent them, and key staff not trained in new skills.</li><li><b>The biggest risk:</b> companies that limit staff to a single approved AI tool push them to free tools instead. That creates privacy and security problems and loses ideas.</li><li><b>Most companies know about AI but aren't ready to use it</b>, mainly because they can't see a clear use. Go beyond chatbots: have AI analyse a video of a process, simulate a layout change, or build an app you describe.</li><li><b>Sovereignty means control, continuity and choice</b>, not that everything has to be made in Malaysia.</li><li><b>“HR for AI”:</b> onboard, train and review AI agents like staff. Send each task to the most suitable AI model to save cost. The setup around a model matters as much as the model itself.</li><li><b>Readiness score (with AI Singapore):</b> if ethics scores zero, the whole score is zero.</li></ul>
+   <p class="take">Don&#x27;t let compliance stop people learning. Use AI every day and keep improving in small steps, Kaizen-style.</p>
+   
+  </div>
+ </div>
+</section>
+<section class="slide" id="keyway">
+ <div class="in grid">
+  <div>
+   <p class="kicker"><span class="num">13</span> · 4:20</p>
+   <h2>From hype to shop floor: deploying agentic AI in real-world SME operations</h2>
+   <ul class="who"><li>Dr. Wong Kee Wei · CEO, Keyway Digital Labs (Safetyware Group)</li></ul>
+   <p class="head">“Don&#x27;t just give AI a chat. Give it a job.”</p>
+   <div class="stats"><div class="stat"><b>4</b><span>role-based AI employees in a 160-person SME</span></div><div class="stat"><b>5 lines</b><span>the test: can you describe the job in five lines?</span></div></div>
+  </div>
+  <div>
+   <ul class="pts"><li><b>More AI tools made them busier:</b> more AI output than anyone could digest, plus constant usage limits.</li><li><b>Why a chatbot isn't enough:</b> asked “Can you deliver 100 pairs of safety shoes by Friday?”, it may say yes from the raw stock count, even if that stock is reserved for someone else or in the wrong sizes.</li><li><b>AI employees by role:</b> chief of staff, sales and service, marketing, HR. Each gets a job description, knowledge, skills, access to specific tools and limits, instead of one agent that does everything. That means better control and data security.</li><li><b>A skill is training:</b> the step-by-step you'd teach a new hire, such as checking stock in the company system or raising a quotation. Local systems needed custom connections.</li><li><b>Set the limits:</b> what it should do, when to ask for approval, and what it must never do. No “allow everything” button.</li><li><b>Lessons:</b> a skill is useless without access to the tool it needs. AI on existing CCTV now flags workers without safety gear to safety officers.</li><li><b>Prove the return:</b> tasks saved × minutes per task × hourly staff cost, compared with what the AI costs.</li></ul>
+   <p class="take">Start with the workflow that causes the most headaches, as long as you can describe it in five lines.</p>
+   
+  </div>
+ </div>
+</section>
 
-<footer>
-  <span>© 2026 chinkeong</span>
-  <a href="./">AI Horizon 2026 notes</a>
-  <a href="https://www.techdomepenang.org/ai-horizon-2026/">Event site</a>
-</footer>
-</div>
+<section class="slide" id="close">
+ <div class="in">
+  <p class="kicker">Before you go · ET Tan, conference chair, opening Day 2</p>
+  <h2>The small things matter</h2>
+  <p class="head">Consultants make AI look big, daunting and in need of sign-off from the very top. What works is small, practical wins.</p>
+  <p class="kicker" style="margin-top:2.2em">Worth trying</p>
+  <div class="tiles"><div class="tile"><h3>The five-line job test</h3><p>List our biggest headaches. Any job we can describe in five lines is a candidate for an AI employee.</p><small>from: Keyway</small></div><div class="tile"><h3>A written autonomy rule</h3><p>Decide what AI may do alone (actions that can be undone) and what always needs a person (money, legal, reputation).</p><small>from: AMD</small></div><div class="tile"><h3>Starting point before every pilot</h3><p>Record today&#x27;s hours, error rate and number of users, plus the target and the date.</p><small>from: Dell</small></div><div class="tile"><h3>AI on cameras we already have</h3><p>Blocked exits and missing safety gear can raise alerts from existing CCTV at low cost.</p><small>from: Intel · Keyway</small></div></div>
+  <p class="note">Distilled from attendee recordings of each talk. Names follow the printed programme, and figures are as stated by speakers, not independently checked. The closing remarks were not recorded.</p>
+ </div>
+</section>
+</main>
+<footer><a href="day1.html">← Day 1</a><a href="./">AI Horizon 2026 notes</a><a href="https://www.techdomepenang.org/ai-horizon-2026/">Event site</a></footer>
+<script>
+(function(){
+  var bar=document.getElementById('bar');
+  function prog(){var h=document.documentElement;var m=h.scrollHeight-h.clientHeight;bar.style.width=(m>0?h.scrollTop/m*100:0)+'%';}
+  addEventListener('scroll',prog,{passive:true});prog();
+  if(!('IntersectionObserver' in window))return;
+  var links={};document.querySelectorAll('nav.dots a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){
+    Object.keys(links).forEach(function(k){links[k].classList.toggle('on',k===en.target.id);});}});},{rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('section.slide').forEach(function(s){io.observe(s);});
+})();
+</script>
 </body>
 </html>
