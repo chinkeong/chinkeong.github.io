@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>Pi on a Local GPU</title>
-<meta name="description" content="Set up the Pi coding agent on Windows with a local llama.cpp model, a 27B for 24 GB cards and a 9B for 12 and 16 GB cards: install, llama.cpp step by step, server flags, model config, how big a context window your GPU can take, what extensions cost, and why one slot or two matters for subagents.">
+<meta name="description" content="Set up the Pi coding agent on Windows with a local llama.cpp model, two 27B fine-tunes to choose between on 24 GB cards (Swift-1.5 or one made for Pi) and a 9B for 12 and 16 GB cards: install, llama.cpp step by step, server flags, model config, how big a context window your GPU can take, what extensions cost, and why one slot or two matters for subagents.">
 <style>
 :root{--bg:#ffffff;--fg:#0f172a;--mut:#5b6b80;--line:#cbd5e1;--soft:#e2e8f0;--surface:#f4f7fa;--accent:#0f766e;--accent-h:#115e59;--accent-soft:#e6f4f2;--warn:#b45309;--warn-bg:#fff8eb;--code-bg:#0b1220;--code-fg:#e2e8f0;--code-mut:#94a3b8;--code-head:#141d2e}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b1120;--fg:#e5e9f0;--mut:#94a3b8;--line:#334155;--soft:#1e293b;--surface:#111a2c;--accent:#2dd4bf;--accent-h:#5eead4;--accent-soft:#0f2a2c;--warn:#f59e0b;--warn-bg:#1f1a10;--code-bg:#060b16;--code-head:#0f1729}}
@@ -118,7 +118,7 @@ footer{margin:4.5rem 0 3rem;padding-top:1.2rem;border-top:1px solid var(--soft);
 <header class="hero">
 <p class="kicker">A field guide for your first local coding agent, Windows and one graphics card</p>
 <h1>Run Pi on a model that lives on your own GPU</h1>
-<p class="lead">Pi is a small, fast coding agent. Pointed at a model you serve yourself, it costs nothing per token and never leaves your machine. This page is the setup I run every day on a 24 GB card, a lighter one for 12 and 16 GB cards, and the handful of numbers that decide whether it feels quick or painfully slow.</p>
+<p class="lead">Pi is a small, fast coding agent. Pointed at a model you serve yourself, it costs nothing per token and never leaves your machine. This page is the setup I run every day on a 24 GB card, a fine-tune made for Pi that can run in its place, a lighter setup for 12 and 16 GB cards, and the handful of numbers that decide whether it feels quick or painfully slow.</p>
 </header>
 
 <div class="facts wide" role="list">
@@ -127,7 +127,7 @@ footer{margin:4.5rem 0 3rem;padding-top:1.2rem;border-top:1px solid var(--soft);
 <div role="listitem"><b>~45 KiB</b><span>of GPU memory per token of context for the 27B</span></div>
 <div role="listitem"><b>1-2.5 min</b><span>to re-read a 60-100k conversation the cache lost</span></div>
 </div>
-<p class="note">Measured 2026-10-03/04 on an RTX 3090 24 GB with Pi 1.0.0 and llama.cpp build 10502. Token counts come from Pi's real requests, rendered with the model's own chat template; they match what the server reported to the token.</p>
+<p class="note">Measured 2026-10-03/04 on an RTX 3090 24 GB with Pi 1.0.0 and llama.cpp build 10502; the Pi fine-tune on 2026-10-06/07 and the draft-head settings on 2026-10-07/08, on the same card and build. Token counts come from Pi's real requests, rendered with the model's own chat template; they match what the server reported to the token.</p>
 
 <h2 id="start">How it fits together</h2>
 <p>Two programs talk over your loopback network. <strong>Pi</strong> is the agent: it reads and edits your files, runs commands and keeps the conversation. <strong>llama-server</strong> (from llama.cpp) holds the model on the GPU and answers Pi's requests on <code>http://localhost:1234</code>, in the same format cloud models use.</p>
@@ -163,19 +163,21 @@ footer{margin:4.5rem 0 3rem;padding-top:1.2rem;border-top:1px solid var(--soft);
 </ul>
 
 <h2 id="choose">Pick a model for your card</h2>
-<p>Two models cover the common NVIDIA cards. Both carry a built-in draft head for faster generation and come with a vision projector, so Pi can read screenshots with either. Find your card's memory in Task Manager, under Performance, GPU, Dedicated GPU memory.</p>
+<p>Three models cover the common NVIDIA cards: Ornith-1.5 9B, and two fine-tunes of Qwen3.8-27B, Swift-1.5 and bytkim's Qwen3.8-27B-pi, which was made for the Pi agent. On a 24 GB card you choose between the two 27Bs (the box under the table). Every file here carries a built-in draft head for faster generation, and all but the 16 GB GSQ-RCO build come with a vision projector, so Pi can read screenshots. Find your card's memory in Task Manager, under Performance, GPU, Dedicated GPU memory.</p>
 <div class="tablewrap wide"><table>
 <thead><tr><th>Your card</th><th>Model and file</th><th>Setup</th><th class="n">Context Win. per slot</th></tr></thead>
 <tbody>
 <tr><td>12 GB<br><span class="note">3060 12 GB, 4070, 4070 Super, 5070</span></td><td><a href="https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF">Ornith-1.5 9B</a> IQ4_XS, 5.5 GB</td><td>vision, one slot</td><td class="n">136,192 <span class="note">derived</span></td></tr>
 <tr><td>16 GB<br><span class="note">4060 Ti 16 GB, 4070 Ti Super, 4080, 5060 Ti 16 GB, 5070 Ti, 5080</span></td><td>Ornith-1.5 9B IQ4_XS, 5.5 GB</td><td>vision, two slots</td><td class="n">145,408 <span class="note">derived</span></td></tr>
 <tr><td>16 GB, Qwen3.8-27B</td><td><a href="https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF">Swift-1.5 27B GSQ-RCO</a> IQ3_XXS, 10.4 GB</td><td>text, one slot</td><td class="n">75,776 <span class="note">derived</span></td></tr>
-<tr class="hl"><td>24 GB<br><span class="note">3090, 4090</span></td><td><a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5 27B</a> IQ4_XS, 15.5 GB</td><td>vision, one slot</td><td class="n">139,264 <span class="note">run daily here</span></td></tr>
+<tr class="hl"><td>24 GB<br><span class="note">3090, 4090</span></td><td><a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5 27B</a> IQ4_XS, 15.5 GB</td><td>vision, one slot, xhigh effort</td><td class="n">139,264 <span class="note">run daily here</span></td></tr>
+<tr><td>24 GB, the Pi fine-tune<br><span class="note">3090, 4090</span></td><td><a href="https://huggingface.co/bartowski/bytkim_Qwen3.8-27B-pi-GGUF">Qwen3.8-27B-pi</a> IQ4_XS, 15.5 GB</td><td>vision, one slot, medium effort</td><td class="n">139,264 <span class="note">filled, held</span></td></tr>
 <tr><td>24 GB, with subagents</td><td>Swift-1.5 27B IQ3_XXS, 12.3 GB</td><td>vision, two slots</td><td class="n">123,904 <span class="note">measured</span></td></tr>
 <tr><td>32 GB<br><span class="note">5090</span></td><td>Swift-1.5 27B IQ4_XS, 15.5 GB</td><td>vision, two slots</td><td class="n">about 157,000 <span class="note">derived</span></td></tr>
 </tbody></table></div>
-<p class="note">Intel Arc cards of the same size (B580 12 GB, A770 16 GB, Arc Pro B60 24 GB) can start from the same row, but these numbers were worked out for NVIDIA and not tested on Intel. "One slot" and "two slots" are the server's <code>--parallel 1</code> and <code>--parallel 2</code>: how many conversations it holds at once. Two slots let a subagent keep its own cache next to your main session (see <a href="#slots">One slot or two</a>). "Measured" means the window was filled on the 3090 and the speed watched up to the cliff; "derived" means worked out from the file sizes and the 3090's measured costs, with a 0.7 GiB buffer for the desktop. How the windows are worked out is under <a href="#window">How big a window</a>.</p>
-<div class="callout plain"><p><strong>9B or 27B on a 16 GB card?</strong> A standard 3-bit 27B file is 12.3 GB and leaves only about 43,000 tokens, too few once Pi has taken its share. The GSQ-RCO build of Swift-1.5 squeezes the 27B into 10.4 GB at 3.0 bits per weight, which leaves a 75,776-token window for text and about 52,000 tokens of working room in Pi. Take the 27B for harder problems in one conversation at a time; take the 9B for screenshots, two slots and long sessions. Which answers your tasks better was not measured for this page.</p></div>
+<p class="note">Intel Arc cards of the same size (B580 12 GB, A770 16 GB, Arc Pro B60 24 GB) can start from the same row, but these numbers were worked out for NVIDIA and not tested on Intel. "One slot" and "two slots" are the server's <code>--parallel 1</code> and <code>--parallel 2</code>: how many conversations it holds at once. Two slots let a subagent keep its own cache next to your main session (see <a href="#slots">One slot or two</a>). "Measured" means the window was filled on the 3090 and the speed watched up to the cliff; "filled, held" means it was filled to about 91% with a screenshot in front and the speed held, with no bigger window tried; "derived" means worked out from the file sizes and the 3090's measured costs, with room kept for the desktop. How the windows are worked out is under <a href="#window">How big a window</a>.</p>
+<div class="callout plain"><p><strong>Swift-1.5 or the Pi fine-tune on 24 GB?</strong> Both are bartowski's IQ4_XS of a Qwen3.8-27B fine-tune, with the same layout and chat template, so they hold the same 139,264-token window with vision and decode at the same speed with the draft head off; with it on, neither was faster in general. On the five automatically scored sets of the <a href="../qwen-27b/#sB-quality">Qwen3.8-27B field guide</a>'s 175-prompt test (single-turn, greedy, draft head off) neither scored detectably better: Swift-1.5 82.7 at xhigh, the Pi fine-tune 81.2 at medium and 80.6 at xhigh, the base model 81.3. That is as far as 25 questions per set can see, and a gap of up to about 5 points in Swift's favour is not ruled out. Over all 175 prompts the Pi fine-tune wrote 1.46 times Swift's tokens at xhigh and 0.83 times Swift's xhigh total at medium, though its typical reply at medium was longer, so the saving is in the longest replies; whether that holds at these commands' temperature of 1.0 or in Pi was not measured. bytkim tuned it for Pi, but whether that helps the agent was not measured: it passed a three-probe smoke test in Pi and nothing more. I run Swift-1.5 by default; take the Pi fine-tune if you want the model made for this agent. Details are in its <a href="../qwen-27b/#sB">Appendix B</a>.</p></div>
+<div class="callout plain"><p><strong>9B or 27B on a 16 GB card?</strong> A standard 3-bit 27B file is 12.3 GB and leaves only about 43,000 tokens, too few once Pi has taken its share. The GSQ-RCO build of Swift-1.5 squeezes the 27B into 10.4 GB at 3.0 bits per weight, which leaves a 75,776-token window for text and about 52,000 tokens of working room in Pi. Take the 27B for harder problems in one conversation at a time; take the 9B for screenshots, two slots and long sessions. Which answers your tasks better was not measured for this page. The Pi fine-tune has no 16 GB setup here: its IQ4_XS does not fit, and its IQ3_XXS has the same 12.3 GB layout as the standard 3-bit Swift file, so with the draft head on it leaves the same short window, and its answers were never scored. On 12 GB only its 2-bit files could fit, and none was checked.</p></div>
 <p>A 24 GB card can run the 9B too, with two slots at its full 262,144 tokens each, if you would rather have speed and room than the 27B's strength.</p>
 
 <h2 id="before">Before you start</h2>
@@ -220,25 +222,43 @@ footer{margin:4.5rem 0 3rem;padding-top:1.2rem;border-top:1px solid var(--soft);
 <li><strong>Download the model.</strong> You need two files: the GGUF for your card and the <code>mmproj</code> file, which is the vision projector. Either open the model's Hugging Face page, go to Files and click the download arrow next to each, or let <code>curl</code> fetch them. It comes with Windows 10 and 11, so there is nothing to install. Run it in Command Prompt (in PowerShell, type <code>curl.exe</code>); <code>-C -</code> picks up a download that was cut off where it stopped.<div class="codewrap labelled"><div class="codehead"><span>24 GB: Swift-1.5 27B IQ4_XS and its vision file, 16.4 GB</span><button type="button" class="copy" data-target="dl-27b">Copy</button></div><pre><code id="dl-27b">mkdir C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF
 cd /d C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF
 curl -L -C - -O https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF/resolve/main/ukisai_Swift-1.5-Qwen3.8-27b-IQ4_XS.gguf
-curl -L -C - -O https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF/resolve/main/mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf</code></pre></div><div class="codewrap labelled"><div class="codehead"><span>12 and 16 GB: Ornith-1.5 9B IQ4_XS and its vision file, 6.4 GB</span><button type="button" class="copy" data-target="dl-9b">Copy</button></div><pre><code id="dl-9b">mkdir C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF
+curl -L -C - -O https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF/resolve/main/mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf</code></pre></div><div class="codewrap labelled"><div class="codehead"><span>24 GB, the Pi fine-tune: Qwen3.8-27B-pi IQ4_XS and its vision file, 16.4 GB</span><button type="button" class="copy" data-target="dl-27b-pi">Copy</button></div><pre><code id="dl-27b-pi">mkdir C:\models\bartowski\bytkim_Qwen3.8-27B-pi-GGUF
+cd /d C:\models\bartowski\bytkim_Qwen3.8-27B-pi-GGUF
+curl -L -C - -O https://huggingface.co/bartowski/bytkim_Qwen3.8-27B-pi-GGUF/resolve/main/bytkim_Qwen3.8-27B-pi-IQ4_XS.gguf
+curl -L -C - -O https://huggingface.co/bartowski/bytkim_Qwen3.8-27B-pi-GGUF/resolve/main/mmproj-bytkim_Qwen3.8-27B-pi-f16.gguf</code></pre></div><div class="codewrap labelled"><div class="codehead"><span>12 and 16 GB: Ornith-1.5 9B IQ4_XS and its vision file, 6.4 GB</span><button type="button" class="copy" data-target="dl-9b">Copy</button></div><pre><code id="dl-9b">mkdir C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF
 cd /d C:\models\protoLabsAI\Ornith-1.5-9B-MTP-GGUF
 curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolve/main/Ornith-1.5-9B-MTP-IQ4_XS.gguf
-curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolve/main/mmproj-Ornith-1.5-9B-BF16.gguf</code></pre></div><p class="note">For the two-slot 24 GB setup below, fetch <code>ukisai_Swift-1.5-Qwen3.8-27b-IQ3_XXS.gguf</code> into the same folder the same way. If you already use Python, <code>pip install -U huggingface_hub</code> adds an <code>hf download</code> command that does the same job.</p></li>
+curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolve/main/mmproj-Ornith-1.5-9B-BF16.gguf</code></pre></div><p class="note">On 24 GB, download only the 27B you choose. For the Pi fine-tune, take bartowski's files as above: they carry the draft head inside, while bytkim's own GGUFs keep it in a separate file that these commands do not load. For the two-slot 24 GB setup below, fetch <code>ukisai_Swift-1.5-Qwen3.8-27b-IQ3_XXS.gguf</code> into the Swift-1.5 folder the same way; that command also loads Swift-1.5's vision file, so if you took the Pi fine-tune, run the Swift-1.5 block first, leaving out its IQ4_XS line. If you already use Python, <code>pip install -U huggingface_hub</code> adds an <code>hf download</code> command that does the same job.</p></li>
 <li><strong>Start the server</strong> in Command Prompt, from the llama.cpp folder, with the command for your card below, and leave the window open. The commands are written for Command Prompt: in PowerShell the line breaks (<code>^</code>) and the quoting work differently. Loading can take a minute. When the log prints <code>server is listening on http://127.0.0.1:1234</code>, run <code>curl http://127.0.0.1:1234/health</code> in another window: <code>{"status":"ok"}</code> means Pi can connect.</li>
 </ol>
-<p>For a 24 GB card, the example is <a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5</a>, a 27B Qwen3.8 fine-tune, at IQ4_XS (15.5 GB) with its vision projector, one slot and a 139,264-token window:</p>
-<div class="codewrap labelled"><div class="codehead"><span>24 GB: Swift-1.5 27B, one slot, 139,264 tokens, vision</span><button type="button" class="copy" data-target="server-1">Copy</button></div><pre><code id="server-1">llama-server.exe ^
+<h3>24 GB cards: Swift-1.5 or the Pi fine-tune</h3>
+<p>For a 24 GB card there is one command per 27B fine-tune (which to choose is under <a href="#choose">Pick a model</a>). Both load the file at IQ4_XS (15.5 GB) with its vision projector, one slot and a 139,264-token window. The first is <a href="https://huggingface.co/bartowski/ukisai_Swift-1.5-Qwen3.8-27b-GGUF">Swift-1.5</a>, the one I run every day:</p>
+<div class="codewrap labelled"><div class="codehead"><span>24 GB: Swift-1.5 27B, one slot, 139,264 tokens, vision, xhigh</span><button type="button" class="copy" data-target="server-1">Copy</button></div><pre><code id="server-1">llama-server.exe ^
   -m &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\ukisai_Swift-1.5-Qwen3.8-27b-IQ4_XS.gguf&quot; ^
   --mmproj &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\mmproj-ukisai_Swift-1.5-Qwen3.8-27b-f16.gguf&quot; ^
   --image-min-tokens 1024 --image-max-tokens 10580 ^
   --alias qwen/qwen3.8-27b ^
   -c 139264 --parallel 1 ^
   -ngl 99 -ctk q8_0 -ctv q8_0 ^
-  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --spec-type draft-mtp --spec-draft-n-max 3 --spec-draft-p-min 0.0 ^
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
   --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;xhigh\&quot;}&quot; ^
   --jinja --load-mode none --api-key dummy ^
   --host 127.0.0.1 --port 1234</code></pre></div>
+<p>The second is bytkim's <a href="https://huggingface.co/bartowski/bytkim_Qwen3.8-27B-pi-GGUF">Qwen3.8-27B-pi</a>. Its command differs in three places: its own two files, a draft length of 4 instead of 3 (each command uses the draft settings measured best for its file) and medium effort instead of xhigh:</p>
+<div class="codewrap labelled"><div class="codehead"><span>24 GB: Qwen3.8-27B-pi, one slot, 139,264 tokens, vision, medium</span><button type="button" class="copy" data-target="server-pi">Copy</button></div><pre><code id="server-pi">llama-server.exe ^
+  -m &quot;C:\models\bartowski\bytkim_Qwen3.8-27B-pi-GGUF\bytkim_Qwen3.8-27B-pi-IQ4_XS.gguf&quot; ^
+  --mmproj &quot;C:\models\bartowski\bytkim_Qwen3.8-27B-pi-GGUF\mmproj-bytkim_Qwen3.8-27B-pi-f16.gguf&quot; ^
+  --image-min-tokens 1024 --image-max-tokens 10580 ^
+  --alias qwen/qwen3.8-27b ^
+  -c 139264 --parallel 1 ^
+  -ngl 99 -ctk q8_0 -ctv q8_0 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.0 ^
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
+  --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;medium\&quot;}&quot; ^
+  --jinja --load-mode none --api-key dummy ^
+  --host 127.0.0.1 --port 1234</code></pre></div>
+<p class="note">On the field guide's five automatically scored test sets (single-turn, greedy, draft head off) the Pi fine-tune scored alike at medium and xhigh. Over all 175 prompts xhigh wrote about 1.75 times the tokens, but medium's typical reply was longer, so the saving is in the longest replies; the two levels were not compared in Pi. To run it at xhigh, change the value in the command. Both 24 GB windows were filled to 126,838 tokens with a screenshot in front and the speed held, the Pi fine-tune at 0.97 of Swift-1.5's (answer tokens at temperature 0, with the earlier draft settings, which need as much memory as these or more). They fit with up to about 1.3 GB of the card's memory in use before the server starts (Task Manager, Dedicated GPU memory). If more is in use, start with <code>-c 128000</code> (derived) and set <code>contextWindow</code> and <code>maxTokens</code> of that server's entry in <code>models.json</code> to 128000. Both servers use port 1234, so run one at a time.</p>
 <p>Every setting in these commands is explained under <a href="#settings">What each setting means</a>, below.</p>
 <details class="acc"><summary>24 GB, two slots: when you use subagents<span class="sumnote">IQ3_XXS, 2 &times; 123,904</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="server-2">Copy</button><pre><code id="server-2">llama-server.exe ^
   -m &quot;C:\models\bartowski\ukisai_Swift-1.5-Qwen3.8-27b-GGUF\ukisai_Swift-1.5-Qwen3.8-27b-IQ3_XXS.gguf&quot; ^
@@ -247,7 +267,7 @@ curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolv
   --alias qwen/qwen3.8-27b ^
   -c 247808 --parallel 2 ^
   -ngl 99 -ctk q8_0 -ctv q8_0 ^
-  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.0 ^
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
   --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;xhigh\&quot;}&quot; ^
   --jinja --load-mode none --api-key dummy ^
@@ -278,7 +298,7 @@ curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolv
   --host 127.0.0.1 --port 1234</code></pre></div></details>
 <ul>
 <li><strong>These windows are derived, not measured.</strong> They come from the 9B's file and the 27B's measured memory costs, keeping the same 0.7 GiB buffer for the desktop. If the speed collapses late in a long session, lower <code>-c</code> by about 8,000 per slot and try again.</li>
-<li><strong>Draft length.</strong> The model's own recipe drafts up to 16 tokens at a time (<code>--spec-draft-n-max 16</code>). Each extra draft token holds about 50 MiB more per slot, so these commands use 4 and give the memory to the window. Which of the two is faster on this model was not measured here. With room to spare, as on a 24 GB card, try 16.</li>
+<li><strong>Draft length.</strong> The model's own recipe drafts up to 16 tokens at a time (<code>--spec-draft-n-max 16</code>). Each extra draft token holds about 50 MiB more per slot (derived), so these commands use 4 and give the memory to the window, and they keep <code>--spec-draft-p-min 0.8</code>. Which settings are fastest on this model was not measured: the 2026-10-08 sweep behind the 27B commands' draft settings did not run the 9B. On the 27B at temperature 1.0 with thinking on, drafts longer than 3 or 4 tokens were slower, but the 9B runs at 0.6, so measure before raising it.</li>
 <li><strong>Text only:</strong> drop the <code>--mmproj</code> and <code>--image-</code> lines. That frees 0.9 GB, and a 12 GB card then takes a window of about 166,000 tokens (derived).</li>
 <li><strong>Q8_0 instead of IQ4_XS:</strong> the 9.8 GB file is closer to the original model. It suits a 16 GB card with one slot (about 152,000 tokens with vision, derived), but leaves a 12 GB card almost no window.</li>
 </ul>
@@ -301,11 +321,12 @@ llama-server.exe ^
   --host 127.0.0.1 --port 1234</code></pre></div>
 <ul>
 <li><strong>Quality, as its maker measured it.</strong> Mean KL divergence from the full-precision Swift-1.5 (lower is closer), on 100 windows of 512 tokens: 0.098 for this 10.4 GB file, against 0.074 for the standard 12.3 GB IQ3_XXS, 0.152 for the standard IQ2_M of about the same size, and 0.018 for the 15.5 GB IQ4_XS. The GSQ figure is on the text its maker tuned with, so it may flatter the file a little. These numbers are cited from ukisai's model cards, not reproduced here.</li>
-<li><strong>Effort.</strong> This command asks for medium reasoning effort. With about 52,000 tokens of working room, one long reply at the highest effort can fill the window by itself; switch to <code>xhigh</code> for a hard problem in a fresh session.</li>
+<li><strong>Effort.</strong> This command asks for medium reasoning effort. Leave it there: with about 52,000 tokens of working room, one reply at xhigh can fill the window by itself (on one hard task the standard 3-bit Swift file wrote 52,900-67,500 tokens at xhigh), and the field guide does not offer xhigh below a 76k window.</li>
 <li><strong>Vision is untested.</strong> GSQ-RCO ships no vision projector. Swift-1.5's projector from the bartowski repo is built for the same model, and adding it would leave about 56,000 tokens (derived), but this pairing was not run here.</li>
-<li><strong>The window is derived</strong> from the file size and the 3090's measured costs, with the same 0.7 GiB desktop buffer. In Pi, give this setup its own entry with <code>contextWindow</code> and <code>maxTokens</code> set to 75,776.</li>
+<li><strong>The window is derived</strong> from the file size and the 3090's measured costs, assuming a 555 MiB desktop plus a 0.7 GiB buffer; at the field guide's more cautious 1,796 MiB reserve it is 64,512. In Pi, give this setup its own text-only entry with <code>contextWindow</code> and <code>maxTokens</code> set to 75,776 (see <a href="#configure">Tell Pi about it</a>).</li>
+<li><strong>Draft settings.</strong> This file was not in the 2026-10-08 sweep that set the 24 GB commands' draft settings, so the command keeps the n-max 4 / p-min 0.75 its window was worked out with. On every 27B file that was swept, p-min 0 at n-max 4 read higher than 0.75 on reasoning early in a session, at no memory cost, so <code>--spec-draft-p-min 0.0</code> is the change to try; on this file and at medium it was not measured.</li>
 </ul>
-<p class="note">The speeds the 27B setups measured: about 61-66 tokens a second while generating a long answer at the start of a session, 36 with a 257k-token window 98% full (IQ3_XXS, one slot), and about 25 per conversation when both slots of the two-slot setup work at once on 110k-token histories. The speeds of the 9B and the GSQ-RCO file were not measured for this page.</p>
+<p class="note">The speeds the 27B setups measured, all with the earlier draft settings (n-max 4, p-min 0.75): about 61-66 tokens a second while generating a long answer at the start of a session, 36 with the IQ3_XXS file's full 262,144-token window filled to 257k (one slot), and about 25 per conversation when both slots of the two-slot setup work at once on 110k-token histories. The 24 GB commands' draft settings wrote reasoning about 1.19 times as fast early in a session on Swift-1.5 IQ4_XS, about 1.15 times on the Pi fine-tune, and 1.34 times per slot with both slots busy (one load per setting). After a 57,500-token history the gain on Swift-1.5 was about 1.05 times, inside the noise, on the Pi fine-tune about 1.1 (no interval), and with two slots none was resolved. The Pi fine-tune has no speed band of its own here, only ratios to Swift-1.5: equal with the draft head off, 0.97 with the 139,264 window 91% full. The speeds of the 9B and the GSQ-RCO file were not measured for this page.</p>
 
 <h3 id="settings">What each setting means</h3>
 <p>The commands above share most settings; only the values change. In order of appearance:</p>
@@ -321,14 +342,14 @@ llama-server.exe ^
 <tr><td class="flag"><code>--alias</code></td><td>The model name the server reports. With one model loaded, Pi's model entry does not have to match it.</td></tr>
 <tr class="grp"><td colspan="2">Memory and the context window</td></tr>
 <tr><td class="flag"><code>-c</code></td><td>The context window in tokens: how much conversation the model can see. It is the total for all slots, so each slot gets <code>-c</code> divided by <code>--parallel</code>. One slot at 139,264 gives one conversation 139,264 tokens; two slots at 247,808 give each 123,904.</td></tr>
-<tr><td class="flag"><code>--parallel</code></td><td>The number of slots: how many conversations the server keeps in GPU memory at once, each with its own cache. <strong>Always set it.</strong> Left on auto, current llama-server opens four slots, and with the draft head on that costs about 2.2 GB more than one slot (derived from llama.cpp's per-slot state).</td></tr>
+<tr><td class="flag"><code>--parallel</code></td><td>The number of slots: how many conversations the server keeps in GPU memory at once, each with its own cache. <strong>Always set it.</strong> Left on auto, current llama-server opens four slots, and with the draft head on that costs about 2.2 GB more than one slot on the 27B at a draft length of 4, and 1.8 GB at 3 (derived from llama.cpp's per-slot state).</td></tr>
 <tr><td class="flag"><code>-ngl 99</code></td><td>How many of the model's layers go on the GPU. 99 is more than these models have, so all of them. A number one short leaves the output layer on the CPU and quietly costs about a third of your speed.</td></tr>
 <tr><td class="flag"><code>-ctk q8_0</code><br><code>-ctv q8_0</code></td><td>Store the context cache (its keys and values) at 8 bits, half the memory of the default 16, for a small, measured quality cost.</td></tr>
 <tr><td class="flag"><code>--load-mode none</code></td><td>Load the model without memory-mapping the file. The default maps it, which makes restarts faster but keeps up to the file's size in Windows' file cache in system RAM. How much RAM each mode really holds was not measured here.</td></tr>
 <tr class="grp"><td colspan="2">Speed: the draft head</td></tr>
-<tr><td class="flag"><code>--spec-type draft-mtp</code></td><td>Speculative decoding with the draft head built into the model file. The head guesses a few tokens ahead and the model checks them all in one step; correct guesses come almost free, and the model still decides every token. About 80-89% of guesses were accepted in these tests.</td></tr>
-<tr><td class="flag"><code>--spec-draft-n-max</code></td><td>The most tokens the head may guess per step. Each one holds more memory in every slot: about 150 MiB on the 27B and 50 MiB on the 9B.</td></tr>
-<tr><td class="flag"><code>--spec-draft-p-min</code></td><td>The head stops guessing once it is less sure than this (0.75 is 75%) of its next token, so fewer checks are wasted on long shots.</td></tr>
+<tr><td class="flag"><code>--spec-type draft-mtp</code></td><td>Speculative decoding with the draft head built into the model file. The head guesses a few tokens ahead and the model checks them all in one step; correct guesses come almost free, and the model still decides every token. With the 24 GB commands' settings about 40-70% of guesses are accepted, fewer than the roughly 80% of the p-min 0.75 this page used before, and yet decoding is faster: p-min 0.75 cut drafts short, so each check kept fewer tokens (on Swift-1.5 IQ4_XS's reasoning about 1.0, against 1.5 now).</td></tr>
+<tr><td class="flag"><code>--spec-draft-n-max</code></td><td>The most tokens the head guesses before the model checks them; with a p-min of 0 it guesses this many at every step except near the end of a reply. A wrong guess costs time, never quality, and each later guess is right less often, so more is not faster: at these commands' temperature of 1.0, 3 came out best with one slot on Swift-1.5's IQ4_XS and IQ3_XXS, and 4 with two slots busy and on the Pi fine-tune. Each one holds more memory in every slot: about 150 MiB on the 27B (measured) and 50 MiB on the 9B (derived).</td></tr>
+<tr><td class="flag"><code>--spec-draft-p-min</code></td><td>A confidence floor: the head stops at the first guess it is less sure of than this. At 0 it never stops early, which is what the 24 GB commands use (build 10502's default, written out in case a later build changes it). At temperature 1.0, the 0.75 this page used before cut off guesses that would often have been accepted, and was slower. It costs no memory. Both draft settings are fixed when the server starts. The GSQ-RCO and 9B commands keep 0.75 and 0.8, which were not tested against 0 on their files.</td></tr>
 <tr><td class="flag"><code>--spec-draft-ngl 99</code></td><td>How many layers of the draft model go on the GPU; 99 means all. Used in the 9B commands.</td></tr>
 <tr class="grp"><td colspan="2">Sampling: how the next token is chosen</td></tr>
 <tr><td class="flag"><code>--temp</code></td><td>Randomness. 1.0 uses the model's own probabilities as they are; lower values make it more predictable. Keep the value each command uses with its model.</td></tr>
@@ -338,7 +359,7 @@ llama-server.exe ^
 <tr><td class="flag"><code>--presence-penalty</code><br><code>--repeat-penalty</code></td><td>Discourage repeating words already written. 0 and 1.0 mean off; the 9B commands use a mild 1.05 repeat penalty.</td></tr>
 <tr class="grp"><td colspan="2">Thinking and the chat format</td></tr>
 <tr><td class="flag"><code>--reasoning-preserve</code></td><td>Keep the model's thinking from earlier turns in the history it sees, instead of dropping it. Dropping it would change text the server already holds in its cache, so part of the conversation would be read again; keeping it costs window space.</td></tr>
-<tr><td class="flag"><code>--chat-template-kwargs</code></td><td>Passes a setting into the model's chat template. Here it is <code>reasoning_effort</code>, how long the model thinks before answering: <code>low</code>, <code>medium</code> or <code>xhigh</code>. Higher effort does better on hard problems and uses far more tokens. The backslashes keep the inner quotes intact on the command line.</td></tr>
+<tr><td class="flag"><code>--chat-template-kwargs</code></td><td>Passes a setting into the model's chat template. Here it is <code>reasoning_effort</code>, how long the model thinks before answering: <code>low</code>, <code>medium</code> or <code>xhigh</code>. <code>high</code> is not one of them: the Swift-1.5 and Pi template rejects it. xhigh thinks longest: on the base model's 175 test prompts it took 1.84 times as long as medium for scores the test could not tell apart, so the field guide keeps it for hard code you need finished. Pi sends no effort to this server, so this value is the one the model gets; to change it, restart the server. The backslashes keep the inner quotes intact on the command line.</td></tr>
 <tr><td class="flag"><code>--jinja</code></td><td>Use the chat template stored in the model file, which lays out Pi's messages and tool calls the way the model was trained to read them.</td></tr>
 <tr class="grp"><td colspan="2">The connection</td></tr>
 <tr><td class="flag"><code>--api-key dummy</code></td><td>The key a program must send to use the server. Pi's <code>models.json</code> sends <code>dummy</code>, so they match.</td></tr>
@@ -347,8 +368,8 @@ llama-server.exe ^
 </tbody></table></div>
 
 <h2 id="configure">Tell Pi about it</h2>
-<p>Pi reads its local models from <code>%USERPROFILE%\.pi\agent\models.json</code> and its defaults from <code>settings.json</code> in the same folder. Make one model entry per server setup you run, and set its <code>contextWindow</code> to the server's window <strong>per slot</strong>.</p>
-<details class="acc"><summary>models.json<span class="sumnote">three entries, one per server setup</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="models-json">Copy</button><pre><code id="models-json">{
+<p>Pi reads its local models from <code>%USERPROFILE%\.pi\agent\models.json</code> and its defaults from <code>settings.json</code> in the same folder. (Pi's built-in llama.cpp provider, set up with <code>/login llama.cpp</code>, is for llama-server started without a model, in router mode; the commands here load one model with <code>-m</code>, so they connect through <code>models.json</code>.) Make one model entry per server setup you run, and set its <code>contextWindow</code> to the server's window <strong>per slot</strong>.</p>
+<details class="acc"><summary>models.json<span class="sumnote">four entries: two for one slot on 24 GB, one for two slots, one for the 9B</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="models-json">Copy</button><pre><code id="models-json">{
   "providers": {
     "llamacpp": {
       "baseUrl": "http://localhost:1234/v1",
@@ -358,14 +379,21 @@ llama-server.exe ^
       "models": [
         {
           "id": "qwen/qwen3.8-27b-c139264",
-          "name": "Swift-1.5 IQ4_XS, 1 slot, 139k (vision)",
+          "name": "Swift-1.5 IQ4_XS, 1 slot, 139k (vision), xhigh",
           "reasoning": true,
           "input": ["text", "image"],
           "contextWindow": 139264,
           "maxTokens": 139264,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
-                        "defaultLevel": "xhigh", "requiresEffort": false }
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        },
+        {
+          "id": "qwen/qwen3.8-27b-pi-c139264",
+          "name": "Qwen3.8-27B-pi IQ4_XS, 1 slot, 139k (vision), medium",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 139264,
+          "maxTokens": 139264,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         },
         {
           "id": "qwen/qwen3.8-27b",
@@ -374,9 +402,7 @@ llama-server.exe ^
           "input": ["text", "image"],
           "contextWindow": 123904,
           "maxTokens": 123904,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
-                        "defaultLevel": "xhigh", "requiresEffort": false }
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         },
         {
           "id": "ornith/ornith-1.5-9b",
@@ -385,22 +411,18 @@ llama-server.exe ^
           "input": ["text", "image"],
           "contextWindow": 136192,
           "maxTokens": 136192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
-          "thinking": { "mode": "effort", "efforts": ["low", "medium", "xhigh"],
-                        "defaultLevel": "xhigh", "requiresEffort": false }
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }
       ]
     }
   }
 }</code></pre></div></details>
-<p class="note">Keep only the entries for the servers you run. On a 16 GB card with two 9B slots, set the 9B entry's <code>contextWindow</code> and <code>maxTokens</code> to 145,408; on a 12 GB or 16 GB card, set <code>defaultModel</code> below to <code>ornith/ornith-1.5-9b</code>.</p>
+<p class="note">Keep only the entries for the servers you run. The two 139k entries differ only in <code>id</code> and name; the name tells you in Pi which server an entry is for. With the Pi fine-tune, set <code>defaultModel</code> below to <code>qwen/qwen3.8-27b-pi-c139264</code>; with the 9B, to <code>ornith/ornith-1.5-9b</code>, and on a 16 GB card with two 9B slots set its <code>contextWindow</code> and <code>maxTokens</code> to 145,408. For a server started without a vision file, such as the 16 GB GSQ-RCO one, copy an entry with a new <code>id</code>, its window and <code>"input": ["text"]</code>. Keep the two <code>compat</code> settings: they make Pi send a plain system message and no effort, which is what llama-server expects.</p>
+<p><strong>Effort is set on the server, not in Pi.</strong> Pi sends none to this server, so the model gets the effort in the server command: xhigh for Swift-1.5, medium for the Pi fine-tune and the GSQ-RCO file. Pi's own thinking level and <code>/thinking</code> do not reach it. To change effort, stop the server and start it again with another <code>reasoning_effort</code>. The 9B commands pass no effort, so the 9B thinks at its template's default, which was not checked here.</p>
 <details class="acc"><summary>settings.json<span class="sumnote">default model and the extensions this page recommends</span></summary><div class="codewrap"><button type="button" class="copy floating" data-target="settings-json">Copy</button><pre><code id="settings-json">{
   "theme": "titanium",
   "defaultProvider": "llamacpp",
   "defaultModel": "qwen/qwen3.8-27b-c139264",
-  "modelThinkingLevels": {
-    "qwen/qwen3.8-27b-c139264": { "level": "xhigh" }
-  },
   "packages": [
     "npm:@nguyenquangthai/pi-omp-theme",
     "npm:@juicesharp/rpiv-ask-user-question",
@@ -432,7 +454,7 @@ llama-server.exe ^
 <tr><td>Q4_K_M</td><td class="n">17.4 GB</td><td class="n">262,144</td><td class="n">117,760</td><td class="n">no fit</td><td class="n">no fit</td></tr>
 <tr><td>Q6_K</td><td class="n">23.9 GB</td><td class="n">167,936</td><td class="n">no fit</td><td class="n">no fit</td><td class="n">no fit</td></tr>
 </tbody></table></div>
-<p class="note">Largest window for text, one slot, drafter on, with everything held in GPU memory and a 0.7 GiB buffer for the desktop. Derived from measurements on the 3090, not measured on each card; 262,144 is the model's own limit. Windows past these numbers can still run fast until the cliff, but only a test on your card finds where it is. The full table, with vision and two-slot columns, is in the <a href="../qwen-27b/">Qwen3.8-27B field guide</a>.</p>
+<p class="note">Largest window for text, one slot, drafter on, with everything held in GPU memory, assuming a 555 MiB desktop plus a 0.7 GiB buffer. At the field guide's more cautious 1,796 MiB reserve the windows are smaller: 216,064 for IQ3_XXS on 24 GB, 64,512 for GSQ-RCO on 16 GB. Derived from measurements on the 3090, not measured on each card, at a draft length of 4; the Swift-1.5 command's 3 needs about 150 MiB less, and p-min costs nothing. 262,144 is the model's own limit. The IQ4_XS cell on 24 GB, 159,744, was filled with both Swift-1.5 and the Pi fine-tune and held; bartowski's IQ3_XXS and IQ4_XS of the Pi fine-tune have the same layout as the Swift files, so their rows apply to it. Windows past these numbers can still run fast until the cliff, but only a test on your card finds where it is. The full table, with vision and two-slot columns, is in the <a href="../qwen-27b/#sA-cards">Qwen3.8-27B field guide</a>.</p>
 <h3>The 9B</h3>
 <p>Ornith-1.5 9B has the same layout at a smaller size: 8 of its 32 layers keep a cache that grows with context. On paper that is 17 KiB a token at 8 bits plus 4 KiB for the draft head, <strong>21 KiB a token</strong>. Adding the 27B's measured buffer overhead on top gives about 27 KiB a token with two slots and 29 with one, or roughly 34,000 tokens per GB of free memory. That errs on the large side, because the 9B's working buffers are smaller than the 27B's.</p>
 <div class="tablewrap wide"><table>
@@ -457,7 +479,7 @@ llama-server.exe ^
 <p>Then two rules decide how much room is really left:</p>
 <ul>
 <li><strong>Pi compacts at the window minus 16,384 tokens.</strong> With a 139,264 window that is 122,880; with 123,904 it is 107,520.</li>
-<li><strong>One reply can run to about the window minus 4,096</strong>, because Pi only checks between requests. Thinking at the highest effort is hungry: on one demanding coding task, base Qwen3.8-27B wrote 22,700 and 80,200 tokens in two tries, and Swift-1.5 between 52,900 and 67,500.</li>
+<li><strong>One reply can run to about the window minus 4,096</strong>, because Pi only checks between requests. Thinking at the highest effort is hungry: on one demanding coding task, base Qwen3.8-27B wrote 22,700 and 80,200 tokens in two tries, and Swift-1.5 between 52,900 and 67,500 across its two files. The Pi fine-tune was not run on that task.</li>
 </ul>
 <div class="callout plain"><p><strong>Rule of thumb.</strong> Window, minus 16,384, minus what Pi needs before you type, is your working room. With the recommended extensions and a 139,264 window that is about 115,000 tokens; at 63,488 it would be under 40,000, too small for one long high-effort reply.</p></div>
 <p>To see your own numbers, install <code>pi-context-view</code> and open it in a session: it splits the window into system prompt, tools and free space.</p>
@@ -474,6 +496,8 @@ llama-server.exe ^
 <tr><td>hand work to subagents</td><td>two slots</td><td>each agent keeps its cache; about 124k per slot instead of 139k+</td></tr>
 <tr><td>fan out three or more agents at once</td><td>a cloud model, or accept the re-reads</td><td>every agent past the slot count evicts another one's cache</td></tr>
 </tbody></table></div>
+
+<p>The two-slot command runs Swift-1.5's IQ3_XXS, the file Pi has been run end to end with at two slots. The Pi fine-tune's IQ3_XXS held the same setup at 0.96 of Swift-1.5's speed per slot with both conversations 91% full, but its answers were never scored, and its IQ4_XS was never run with two slots. The two-slot window is set by speed rather than memory: in those fills about 1.6-1.7 GB sat in shared system memory and the speed still held, while 135,168 per slot fell off the cliff.</p>
 
 <h2 id="extensions">Extensions</h2>
 <p>The set I keep for a one-slot daily driver, with what each costs in every request:</p>
@@ -611,15 +635,15 @@ For reference docs, outlines, or specs: use a tree/drill-down structure — trun
 <tbody>
 <tr><td><code>--list-devices</code> shows no GPU</td><td>The cudart zip is not in the llama.cpp folder, or the driver is older than the build</td><td>Unzip the cudart files next to <code>llama-server.exe</code>, update the driver, or take the CUDA 12 build</td></tr>
 <tr><td>Pi cannot connect</td><td>The server is not running or still loading the model</td><td>Wait for <code>server is listening</code> in its window; <code>curl http://127.0.0.1:1234/health</code> should answer <code>{"status":"ok"}</code></td></tr>
-<tr><td>Fast at first, crawling once the conversation is long</td><td>The window is past your card's cliff and the cache spilled into system RAM</td><td>Lower <code>-c</code> one step, or use a smaller file</td></tr>
+<tr><td>Fast at first, crawling once the conversation is long</td><td>The window is past your card's cliff and the cache spilled into system RAM</td><td>Lower <code>-c</code> (on the 24 GB one-slot commands, to 128000) and the model entry's <code>contextWindow</code> with it, or use a smaller file</td></tr>
 <tr><td>Overflow or "context size" errors in Pi</td><td>Pi's selected model entry has a bigger window than the server</td><td>Select the entry that matches the server (<kbd>Ctrl</kbd>+<kbd>P</kbd>)</td></tr>
 <tr><td>Long pauses when a subagent hands back</td><td>One slot: the main session's cache was evicted</td><td>Two slots, or no subagents</td></tr>
 <tr><td><code>failed to fit params</code> in the server log</td><td>llama.cpp projects that this load leaves less than 1,024&nbsp;MiB of GPU memory free (its <code>--fit-target</code> margin); with <code>-ngl 99</code> set, it loads as asked anyway. It is a warning, not a failure: the load may still fit.</td><td>Nothing, if long sessions stay fast. If the speed collapses late in a long session, lower <code>-c</code> one step</td></tr>
-<tr><td>Replies cut off and Pi retries</td><td>One high-effort reply ran into the window</td><td>A bigger window, fewer extensions, or medium effort for routine turns</td></tr>
+<tr><td>Replies cut off and Pi retries</td><td>One high-effort reply ran into the window</td><td>A bigger window, fewer extensions, or restart the 27B server at medium effort (Pi's own thinking setting does not reach it)</td></tr>
 </tbody></table></div>
 <p>To check the setup: start the server, run <code>pi</code>, confirm your model entry is selected, ask it to list the files in the current folder, and run <code>/mcp</code> to see the built-in MCP manager.</p>
 
-<footer>Run Pi on a model that lives on your own GPU. Measured on one RTX 3090 24 GB, Windows 11, Pi 1.0.0, llama.cpp build 10502, 2026-10-03 and 2026-10-04. Token counts are exact for the Qwen3.8 tokenizer; speeds and windows are for this card and move with yours. The 9B windows are derived, not measured. Updated 2026-10-04.</footer>
+<footer>Run Pi on a model that lives on your own GPU. Measured on one RTX 3090 24 GB, Windows 11, Pi 1.0.0, llama.cpp build 10502, 2026-10-03 and 2026-10-04. Token counts are exact for the Qwen3.8 tokenizer; speeds and windows are for this card and move with yours. The Pi fine-tune was measured on 2026-10-06/07 and the draft-head settings on 2026-10-07/08, on the same card and build. The 9B windows are derived, not measured. Updated 2026-10-08.</footer>
 </main>
 </div>
 <script>
