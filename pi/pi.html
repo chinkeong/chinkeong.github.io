@@ -314,7 +314,7 @@ llama-server.exe ^
   --alias qwen/qwen3.8-27b ^
   -c 75776 --parallel 1 ^
   -ngl 99 -ctk q8_0 -ctv q8_0 ^
-  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.75 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.0 ^
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 ^
   --reasoning-preserve --chat-template-kwargs &quot;{\&quot;reasoning_effort\&quot;:\&quot;medium\&quot;}&quot; ^
   --jinja --load-mode none --api-key dummy ^
@@ -324,7 +324,7 @@ llama-server.exe ^
 <li><strong>Effort.</strong> This command asks for medium reasoning effort. Leave it there: with about 52,000 tokens of working room, one reply at xhigh can fill the window by itself (on one hard task the standard 3-bit Swift file wrote 52,900-67,500 tokens at xhigh), and the field guide does not offer xhigh below a 76k window.</li>
 <li><strong>Vision is untested.</strong> GSQ-RCO ships no vision projector. Swift-1.5's projector from the bartowski repo is built for the same model, and adding it would leave about 56,000 tokens (derived), but this pairing was not run here.</li>
 <li><strong>The window is derived</strong> from the file size and the 3090's measured costs, assuming a 555 MiB desktop plus a 0.7 GiB buffer; at the field guide's more cautious 1,796 MiB reserve it is 64,512. In Pi, give this setup its own text-only entry with <code>contextWindow</code> and <code>maxTokens</code> set to 75,776 (see <a href="#configure">Tell Pi about it</a>).</li>
-<li><strong>Draft settings.</strong> This file was not in the 2026-10-08 sweep that set the 24 GB commands' draft settings, so the command keeps the n-max 4 / p-min 0.75 its window was worked out with. On every 27B file that was swept, p-min 0 at n-max 4 read higher than 0.75 on reasoning early in a session, at no memory cost, so <code>--spec-draft-p-min 0.0</code> is the change to try; on this file and at medium it was not measured.</li>
+<li><strong>Draft settings.</strong> This file was not in the 2026-10-08 sweep that set the 24 GB commands' draft settings. The command keeps the n-max 4 its window was worked out with and, since 2026-10-09, uses p-min 0 instead of 0.75. p-min costs no memory, so the window still fits. On the four 27B files that were swept, p-min 0.75 at n-max 4 decoded reasoning early in a session at 0.87-0.97 of p-min 0's speed. After a 57,540-token prefix it read 0.90-1.03 of p-min 0's speed. On this file and at medium the setting is derived, not measured.</li>
 </ul>
 <p class="note">The speeds the 27B setups measured, all with the earlier draft settings (n-max 4, p-min 0.75): about 61-66 tokens a second while generating a long answer at the start of a session, 36 with the IQ3_XXS file's full 262,144-token window filled to 257k (one slot), and about 25 per conversation when both slots of the two-slot setup work at once on 110k-token histories. The 24 GB commands' draft settings wrote reasoning about 1.19 times as fast early in a session on Swift-1.5 IQ4_XS, about 1.15 times on the Pi fine-tune, and 1.34 times per slot with both slots busy (one load per setting). After a 57,500-token history the gain on Swift-1.5 was about 1.05 times, inside the noise, on the Pi fine-tune about 1.1 (no interval), and with two slots none was resolved. The Pi fine-tune has no speed band of its own here, only ratios to Swift-1.5: equal with the draft head off, 0.97 with the 139,264 window 91% full. The speeds of the 9B and the GSQ-RCO file were not measured for this page.</p>
 
