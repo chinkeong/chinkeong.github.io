@@ -281,7 +281,7 @@ curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolv
   --alias ornith/ornith-1.5-9b ^
   -c 136192 --parallel 1 ^
   -ngl 99 -ctk q8_0 -ctv q8_0 ^
-  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.8 --spec-draft-ngl 99 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.0 --spec-draft-ngl 99 ^
   --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05 ^
   --jinja --api-key dummy ^
   --host 127.0.0.1 --port 1234</code></pre></div>
@@ -292,13 +292,13 @@ curl -L -C - -O https://huggingface.co/protoLabsAI/Ornith-1.5-9B-MTP-GGUF/resolv
   --alias ornith/ornith-1.5-9b ^
   -c 290816 --parallel 2 ^
   -ngl 99 -ctk q8_0 -ctv q8_0 ^
-  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.8 --spec-draft-ngl 99 ^
+  --spec-type draft-mtp --spec-draft-n-max 4 --spec-draft-p-min 0.0 --spec-draft-ngl 99 ^
   --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.0 --presence-penalty 0.0 --repeat-penalty 1.05 ^
   --jinja --api-key dummy ^
   --host 127.0.0.1 --port 1234</code></pre></div></details>
 <ul>
 <li><strong>These windows are derived, not measured.</strong> They come from the 9B's file and the 27B's measured memory costs, keeping the same 0.7 GiB buffer for the desktop. If the speed collapses late in a long session, lower <code>-c</code> by about 8,000 per slot and try again.</li>
-<li><strong>Draft length.</strong> The model's own recipe drafts up to 16 tokens at a time (<code>--spec-draft-n-max 16</code>). Each extra draft token holds about 50 MiB more per slot (derived), so these commands use 4 and give the memory to the window, and they keep <code>--spec-draft-p-min 0.8</code>. Which settings are fastest on this model was not measured: the 2026-10-08 sweep behind the 27B commands' draft settings did not run the 9B. On the 27B at temperature 1.0 with thinking on, drafts longer than 3 or 4 tokens were slower, but the 9B runs at 0.6, so measure before raising it.</li>
+<li><strong>Draft length.</strong> The model's own recipe drafts up to 16 tokens at a time and stops a draft at the first guess the head is less than 80% sure of (<code>--spec-draft-n-max 16 --spec-draft-p-min 0.8</code>). These commands draft up to 4 and never stop early (<code>--spec-draft-p-min 0.0</code>). That was measured on 2026-10-09 on the reference RTX 3090 with these commands' own flags and the model card's sampler (temperature 0.6), against p-min 0.8 at the same n-max, with two passes and the settings in alternating order. Thinking-on decoding was 1.14 times as fast with one slot (128.9 against 113.1 tokens a second) and 1.50 times per slot with two (98.4 against 65.7); after a 57,540-token prompt it was 1.10 and 1.30 times. At p-min 0.8 the head guessed right about 90% of the time but stopped after about one token; at p-min 0 it keeps about 1.7 per check. The recipe's own 16 / 0.8 was slower still: two slots of 262,144 tokens read 59.2 tokens a second per slot against 97.8 for 4 / 0, and 6 / 0 read 87.7. p-min costs no memory, and 4 drafted tokens hold about 1.2 GB less than 16 on two slots. On the 3090 the 12 GB command peaked at 11,133 MiB and the 16 GB one at 15,181 MiB, the desktop's 1.0-1.1 GB included, with no image sent.</li>
 <li><strong>Text only:</strong> drop the <code>--mmproj</code> and <code>--image-</code> lines. That frees 0.9 GB, and a 12 GB card then takes a window of about 166,000 tokens (derived).</li>
 <li><strong>Q8_0 instead of IQ4_XS:</strong> the 9.8 GB file is closer to the original model. It suits a 16 GB card with one slot (about 152,000 tokens with vision, derived), but leaves a 12 GB card almost no window.</li>
 </ul>
